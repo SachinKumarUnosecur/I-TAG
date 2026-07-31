@@ -910,15 +910,9 @@ export default function Dashboard() {
     <div className="page-content">
       <div className="page-header">
         <div className="page-header-copy">
-          <div className="page-welcome">
-            <span className="page-welcome-label">Welcome back</span>
-            <h1 className="page-welcome-name">Tom Walker</h1>
-          </div>
-          <div className="page-title-row">
-            <div className="page-title">Overview</div>
-            <div className="page-title-dot" />
-            <div className="page-subtitle">Security posture across all identities</div>
-          </div>
+          <p className="page-welcome">Welcome back, <span className="page-welcome-name">Tom Walker</span></p>
+          <h1 className="page-title">Overview</h1>
+          <p className="page-subtitle">Security posture across all identities</p>
         </div>
       </div>
       <IdentityOverview navigate={navigate} />

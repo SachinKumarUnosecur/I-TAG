@@ -104,6 +104,7 @@
   --text-secondary: var(--uno-grey-700);
   --text-tertiary: var(--uno-grey-500);
   --text-placeholder: var(--uno-grey-400);
+  --text-heading: var(--uno-blue-800);
 
   /* Top strip */
   --topbar-height: 48px;
@@ -399,28 +400,35 @@ input, select { font-family: inherit; }
 .page-header-copy {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 0;
   min-width: 0;
 }
 .page-welcome {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-family: 'Outfit', Inter, sans-serif;
-}
-.page-welcome-label {
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  color: var(--uno-blue-500);
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 .page-welcome-name {
+  font-weight: 600;
+  color: var(--text-heading);
+}
+.page-header-copy .page-title {
   margin: 0;
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 700;
-  letter-spacing: -0.9px;
-  line-height: 1.1;
-  color: var(--text-primary);
+  letter-spacing: -0.45px;
+  line-height: 1.2;
+  color: var(--text-heading);
+}
+.page-header-copy .page-subtitle {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  line-height: 1.45;
 }
 .page-title-row {
   display: flex;
@@ -446,7 +454,7 @@ input, select { font-family: inherit; }
   font-size: 13px;
   color: var(--text-secondary);
 }
-.page-title { font-size: 20px; font-weight: 800; color: var(--text-primary); letter-spacing: -0.5px; margin-bottom: 3px; }
+.page-title { font-size: 20px; font-weight: 800; color: var(--text-heading); letter-spacing: -0.5px; margin-bottom: 3px; }
 .page-subtitle { font-size: 12.5px; color: var(--text-secondary); font-weight: 400; line-height: 1.5; max-width: 700px; }
 
 /* ─── Cards ────────────────────────────────────────────────── */
@@ -488,7 +496,7 @@ input, select { font-family: inherit; }
 
 .tile-label {
   font-size: 10.5px; font-weight: 700; letter-spacing: 0.7px;
-  text-transform: uppercase; color: var(--text-tertiary);
+  text-transform: uppercase; color: var(--text-heading);
   margin-bottom: 14px;
 }
 .tile-label-row {
@@ -634,7 +642,7 @@ input, select { font-family: inherit; }
 .review-headline-name {
   font-size: 14px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-heading);
   letter-spacing: -0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -878,7 +886,7 @@ input, select { font-family: inherit; }
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--text-heading);
   margin-bottom: 12px;
 }
 .identity-fabric-cards {
@@ -926,7 +934,7 @@ input, select { font-family: inherit; }
   font-family: 'Outfit', Inter, sans-serif;
   font-size: 13px;
   font-weight: 700;
-  color: var(--text-primary);
+  color: var(--text-heading);
   letter-spacing: 0.2px;
 }
 .identity-fabric-card-sub {
@@ -1205,7 +1213,7 @@ input, select { font-family: inherit; }
 .divider { height: 1px; background: var(--border); margin: 14px 0; }
 
 /* ─── Section title ────────────────────────────────────────── */
-.section-title { font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 10px; }
+.section-title { font-size: 12px; font-weight: 700; color: var(--text-heading); margin-bottom: 10px; }
 
 /* ─── Info rows ────────────────────────────────────────────── */
 .info-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; font-size: 12.5px; }
