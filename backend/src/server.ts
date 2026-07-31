@@ -11,7 +11,9 @@ import {
   datasetOwnerRegistry,
   datasetSuppressionRegistry,
   datasetTeamDirectory,
+  createAccessService,
   fixedClock,
+  memoizedAccessOwner,
   memoizedOwnershipState,
   memoryFindingStore,
   seedGraphSource,
@@ -24,6 +26,7 @@ import {
   type Clock,
 } from '@itag/core';
 import { explainRouter } from './routes/explain.js';
+import { createAccessRouter } from './routes/access.js';
 import { createAccountabilityRouter } from './routes/accountability.js';
 import { createFindingsRouter } from './routes/findings.js';
 import { createOffboardingRouter } from './routes/offboarding.js';
@@ -98,6 +101,17 @@ const lineageService = createLineageService({
   policy: DEFAULT_LINEAGE_POLICY,
 });
 
+// Access Discovery. Reads Ownership Assurance through a narrow port for §6.3's
+// Owner column only — `docs/PRD-access-discovery.md` §2.1 has ownership consuming
+// this module for grant-level attribution, so the dependency runs one way and only
+// this composition root knows both sides.
+const accessService = createAccessService({
+  graphSource,
+  clock,
+  owners: memoizedAccessOwner(ownershipService),
+  policy: accountabilityPolicy,
+});
+
 const sweepService = createSweepService({
   graphSource,
   hr,
@@ -127,6 +141,7 @@ app.use('/api/explain', explainRouter);
 app.use('/api/accountability', createAccountabilityRouter(accountabilityService));
 app.use('/api/ownership', createOwnershipRouter(ownershipService));
 app.use('/api/lineage', createLineageRouter(lineageService));
+app.use('/api/access', createAccessRouter(accessService));
 app.use('/api/offboarding-sweep', createOffboardingRouter(sweepService));
 app.use('/api/findings', createFindingsRouter(dispositionService));
 

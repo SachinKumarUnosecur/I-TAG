@@ -31,6 +31,15 @@ export interface IdentityGraph {
   readonly provisionedChildren: ReadonlyMap<string, readonly string[]>;
   readonly employeeStatus: ReadonlyMap<string, EmployeeRecord>;
   readonly sensitivePermissions: ReadonlySet<string>;
+  /**
+   * Permission id -> the principal holding it confers, for `PRD` §4.2's hop check.
+   *
+   * Precomputed here for the same reason `generation` is: the classifier asks this
+   * question once per grant per identity, and rescanning the permission table per
+   * row would make an `O(V·P)` walk out of an `O(V+E)` one. Only permissions that
+   * actually bind appear, so a `has` on this map is the hop test itself.
+   */
+  readonly permissionBindings: ReadonlyMap<string, string>;
   readonly apps: ReadonlyMap<string, AppRecord>;
   /** Identities grouped by app, for the per-app views the Unosecur model expects. */
   readonly byApp: ReadonlyMap<string, readonly Identity[]>;
@@ -190,9 +199,13 @@ export function buildIdentityGraph(dataset: IdentityDataset): IdentityGraph {
   }
 
   const sensitivePermissions = new Set<string>();
+  const permissionBindings = new Map<string, string>();
   for (const permission of dataset.permissions) {
     if (permission.sensitive === true) {
       sensitivePermissions.add(permission.id);
+    }
+    if (permission.grants_identity !== undefined) {
+      permissionBindings.set(permission.id, permission.grants_identity);
     }
   }
 
@@ -258,6 +271,7 @@ export function buildIdentityGraph(dataset: IdentityDataset): IdentityGraph {
     provisionedChildren,
     employeeStatus,
     sensitivePermissions,
+    permissionBindings,
     apps,
     byApp,
     creationEdges,

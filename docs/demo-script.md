@@ -358,8 +358,8 @@ Reachable on the default policy with no env override: `maxChainDepth` is 16.
 
 **Click:** back to the queue. Sort by age to make the point, then sort back.
 
-> "Eleven of these 22 can reach production. The oldest finding in the list is 711
-> days old and sits eleven rows down, because it can reach nothing. Sorting by age or
+> "Twelve of these 24 can reach production. The oldest finding in the list is 711
+> days old and sits twelve rows down, because it can reach nothing. Sorting by age or
 > by count gives you a list nobody works. Sorting by what is reachable gives you the
 > row you would actually start with — which is where we started."
 
@@ -367,14 +367,156 @@ Reachable on the default policy with no env override: `maxChainDepth` is 16.
 
 | | |
 | --- | --- |
-| Findings | 22 |
-| Reaching sensitive access | 11, all ranked above every row that reaches nothing |
-| Oldest finding | `agent-legacy-sweeper`, 711 days, rank 12, 0 sensitive |
+| Findings | 24 |
+| Reaching sensitive access | 12, all ranked above every row that reaches nothing |
+| Oldest finding | `agent-legacy-sweeper`, 711 days, rank 13, 0 sensitive |
 | Rank 1 | `svc-vpn-legacy`, 200 days, 2 sensitive |
 
-Honest framing if pressed on scale: a 39-row curated dataset demonstrates the
+Honest framing if pressed on scale: a 90-row curated dataset demonstrates the
 ordering, not the ratio. The claim being made is about which rows surface first, and
 that property is asserted in `seed.test.ts` rather than eyeballed.
+
+---
+
+## Beats 16-18 — Provisioning Lineage
+
+**Not written up.** The module landed in `0cf92bb` and its dataset in `1a7727b` /
+`9f9ab34`; the beats are asserted in `core/src/data/seed-lineage.test.ts` but have
+never been scripted here. No test guards this document, so it goes stale silently —
+that is a standing defect in the demo prep, not a note about these three beats
+specifically. Read the test file until this section exists.
+
+---
+
+## Beat 19 — Access nobody can see
+
+**Click:** `/api/access/summary`, then filter the table to Hop.
+
+> "This is every access path in the estate, classified by *how* it is held rather
+> than by what it grants. Two of them are hop paths — the identity connects to a
+> resource, and the resource carries a privileged identity of its own."
+>
+> "This one is Jane. She has a dashboard read and one group membership. Someone gave
+> her an SSM session on the deploy box for a support ticket and never took it back.
+> The deploy box carries a role with `admin:platform`."
+>
+> "Her IAM policy viewer shows nothing. Her group shows nothing. Our own ownership
+> queue shows nothing, because her account is correctly owned and her reachable
+> access — by membership — is a dashboard. She holds production platform admin, and
+> every view we had before this one says she does not."
+
+**Evidences:** NIST SP 800-53 AC-6 (least privilege) · AC-6(9)
+
+| | |
+| --- | --- |
+| Path | `user-jane` → `ssm:session-deploy-box` → `role-deploy-box` → `admin:platform` |
+| Type / hops | `hop` / 3 |
+| Jane's other paths | 2 direct, 1 indirect, none reaching anything sensitive |
+| Ownership verdict | `owned`, severity `none` — correctly, and that is the point |
+
+---
+
+## Beat 20 — Sensitive, and correctly not a hop
+
+**Click:** clear the Hop filter, find `user-grace`.
+
+> "Grace reaches a production finance export. It is sensitive and it is worth
+> reviewing — and it is `indirect`, through a group, which is the most ordinary
+> shape in any estate. We classify the mechanism, not the blast radius. Colouring
+> this red because the permission is sensitive would bury Jane's row in a thousand
+> like it."
+
+| | |
+| --- | --- |
+| Path | `user-grace` → `group-finance` → `export:finance-report` |
+| Type / hops | `indirect` / 2 · sensitive |
+| Hop count | 0 |
+
+---
+
+## Beat 21 — A hop that is supposed to be there
+
+**Click:** the second hop row, `svc-ci-runner`.
+
+> "The other hop in the estate is a CI runner assuming a build role. That is how
+> every deployment pipeline on earth works. We report it, because it is a hop, and
+> it is green — it terminates in a staging deploy, not production, and both ends are
+> owned by a live team."
+>
+> "Two hop paths, one finding. If everything with this shape came back red, the
+> number would be noise."
+
+**Evidences:** the §9 true-negative discipline of `delegation-chain-research.md`
+
+| | |
+| --- | --- |
+| Path | `svc-ci-runner` → `ci:assume-build-agent` → `role-build-agent` → `deploy:staging` |
+| Type / hops | `hop` / 3 · not sensitive |
+| Owner | `team-platform`, attested 9 days |
+
+**If asked why the effective-permission column is missing:** it is not implemented
+and is not faked. The engine's permission model is additive — no denies, no
+boundaries, no SCPs — so the field is named `reachable_permissions` and the
+deviation is written up as Amendment 3 in `docs/PRD-access-discovery.md`.
+
+---
+
+## Beat 22 — The same mechanism, on something nobody reviews
+
+**Click:** switch the App selector to MCP Gateway. Keep the Hop filter on.
+
+> "Jane is a person, and people get reviewed. This estate is 103 accounts that are
+> not people — service accounts and AI agents — and this is one of them."
+>
+> "The support triage agent has one direct grant and one group membership. Its
+> entitlement list is two rows long. The group it belongs to holds a connect
+> permission onto the runbook host, and the runbook host carries a role that can
+> query the production database."
+>
+> "Note the classification: the path starts with a group membership, and we still
+> call it a hop. The mechanism is what a reviewer acts on. Filing this under
+> 'indirect' would put it next to the thousand ordinary group memberships in this
+> estate, which is exactly where it has been sitting."
+
+**Evidences:** NIST SP 800-53 AC-6(9) · AC-3
+
+| | |
+| --- | --- |
+| Path | `agent-support-triage` → `group-oncall-agents` → `mcp:connect-prod-runbook` → `role-runbook-executor` → `mcp:prod-db-query` |
+| Type / hops | `hop` / 4 · sensitive |
+| Agent's own paths | 1 direct, 1 indirect, 3 hop |
+| Ownership verdict | `owned`, attested 7 days ago |
+
+---
+
+## Beat 23 — It does not stop at one resource
+
+**Click:** the `admin:warehouse` row on the same agent. Expand the chain.
+
+> "The runbook host's role holds a second connect grant, onto the warehouse host.
+> That host carries a role with `admin:warehouse`."
+>
+> "So the full path is six edges: the agent, its group, the runbook host, its role,
+> the warehouse host, its role, and finally Snowflake warehouse admin. The agent
+> lives in the MCP gateway. The permission lives in Snowflake. No single system's
+> console can render this, because no single system holds both ends."
+>
+> "Every rung is owned. Two different teams attested inside the last ten days.
+> Nobody was negligent — nobody owns the *composition*, because until now nothing
+> drew it."
+
+**Evidences:** NIST SP 800-53 AC-6 · CA-3 (system interconnections)
+
+| | |
+| --- | --- |
+| Path | 6 edges, `mcp-gateway` → `snowflake` |
+| Resource crossings | 2 (`ASSUMES_ROLE` twice — `PRD` §8's first open question) |
+| Grant that closes it | `mcp:connect-prod-runbook`, held by the group |
+| Ownership verdicts | every rung `owned`, severity `none` |
+
+Six hop paths across four identities, spanning hop counts 3, 4 and 6 and two apps
+— so the App selector and the hop-count range in §6.2 both have something real to
+filter. All six are asserted in `core/src/access/classify.test.ts`.
 
 ---
 
@@ -382,7 +524,10 @@ that property is asserted in `seed.test.ts` rather than eyeballed.
 
 The contract the UI is built against. Ages and inactivity are days as of
 `ITAG_NOW=2026-07-31T00:00:00Z`; every row is asserted in `core/src/data/seed.test.ts`.
-Six groups and 21 `svc-fixture-*` probes are omitted.
+Eight groups and 22 `svc-fixture-*` probes are omitted. **Incomplete:** the 41
+identities added for beats 16-18 in `1a7727b` / `9f9ab34` were never added to this
+table, so it is a subset rather than the full contract it claims to be. `seed.test.ts`
+is exhaustive; this document is not, and nothing checks it.
 
 | Identity | App | State | Reason | Severity | Counted | Age | Idle | Sens |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -413,6 +558,14 @@ Six groups and 21 `svc-fixture-*` probes are omitted.
 | `svc-etl` | snowflake | `owned` | — | none | false | — | 1 | 1 |
 | `user-dan` | github | `owned` | — | none | false | — | 1 | 0 |
 | `user-heidi` | aws-iam | `owned` | — | none | false | — | 1 | 2 |
+| `user-jane` | aws-iam | `owned` | — | none | false | — | 2 | 0 |
+| `user-grace` | aws-iam | `owned` | — | none | false | — | 3 | 1 |
+| `role-deploy-box` | aws-iam | `owned` | — | none | false | — | 1 | 1 |
+| `role-build-agent` | aws-iam | `owned` | — | none | false | — | 1 | 0 |
+| `svc-ci-runner` | aws-iam | `owned` | — | none | false | — | 1 | 0 |
+| `agent-support-triage` | mcp-gateway | `owned` | — | none | false | — | 1 | 0 |
+| `role-runbook-executor` | mcp-gateway | `owned` | — | none | false | — | 1 | 1 |
+| `role-warehouse-admin` | snowflake | `owned` | — | none | false | — | 2 | 1 |
 | `svc-systemroot` | legacy-ldap | `unknown` | `outside_audit_window` | none | false | 3061 | 16 | 1 |
 | `svc-ldap-batch-sync` | legacy-ldap | `unknown` | `outside_audit_window` | none | false | 3187 | 8 | 0 |
 | `svc-ldap-print-spool` | legacy-ldap | `unknown` | `outside_audit_window` | none | false | 3692 | 2677 | 0 |
