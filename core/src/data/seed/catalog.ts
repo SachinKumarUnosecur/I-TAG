@@ -79,6 +79,30 @@ export const CATALOG: SeedCatalog = {
      * access-based ranking reaches it, and only the creation act does.
      */
     { id: 'admin:exchange-mailboxes', sensitive: true },
+
+    /**
+     * The two hop edges — `docs/PRD-access-discovery.md` L58.
+     *
+     * Neither is sensitive on its own, and that is the whole point: what makes the
+     * first one dangerous is not the permission but the principal on the other side
+     * of it. A ranking that reads only the grant sees an SSM session and a CI
+     * assume-role, which is why §1 says native tooling misses this entirely.
+     */
+    { id: 'ssm:session-deploy-box', grants_identity: 'role-deploy-box' },
+    { id: 'ci:assume-build-agent', grants_identity: 'role-build-agent' },
+
+    /**
+     * The two rungs of the transitive chain — `PRD` §8's first open question.
+     *
+     * §8 asks whether a chain through *several* resources generalizes. It does,
+     * and these are what make that answerable on screen rather than in a fixture:
+     * the runbook host carries a principal that can itself connect to the warehouse
+     * host, which carries another. Both rungs read as ordinary connect grants, and
+     * the second one is held by a role rather than by a person, which is why no
+     * review of human entitlements has ever seen it.
+     */
+    { id: 'mcp:connect-prod-runbook', grants_identity: 'role-runbook-executor' },
+    { id: 'mcp:connect-warehouse-box', grants_identity: 'role-warehouse-admin' },
   ],
 
   // F10 — historical revocation patterns per class of grant.

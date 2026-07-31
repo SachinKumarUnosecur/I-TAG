@@ -201,6 +201,33 @@ const EXPECTED: readonly ExpectedRow[] = [
   // Owned, attested, green — and its origin is still unexplained. Coverage and
   // hygiene are separate numbers, and this row is where that is visible.
   ['svc-github-release-bot', 'owned', null, 'none', false],
+
+  /**
+   * beats 19-21 — Access Discovery, and every row green on purpose.
+   *
+   * `user-jane` holds production platform admin through a resource hop and is still
+   * `owned` with severity `none`, because her ownership is correct and
+   * `ownership/reach.ts` does not follow permission bindings. That is not a gap in
+   * this table — it is the finding Access Discovery exists to add, and it only
+   * counts as a demonstration while these rows stay out of the queue.
+   */
+  ['role-deploy-box', 'owned', null, 'none', false],
+  ['user-jane', 'owned', null, 'none', false],
+  ['user-grace', 'owned', null, 'none', false],
+  ['role-build-agent', 'owned', null, 'none', false],
+  ['svc-ci-runner', 'owned', null, 'none', false],
+
+  /**
+   * beats 22-23 — the agent chain, owned at every rung by two live teams.
+   *
+   * `role-runbook-executor` and `role-warehouse-admin` each hold a sensitive
+   * permission and are still `none`, because ownership is the question this module
+   * answers and theirs is in good standing. Nothing is negligent anywhere in this
+   * chain, which is exactly why no existing view surfaces it.
+   */
+  ['agent-support-triage', 'owned', null, 'none', false],
+  ['role-runbook-executor', 'owned', null, 'none', false],
+  ['role-warehouse-admin', 'owned', null, 'none', false],
 ];
 
 test('every curated identity produces its documented verdict', () => {

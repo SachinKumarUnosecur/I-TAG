@@ -1,5 +1,6 @@
 import type { IdentityDataset } from '../domain/types.js';
 import { assembleDataset } from './seed/fragment.js';
+import { ACCESS } from './seed/access.js';
 import { CATALOG } from './seed/catalog.js';
 import { DATA_GAPS } from './seed/data-gaps.js';
 import { DIRECTORY } from './seed/directory.js';
@@ -40,6 +41,7 @@ import { TRUE_NEGATIVES } from './seed/true-negatives.js';
  *   suppressed      beat 7  — unowned by design, plus one expired exemption
  *   reason-matrix   beats 9b, 10, 12 — one clean example per reason code, SLA pair
  *   lineage         beats 16, 17, 18 — Midnight Blizzard, fan-out 34, generation 5
+ *   access          beats 19, 20, 21 — the resource-mediated hop, and the two it is not
  *   fixtures        beat 14 — depth cap and corrupt lineage, filtered from every view
  *
  * Lineage is stored per app and left unmerged (§4.2). Three chains deliberately
@@ -60,5 +62,6 @@ export const SEED_DATASET: IdentityDataset = assembleDataset(CATALOG, [
   SUPPRESSED,
   REASON_MATRIX,
   LINEAGE,
+  ACCESS,
   FIXTURES,
 ]);

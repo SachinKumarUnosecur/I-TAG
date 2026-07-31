@@ -148,6 +148,30 @@ export interface OwnerAssignment {
 export interface PermissionRecord {
   readonly id: string;
   readonly sensitive?: boolean;
+  /**
+   * The principal whose access this permission confers — the hop edge.
+   *
+   * `docs/PRD-access-discovery.md` L58 defines Hop Access as crossing into a
+   * resource that itself carries a privileged identity: `Identity —CAN_ACCESS→
+   * Resource —ASSUMES_ROLE→ Permission`. Holding the permission is the
+   * `CAN_ACCESS` half; this field is the `ASSUMES_ROLE` half.
+   *
+   * Modelled on the permission rather than as a fifth `IdentityType` or a separate
+   * resource table, so the one-node-shape rule in this file's header survives: a
+   * resource node would be an `Identity` that is not a principal, and every
+   * traversal would then have to branch on type to avoid treating it as one.
+   *
+   * The cost, stated because it is visible in the output: the resource and the
+   * permission that reaches it collapse into a single id, so `PRD` §6.5's chain
+   * renders `ssm:session-deploy-box → role-deploy-box` where a resource-node model
+   * would name the instance separately. The mechanism string carries the
+   * difference; the topology does not.
+   *
+   * Optional so a dataset with no resource-mediated access stays valid, and
+   * validated at load: a binding naming a principal that does not exist is a
+   * dataset bug, not a finding.
+   */
+  readonly grants_identity?: string;
 }
 
 /** A weakening of a protective control over time. Consumed by F9. */

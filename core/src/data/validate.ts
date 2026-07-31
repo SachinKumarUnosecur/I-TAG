@@ -36,6 +36,24 @@ export function validateDataset(dataset: IdentityDataset): IdentityDataset {
   const permissionIds = new Set(dataset.permissions.map((permission) => permission.id));
   const appIds = new Set(dataset.apps.map((app) => app.id));
 
+  // A hop binding that resolves to nothing would silently drop the escalation
+  // rather than report it — the one failure mode `docs/PRD-access-discovery.md`
+  // §1 says native tooling already has. Checked after `byId` is populated so a
+  // binding may name any principal, including one declared later in the table.
+  for (const permission of dataset.permissions) {
+    if (permission.grants_identity === undefined) {
+      continue;
+    }
+    if (!byId.has(permission.grants_identity)) {
+      issues.push(
+        `permission "${permission.id}" grants the access of "${permission.grants_identity}", ` +
+          `which is not an identity`,
+      );
+    } else if (permission.grants_identity === permission.id) {
+      issues.push(`permission "${permission.id}" grants its own access`);
+    }
+  }
+
   for (const app of dataset.apps) {
     if (app.creation_data_from !== null && Number.isNaN(Date.parse(app.creation_data_from))) {
       issues.push(`app "${app.id}" has unparseable creation_data_from "${app.creation_data_from}"`);

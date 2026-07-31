@@ -51,6 +51,20 @@ export type {
   CreatorStatus,
 } from './domain/lineage.js';
 
+// Access Discovery vocabulary
+export type {
+  AccessChainStep,
+  AccessCounts,
+  AccessEdge,
+  AccessOutcome,
+  AccessPath,
+  AccessPathType,
+  AccessRow,
+  AccessSnapshot,
+  AccessSummary,
+  IdentityAccessProfile,
+} from './domain/access.js';
+
 // Ownership vocabulary
 export type {
   DispositionAction,
@@ -169,6 +183,21 @@ export { buildCoverage } from './lineage/coverage.js';
 export type { LineageDeps, LineageQuery, LineageService } from './lineage/service.js';
 export { createLineageService } from './lineage/service.js';
 
+// Access Discovery — path classification (`PRD` §4.2) and the service (§6)
+export type {
+  AccessClassification,
+  AccessPathContext,
+  AccessPathRule,
+} from './access/classify.js';
+export {
+  classifyChain,
+  comparePaths,
+  DEFAULT_ACCESS_PATH_RULES,
+  discoverAccess,
+} from './access/classify.js';
+export type { AccessDeps, AccessOwnerSource, AccessQuery, AccessService } from './access/service.js';
+export { createAccessService } from './access/service.js';
+
 // Ownership Assurance — owner resolution (gap 1)
 export type {
   OwnerResolution,
@@ -220,6 +249,7 @@ export {
   datasetTeamDirectory,
 } from './adapters/dataset-directories.js';
 export { memoryFindingStore } from './adapters/memory-finding-store.js';
+export { memoizedAccessOwner } from './adapters/access-owner.js';
 export { memoizedOwnershipState } from './adapters/ownership-state.js';
 export { fixedClock, systemClock } from './adapters/clock.js';
 export { seedGraphSource } from './adapters/seed-source.js';
