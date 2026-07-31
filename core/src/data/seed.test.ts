@@ -228,6 +228,22 @@ const EXPECTED: readonly ExpectedRow[] = [
   ['agent-support-triage', 'owned', null, 'none', false],
   ['role-runbook-executor', 'owned', null, 'none', false],
   ['role-warehouse-admin', 'owned', null, 'none', false],
+
+  /**
+   * beats 24-28 — Identity Exposure Map, green for the same reason as beats 19-21.
+   *
+   * `user-maya` reaches forty permissions, the widest footprint in the estate, and
+   * is `owned` with severity `none`. Exposure is not an ownership defect: every one
+   * of her grants was approved by somebody entitled to approve it, and the module's
+   * argument is that a correctly owned identity can still be a large blast radius.
+   * A row here that arrived pre-flagged would be Ownership Assurance making the
+   * case, not Exposure Map.
+   */
+  ['user-maya', 'owned', null, 'none', false],
+  ['svc-partner-sync', 'owned', null, 'none', false],
+  ['svc-invoice-poster', 'owned', null, 'none', false],
+  ['role-ledger-writer', 'owned', null, 'none', false],
+  ['svc-platform-watchdog', 'owned', null, 'none', false],
 ];
 
 test('every curated identity produces its documented verdict', () => {

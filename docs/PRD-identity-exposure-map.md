@@ -5,11 +5,16 @@
 **Doc owner:** Harsha
 **Status:** Draft v1
 
-> **Repo copy, amended.** The prose below is Harsha's Draft v1, unchanged. Six amendments
+> **Repo copy, amended.** The prose below is Harsha's Draft v1, unchanged. Seven amendments
 > are inserted inline as blockquotes where they apply, in the same style as
 > `docs/PRD-access-discovery.md`. Where an amendment and the surrounding prose conflict,
 > the amendment governs, and `docs/identity-exposure-map-research.md` carries the full
 > argument for each.
+>
+> Amendments 1–6 are numbered in document order and were written from the research
+> alone. **Amendment 7 is numbered last but appears first**, in §1, because it could
+> only be written after the demo data existed: building the estate this PRD asks for
+> refuted the argument it opens with.
 
 ---
 
@@ -20,6 +25,14 @@ Access Discovery answers "how does this identity reach this one resource" — on
 But an atomic view can't answer a question a reviewer asks constantly during triage: **"forget any single path — overall, if I had to describe this identity's total footprint, how exposed is it, and where does that exposure actually sit?"** Forty low-sensitivity Direct paths and one Hop path into a production database are not the same story, and a table of forty-one rows doesn't make that difference legible at a glance. Identity Exposure Map exists to take Access Discovery's full path inventory for a given identity, aggregate it into a single weighted picture, and — because "where does the exposure sit" is a genuinely spatial question — render that picture as a resource map: what this identity can reach, laid out so a reviewer can see the shape of the exposure, not just count it.
 
 This is the aggregation layer between Access Discovery's per-path facts and Identity Risk Profile's per-identity score: it turns "here are forty-one rows" into "here is one number, and here is the map that number came from."
+
+> **Amendment 7 — the forty-versus-one comparison is the right question and the wrong prediction. Under this PRD's own algorithm the forty win.** See `core/src/data/seed/exposure.ts` and `docs/identity-exposure-map-research.md` §1.3, §9.
+>
+> The seed had no identity wide enough to test this claim — the largest footprint in the estate was five paths — so `seed/exposure.ts` builds one. `user-maya` holds forty non-sensitive permissions across two systems; `user-jane` holds four, one of which is production platform admin reached by a hop nothing else in the product surfaces. Running §4.2's aggregation over them with the weights fixed in research §5 gives Maya **97** and Jane **78**.
+>
+> That is the reverse of the ordering this section implies, and **it is kept**. Three reasons. Forty systems is a real blast radius, and a reviewer who is told otherwise has been told something false. The canonical incident for this module (research §3.4, Capital One 2019) is one path into 700 enumerable buckets — read scope nobody re-examined, which is Maya's shape with the names changed. And a weighting adjusted until it always ranks the sensitive row first is a sensitivity flag with arithmetic on top; the engine already has one of those, in `ownership/severity.ts`, and it is free.
+>
+> So the problem statement stands with its conclusion replaced. Forty low-sensitivity paths and one hop into production are not the same story — **and neither one dominates the other.** Sensitivity and breadth are independent axes, this dataset is the case where they disagree, and a list sorted by either alone loses the identity the other would have caught. That is a stronger argument for a map than the original, because a single ordered column cannot express it and a map can.
 
 ---
 
