@@ -214,6 +214,28 @@ export const CATALOG: SeedCatalog = {
      * about and the only one the estate could not previously demonstrate.
      */
     { id: 'connect:ledger-writer', sensitive: false, grants_identity: 'role-ledger-writer' },
+
+    /**
+     * Beats 29-31 — the release chain, and the second app pair a choke point needs.
+     *
+     * `docs/unified-impact-analysis-research.md` §8 gap 1: the estate's only
+     * multi-stage pivot ran `mcp-gateway → snowflake`, so a candidate ranking
+     * computed over it had exactly one two-stage chain to rank and could not
+     * demonstrate that the selector compares *unrelated* chains rather than walking
+     * the only one it has. These two bindings put a second two-stage chain in
+     * `github → aws-iam`, terminating in a sensitive permission the catalogue
+     * already carries.
+     *
+     * The first binding is the shared one. Two service accounts that have nothing
+     * else in common both hold `gh:connect-release-runner` directly, which is what
+     * gives severing it a blast radius larger than either account — the property
+     * §4.4 selects on, and the one an appearance-frequency count gets wrong.
+     */
+    { id: 'gh:connect-release-runner', sensitive: false, grants_identity: 'role-release-runner' },
+    { id: 'gh:connect-artifact-signer', sensitive: false, grants_identity: 'role-artifact-signer' },
+
+    /** An ordinary grant, so the release orchestrator is not a bare pivot. */
+    { id: 'read:release-notes', sensitive: false },
   ],
 
   // F10 — historical revocation patterns per class of grant.
