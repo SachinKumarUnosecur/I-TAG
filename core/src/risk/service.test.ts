@@ -20,6 +20,7 @@ import { RISK_VERSUS_RANKERS } from '../domain/risk.js';
 import { createExposureService } from '../exposure/service.js';
 import { buildIdentityGraph } from '../graph/build.js';
 import { createOwnershipService } from '../ownership/classify.js';
+import { EXPOSURE_BAND_LEVELS } from './factors.js';
 import { createRiskService } from './service.js';
 
 /**
@@ -374,4 +375,216 @@ test('profile returns exactly the row the table shows', () => {
   const row = RISK.list().at(0);
   assert.ok(row !== undefined);
   assert.deepEqual(profileOf(row.identity_id), row);
+});
+
+// --- The guards this module ships under -------------------------------------
+
+/**
+ * Architecture rule 8, enforced rather than promised.
+ *
+ * The engine's fourth generation of this walk, and the one it was written for: research
+ * §1.4 records that `impact/service.test.ts` L117 already lists **`risk_score`** in its
+ * forbidden array, and that `exposure/service.test.ts` L590 already bans `rising_fast`,
+ * `flag` and `trend` — the exact keys the source PRD's §4.3 score object uses verbatim.
+ * Three modules have now been asked to publish a fused per-identity number and three have
+ * refused; this test is that refusal made structural for the fourth.
+ *
+ * Two subtrees are exempt and both are *quotations*: `ownership` carries
+ * `ownership/severity.ts`'s verdict and `exposure` carries `exposure/score.ts`'s, each
+ * authored elsewhere and copied here so a reviewer cannot see one signal without the
+ * others. The next test proves the exemptions are copies rather than a hiding place.
+ *
+ * `band` is on the list because it is exposure's four-word vocabulary for a different
+ * axis, and re-emitting it under this module's own name is how two surfaces end up sharing
+ * a column heading — research §4.6 Amendment 5's objection in its cheapest form.
+ */
+test('nothing this module authors is a score, a rank or a band', () => {
+  const forbidden = [
+    'severity',
+    'rank',
+    'score',
+    'priority',
+    'band',
+    'exposure_score',
+    'weighted_sum',
+    'risk_score',
+    'trust_score',
+    'composite_score',
+    'peer_percentile',
+  ];
+  /** Quoted from another authority, asserted verbatim below rather than walked. */
+  const quotations = ['ownership', 'exposure'];
+
+  function walk(value: unknown, trail: string): void {
+    if (Array.isArray(value)) {
+      value.forEach((entry, index) => walk(entry, `${trail}[${index}]`));
+      return;
+    }
+    if (value === null || typeof value !== 'object') {
+      return;
+    }
+    for (const [key, nested] of Object.entries(value)) {
+      assert.equal(forbidden.includes(key), false, `${trail}.${key} ranks something`);
+      assert.equal(key.endsWith('_score'), false, `${trail}.${key} is score-shaped`);
+      if (!quotations.includes(key)) {
+        walk(nested, `${trail}.${key}`);
+      }
+    }
+  }
+
+  walk(RISK.summary(), 'summary()');
+  walk(RISK.list({ includeWithoutFindings: true }), 'list()');
+  for (const identity of DATASET.identities) {
+    walk(RISK.profile(identity.id), `profile(${identity.id})`);
+  }
+});
+
+/**
+ * The other half of the guard: an exemption that is not a copy is a loophole.
+ *
+ * A module could satisfy the test above by renaming its own value to `exposure` and hiding
+ * it in the exempt subtree, so both quotations are asserted identical to what the ports
+ * returned — the same ports, the same adapter instances the service was constructed with.
+ * This is also what keeps the disclosure honest in the other direction: the context has to
+ * actually be there, not merely be unranked.
+ */
+test('the quoted subtrees are verbatim copies of the authorities that own them', () => {
+  for (const identityId of ['svc-vpn-legacy', 'user-maya', 'user-jane', 'agent-support-triage', 'svc-backup']) {
+    const profile = profileOf(identityId);
+
+    assert.deepEqual(profile.ownership, OWNERSHIP_SOURCE.context(identityId), identityId);
+    assert.deepEqual(profile.exposure, EXPOSURE_SOURCE.assessment(identityId), identityId);
+    assert.equal(profile.why_factors_differ, RISK_VERSUS_RANKERS, identityId);
+  }
+});
+
+/**
+ * `quoted: true` is a checkable claim, not a comment.
+ *
+ * Two factors copy a level they did not author, and this is what stops one of them quietly
+ * starting to compute. The ownership finding's level must equal the severity in the quoted
+ * subtree beside it, and the exposure finding's level must be exactly what
+ * `EXPOSURE_BAND_LEVELS` maps that subtree's band to — so a divergence between the table and
+ * the factor fails here instead of shipping as two numbers that disagree on one row.
+ */
+test('a factor marked quoted carries the level the authority beside it published', () => {
+  let checkedOwnership = 0;
+  let checkedExposure = 0;
+
+  for (const row of RISK.list()) {
+    assert.ok(row.assessment.kind === 'findings');
+    for (const finding of row.assessment.findings) {
+      if (finding.factor === 'ownership') {
+        assert.equal(finding.quoted, true, row.identity_id);
+        assert.equal(finding.level, row.ownership.severity, row.identity_id);
+        checkedOwnership += 1;
+      }
+      if (finding.factor === 'exposure') {
+        assert.equal(finding.quoted, true, row.identity_id);
+        assert.ok(row.exposure !== null && row.exposure.kind === 'scored', row.identity_id);
+        const mapped = EXPOSURE_BAND_LEVELS.find((entry) => entry.band === row.exposure?.band);
+        assert.equal(finding.level, mapped?.level, row.identity_id);
+        checkedExposure += 1;
+      }
+      if (finding.factor !== 'ownership' && finding.factor !== 'exposure') {
+        assert.equal(finding.quoted, false, `${row.identity_id} / ${finding.factor} is authored here`);
+      }
+    }
+  }
+
+  assert.ok(checkedOwnership > 0 && checkedExposure > 0, 'both quotations must actually be exercised');
+});
+
+/**
+ * Research §4.6 Amendment 4, and the third module to enforce it against the same key names.
+ *
+ * `exposure/service.test.ts` L590 bans `rising_fast`, `flag` and `trend`; the exposure
+ * router's own comment records why — "the graph is built once from a frozen dataset, so a
+ * trend would be fabricated and a badge derived from it would be a fabricated alarm — worse
+ * than a missing field, because it is actionable". The source PRD §4.3 uses `"flag":
+ * "rising_fast"` verbatim and §6.3 asks for the chip, so this test is what stops it coming
+ * back. `stale_if_older_than_hours` and `partially_stale` are here for the same reason one
+ * document further on: both were refused in writing before this module existed.
+ */
+test('no fabricated trend, percentile or partial-badge key exists anywhere', () => {
+  const banned = [
+    'delta_7d',
+    'exposure_delta',
+    'rising_fast',
+    'flag',
+    'trend',
+    'score_drift',
+    'peer_percentile',
+    'partially_stale',
+    'stale_if_older_than_hours',
+    'historical_trend',
+  ];
+
+  function walk(value: unknown, trail: string): void {
+    if (Array.isArray(value)) {
+      value.forEach((entry, index) => walk(entry, `${trail}[${index}]`));
+      return;
+    }
+    if (value === null || typeof value !== 'object') {
+      return;
+    }
+    for (const [key, nested] of Object.entries(value)) {
+      assert.equal(banned.includes(key), false, `${trail}.${key} claims a measurement we never made`);
+      walk(nested, `${trail}.${key}`);
+    }
+  }
+
+  walk(RISK.summary(), 'summary()');
+  walk(RISK.list({ includeWithoutFindings: true }), 'list()');
+  walk(RISK.profile('svc-vpn-legacy'), 'profile(svc-vpn-legacy)');
+});
+
+/**
+ * Union completeness, as equalities rather than subset checks.
+ *
+ * A value that becomes unreachable is then *reported* rather than silently stopping being
+ * exercised — the device `seed-lineage.test.ts` uses on its six actor kinds and four walk
+ * outcomes. The `no_findings` arm is the interesting entry: on this estate it is
+ * **unreachable**, because `control_drift` and `grant_staleness` have no data for most
+ * identities and every clean row is therefore `partially_evaluated` rather than clean. That
+ * is research §8 gap 3 with a test attached, so the day the lifecycle tables reach a
+ * realistic population this assertion fails and someone reads this comment.
+ */
+test('the arms and levels reachable on this estate are exactly these', () => {
+  const rows = RISK.list({ includeWithoutFindings: true });
+
+  const arms = [...new Set(rows.map((row) => row.assessment.kind))].sort();
+  assert.deepEqual(arms, ['findings', 'partially_evaluated']);
+
+  const levels = [
+    ...new Set(
+      rows.flatMap((row) => (row.assessment.kind === 'findings' ? [row.assessment.worst_level] : [])),
+    ),
+  ].sort();
+  assert.deepEqual(levels, ['critical', 'high', 'low', 'medium']);
+
+  const firedFactors = [
+    ...new Set(
+      rows.flatMap((row) =>
+        row.assessment.kind === 'findings' ? row.assessment.findings.map((finding) => finding.factor) : [],
+      ),
+    ),
+  ].sort();
+  assert.deepEqual(firedFactors, [...FACTORS].sort(), 'every factor should fire somewhere in the seed');
+
+  const sources = [
+    ...new Set(
+      rows.flatMap((row) =>
+        row.assessment.kind === 'findings' ? row.assessment.findings.map((finding) => finding.source) : [],
+      ),
+    ),
+  ].sort();
+  assert.deepEqual(sources, [
+    'access/classify.ts',
+    'control_history',
+    'employee_status',
+    'exposure/score.ts',
+    'grant_records',
+    'ownership/classify.ts',
+  ]);
 });
