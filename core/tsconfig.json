@@ -2,14 +2,14 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ES2022"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
     "outDir": "dist",
     "rootDir": "src",
-    "declaration": false,
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
     "types": ["node"]
   },
   "include": ["src"],
-  "references": [{ "path": "../core" }]
+  "exclude": ["src/**/*.test.ts"]
 }
