@@ -29,6 +29,7 @@ import { createOwnershipService } from '../ownership/classify.js';
 import { DEFAULT_OWNER_RESOLVERS } from '../ownership/resolve.js';
 import { createSweepService } from '../ownership/sweep.js';
 import { SEED_DATASET } from './seed.js';
+import { SCIM_PROVISIONED_IDS } from './seed/lineage.js';
 import { validateDataset } from './validate.js';
 
 /**
@@ -101,9 +102,22 @@ const ALL_FINDINGS: readonly OwnershipFinding[] = DATASET.identities.map((identi
  * The set of ids is asserted to be exhaustive below, so adding an identity without
  * deciding what it is supposed to prove fails the build.
  */
-const EXPECTED: ReadonlyArray<
-  readonly [string, OwnershipState, OwnershipReason | null, Severity, boolean]
-> = [
+type ExpectedRow = readonly [string, OwnershipState, OwnershipReason | null, Severity, boolean];
+
+/**
+ * Beat 17's cohort, pinned as a cohort.
+ *
+ * Thirty-four identities authored in `seed/lineage.ts` to be identical in every column
+ * that decides a verdict, so the expectation is written once rather than copied
+ * thirty-four times. Each identity still gets its own four assertions below and still
+ * has to appear in the exhaustiveness check, so a single divergent row fails here — it
+ * is the expectation that is shared, not the assertion.
+ */
+const SCIM_COHORT: readonly ExpectedRow[] = SCIM_PROVISIONED_IDS.map(
+  (id): ExpectedRow => [id, 'owned', null, 'none', false],
+);
+
+const EXPECTED: readonly ExpectedRow[] = [
   // people
   ['user-alice', 'owner_invalid', 'creator_deactivated', 'critical', true],
   ['user-bob', 'owner_invalid', 'owner_attestation_stale', 'critical', true],
@@ -113,6 +127,7 @@ const EXPECTED: ReadonlyArray<
   ['user-heidi', 'owned', null, 'none', false],
   ['user-nadia', 'owner_invalid', 'creator_deactivated', 'none', false],
   ['user-omar', 'owner_invalid', 'creator_deactivated', 'none', false],
+  ['user-priya', 'owned', null, 'none', false],
   ['user-victor', 'owner_invalid', 'creator_deactivated', 'none', false],
 
   // beat 1 — the headline, and the login that *was* disabled
@@ -156,6 +171,36 @@ const EXPECTED: ReadonlyArray<
   ['svc-oauth-dashboards', 'unowned', 'no_owner_on_record', 'medium', true],
   ['svc-etl', 'owned', null, 'none', false],
   ['agent-analytics', 'owner_invalid', 'owner_attestation_stale', 'medium', true],
+
+  /**
+   * beat 16 — the Midnight Blizzard chain.
+   *
+   * The bootstrap principal predates the tenant's export floor, so it is `unknown`
+   * for the same reason the legacy directory's roots are. The application below it is
+   * a real ownership finding and only `medium`, because it reaches nothing sensitive —
+   * which is exactly why an access-based queue never surfaces it and why this module
+   * has something to add. The account it created is `high` rather than `critical`
+   * only because it is five days old and still inside the 14-day SLA.
+   */
+  ['svc-entra-bootstrap', 'unknown', 'outside_audit_window', 'none', false],
+  ['svc-legacy-test-oauth', 'unowned', 'no_owner_on_record', 'medium', true],
+  ['svc-mail-archive-relay', 'unowned', 'no_owner_on_record', 'high', true],
+
+  // beat 17 — fan-out 34 with a declared owner, and the 34 accounts themselves
+  ['svc-scim-provisioner', 'owned', null, 'none', false],
+  ...SCIM_COHORT,
+
+  // beat 18 — five generations, every rung owned by the same live team
+  ['svc-terraform-ci', 'owned', null, 'none', false],
+  ['svc-tf-workspace-runner', 'owned', null, 'none', false],
+  ['svc-landing-zone-baseline', 'owned', null, 'none', false],
+  ['svc-service-mesh-ca', 'owned', null, 'none', false],
+  ['svc-workload-identity-broker', 'owned', null, 'none', false],
+  ['svc-batch-executor', 'owned', null, 'none', false],
+
+  // Owned, attested, green — and its origin is still unexplained. Coverage and
+  // hygiene are separate numbers, and this row is where that is visible.
+  ['svc-github-release-bot', 'owned', null, 'none', false],
 ];
 
 test('every curated identity produces its documented verdict', () => {
@@ -490,14 +535,17 @@ test('beat 15: the queue is ranked by reachable sensitive access, not by count o
   const queue = OWNERSHIP.list();
   const reaching = queue.filter((value) => value.reachable_sensitive_count > 0);
 
-  assert.equal(reaching.length, 11);
-  assert.equal(queue.length, 22);
+  // 12 of 24 rather than 11 of 22: beat 16 adds one finding that reaches production
+  // (`svc-mail-archive-relay`) and one that reaches nothing (`svc-legacy-test-oauth`).
+  // The 46 identities beats 17 and 18 add are all `owned`, so none of them lands here.
+  assert.equal(reaching.length, 12);
+  assert.equal(queue.length, 24);
 
   const lastReaching = queue.findLastIndex((value) => value.reachable_sensitive_count > 0);
   const firstHarmless = queue.findIndex((value) => value.reachable_sensitive_count === 0);
   assert.equal(lastReaching < firstHarmless, true, 'every row that reaches sensitive sorts first');
 
-  // The oldest finding in the dataset is 711 days old and sits eleven rows below a
+  // The oldest finding in the dataset is 711 days old and sits twelve rows below a
   // five-day-old one, because it reaches nothing.
   const oldest = [...queue].sort((a, b) => (b.timeline.age_days ?? 0) - (a.timeline.age_days ?? 0))[0];
   assert.equal(oldest?.identity_id, 'agent-legacy-sweeper');
@@ -572,6 +620,17 @@ test('every date in the dataset parses, so no threshold silently reads NaN', () 
   }
   for (const grant of DATASET.grant_records) {
     dates.push(grant.granted_at);
+  }
+  // The two lineage tables feed date arithmetic of their own — the AC-2(e) join
+  // window and the observed-at ordering — so they belong in the same guard.
+  for (const edge of DATASET.creation_edges ?? []) {
+    dates.push(edge.observed_at);
+    if (edge.occurred_at !== null) {
+      dates.push(edge.occurred_at);
+    }
+  }
+  for (const grant of DATASET.privilege_grant_events ?? []) {
+    dates.push(grant.occurred_at);
   }
 
   for (const value of dates) {

@@ -69,6 +69,32 @@ export const FIXTURES = cluster({
       // either the application object or the user who triggered its creation.
       provisioned_by: 'user-ghost',
     },
+    /**
+     * The out-of-population parent, produced by a provider working correctly.
+     *
+     * `PRD` L28 asserts creation lineage cannot contain a dangling parent; research
+     * §4.8 shows AWS `CreateServiceLinkedRole` produces one by construction, naming
+     * a service principal that is not an identity in the customer's estate at all.
+     * The row above it is a *corrupt* pointer; this one is a correct record we
+     * cannot resolve, and the two are worth having side by side because the
+     * remediation differs — one is a bug to chase, the other is a fact to display.
+     *
+     * Revoked so a probe cannot enter the reviewer's queue. The accountability and
+     * lineage walks both ignore `revoked`, so `dangling_reference` stays reachable.
+     */
+    {
+      id: 'svc-fixture-service-linked-role',
+      type: 'service_account',
+      name: 'service-linked-role-probe',
+      app: 'aws-iam',
+      direct_grants: [],
+      inherited_from: [],
+      delegates_to: [],
+      provisioned_by: 'aws:autoscaling.amazonaws.com',
+      revoked: true,
+      created_at: '2025-04-18',
+      provisioning_source: 'app_native',
+    },
     {
       id: 'svc-fixture-cycle-a',
       type: 'service_account',
@@ -90,5 +116,34 @@ export const FIXTURES = cluster({
       provisioned_by: 'svc-fixture-cycle-a',
     },
     ...DEPTH_CHAIN,
+  ],
+
+  /**
+   * The one `provider_service` actor in the dataset.
+   *
+   * `KIND_BY_IDENTITY_TYPE` in `lineage/actors.ts` cannot produce this kind from an
+   * identity object, because the AWS service that performed the create is not in the
+   * population to have a type — it is a fact recorded only in the audit event. So the
+   * edge is the only place the kind can come from, and this is the row that proves it.
+   */
+  creation_edges: [
+    {
+      app: 'aws-iam',
+      child_id: 'svc-fixture-service-linked-role',
+      actor: {
+        raw_principal: 'aws:autoscaling.amazonaws.com',
+        kind: 'provider_service',
+        app: 'aws-iam',
+        issuer: null,
+        attested_human: null,
+        attested_basis: null,
+        pipeline_actor: null,
+        review_approver: null,
+      },
+      observed_at: '2025-04-18',
+      occurred_at: '2025-04-18',
+      source: 'audit_event',
+      superseded_by: null,
+    },
   ],
 });

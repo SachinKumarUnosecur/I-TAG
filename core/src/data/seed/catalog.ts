@@ -18,6 +18,19 @@ export const CATALOG: SeedCatalog = {
     { id: 'idp-core', name: 'Corporate IdP', creation_data_from: '2025-03-01' },
     // Predates any usable audit trail, which is why its roots are unattributable.
     { id: 'legacy-ldap', name: 'Legacy LDAP', creation_data_from: '2019-01-01' },
+    /**
+     * Its own tenant rather than a row inside `idp-core`, because
+     * `docs/delegation-chain-research.md` §8 gap 8 is that `PRD` §5's provider table
+     * omits Entra service-principal and app-registration creation entirely, and the
+     * canonical incident runs through exactly that object type. A gap closed only in
+     * prose is a gap; this is the app whose data closes it.
+     *
+     * The floor is the date diagnostic settings were pointed at Log Analytics, which
+     * is the whole counterfactual: Entra's own `directoryAudit` retention is 7 days
+     * on the free tier and 30 on P1 (§3.2), so an estate that did not export gets
+     * nothing. Everything created after this date here is attributable.
+     */
+    { id: 'entra-tenant', name: 'Microsoft Entra ID', creation_data_from: '2024-01-01' },
   ],
 
   /**
@@ -57,6 +70,15 @@ export const CATALOG: SeedCatalog = {
     { id: 'read:mailroom' },
     { id: 'sso:corp-login' },
     { id: 'read:hris-feed' },
+    { id: 'read:directory-metadata' },
+    /**
+     * The consent the Midnight Blizzard chain ends in.
+     *
+     * Sensitive, and held by the *created* account rather than by its creator — which
+     * is the point of the beat: the creator's own access is unremarkable, so no
+     * access-based ranking reaches it, and only the creation act does.
+     */
+    { id: 'admin:exchange-mailboxes', sensitive: true },
   ],
 
   // F10 — historical revocation patterns per class of grant.

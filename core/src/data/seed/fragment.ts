@@ -1,3 +1,4 @@
+import type { PersistedCreationEdge, PrivilegeGrantEvent } from '../../domain/lineage.js';
 import type {
   AppRecord,
   ControlHistory,
@@ -34,6 +35,17 @@ export interface SeedCluster {
   readonly suppressions?: readonly SuppressionEntry[];
   readonly control_history?: readonly ControlHistory[];
   readonly grant_records?: readonly GrantRecord[];
+  /**
+   * Observed creation events, carried by the beat whose identities they explain.
+   *
+   * Kept with the cluster rather than in one table because an edge is only
+   * meaningful next to the identity it describes: `docs/delegation-chain-research.md`
+   * §4.6 makes this store the system of record for lineage, so a reviewer checking
+   * whether the Midnight Blizzard beat is still intact has to be able to read the
+   * actor and the account it created without opening a second file.
+   */
+  readonly creation_edges?: readonly PersistedCreationEdge[];
+  readonly privilege_grant_events?: readonly PrivilegeGrantEvent[];
 }
 
 /** The catalogue every cluster draws on: systems, permissions, grant patterns. */
@@ -74,6 +86,8 @@ export function assembleDataset(
     suppressions: concat(clusters, (cluster) => cluster.suppressions),
     control_history: concat(clusters, (cluster) => cluster.control_history),
     grant_records: concat(clusters, (cluster) => cluster.grant_records),
+    creation_edges: concat(clusters, (cluster) => cluster.creation_edges),
+    privilege_grant_events: concat(clusters, (cluster) => cluster.privilege_grant_events),
   };
 }
 
