@@ -44,6 +44,7 @@ export type {
   Provenance,
   ProvenanceOutcome,
   ProvenanceRecord,
+  LineageCoverageReport,
 } from './domain/lineage.js';
 
 // Ownership vocabulary
@@ -156,6 +157,9 @@ export {
   evaluateCreationAuthority,
   evaluateFanOut,
 } from './lineage/signals.js';
+
+// Provisioning Lineage — explanation coverage (research 4.5, the landing view)
+export { buildCoverage } from './lineage/coverage.js';
 
 // Ownership Assurance — owner resolution (gap 1)
 export type {

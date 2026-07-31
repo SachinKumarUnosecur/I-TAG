@@ -385,16 +385,22 @@ export interface PrivilegeGrantEvent {
 }
 
 /**
- * Whether this identity's origin is known.
+ * What we can say about this identity's origin.
  *
- * A union rather than a nullable actor plus a nullable gap: "we know what created
- * this" and "we do not, and here is which bucket" are different answers, and a
- * shape that allows both or neither to be set lets a caller report a coverage gap
- * on a row whose creator we actually hold.
+ * Three states, not two, and the third is the one that matters. "We hold the
+ * creator", "we do not and here is the bucket that accounts for it", and "we do not
+ * and we cannot say why" are materially different answers, and the last is the
+ * entire subject of `explanation_coverage`. If it could masquerade as either
+ * neighbour, the metric would be unfalsifiable: fold it into a gap bucket and
+ * coverage is always 1, fold it into a recorded creator and it is a lie.
+ *
+ * A nullable actor plus a nullable gap would permit both or neither to be set,
+ * which is how a caller ends up reporting a coverage gap on a row whose creator we
+ * actually hold.
  */
 export type Provenance =
   | {
-      readonly known: true;
+      readonly state: 'recorded';
       readonly actor: CreationActor;
       /**
        * Null when the actor is an automation we could not attribute to any human.
@@ -404,7 +410,9 @@ export type Provenance =
        */
       readonly authorizing_human: AuthorizingHuman | null;
     }
-  | { readonly known: false; readonly gap: LineageGap };
+  | { readonly state: 'explained_absence'; readonly gap: LineageGap }
+  /** No creator on record, and no bucket accounts for it. Never suppressed. */
+  | { readonly state: 'unexplained' };
 
 /**
  * The core output — `PRD` §4.3's chain object, corrected.
@@ -493,4 +501,17 @@ export interface LineageCoverage {
   /** Of the recorded creators, how many resolve to a human, by confidence. */
   readonly attributed_to_human: number;
   readonly attested_attributions: number;
+}
+
+/**
+ * Coverage for the estate and for each app in it — the `/coverage` landing view (§6).
+ *
+ * Per-app rather than only aggregate because the numbers differ by an order of
+ * magnitude between providers: research §3.2's model puts a three-year-old estate at
+ * roughly 3% recoverable on Entra P1 and 37% on GCP, so one blended figure would
+ * hide the only actionable message, which is *which* audit configuration to fix.
+ */
+export interface LineageCoverageReport {
+  readonly overall: LineageCoverage;
+  readonly by_app: readonly LineageCoverage[];
 }
