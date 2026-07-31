@@ -235,6 +235,53 @@ export {
 export type { ExposureDeps, ExposureOwnershipSource, ExposureService } from './exposure/service.js';
 export { createExposureService } from './exposure/service.js';
 
+// Blast Radius — the counterfactual, and the engine's only ranker of remediations
+export type {
+  AffectedIdentity,
+  ChokePoint,
+  ChokePointEffect,
+  ChokePointReport,
+  ChokePointSelection,
+  ImpactAssessment,
+  ImpactBaseline,
+  ImpactCounts,
+  ImpactDelta,
+  ImpactExposureReference,
+  ImpactOutcome,
+  ImpactPivot,
+  ImpactProfile,
+  ImpactStaleness,
+  SimulationOutcome,
+  SurvivingRoute,
+} from './domain/impact.js';
+export { IMPACT_VERSUS_EXPOSURE, MAX_EXHAUSTIVE_CANDIDATES } from './domain/impact.js';
+export { severingBindings } from './impact/counterfactual.js';
+export type {
+  AffectedReach,
+  CandidateEvaluation,
+  ChokePointStrategy,
+  ReachIndex,
+  SelectionContext,
+  SelectionResult,
+} from './impact/choke.js';
+export {
+  baselineOf,
+  DEFAULT_CHOKE_POINT_STRATEGIES,
+  evaluateCandidate,
+  EXHAUSTIVE_STRATEGY,
+  GREEDY_HITTING_SET_STRATEGY,
+  indexReach,
+  pivotBindingsOf,
+  selectChokePoints,
+} from './impact/choke.js';
+export type {
+  ImpactDeps,
+  ImpactExposureSource,
+  ImpactOwnershipSource,
+  ImpactService,
+} from './impact/service.js';
+export { createImpactService } from './impact/service.js';
+
 // Ownership Assurance — owner resolution (gap 1)
 export type {
   OwnerResolution,
@@ -288,6 +335,7 @@ export {
 export { memoryFindingStore } from './adapters/memory-finding-store.js';
 export { memoizedAccessOwner } from './adapters/access-owner.js';
 export { memoizedExposureOwnership } from './adapters/exposure-ownership.js';
+export { memoizedImpactExposure } from './adapters/impact-exposure.js';
 export { memoizedOwnershipState } from './adapters/ownership-state.js';
 export { fixedClock, systemClock } from './adapters/clock.js';
 export { seedGraphSource } from './adapters/seed-source.js';

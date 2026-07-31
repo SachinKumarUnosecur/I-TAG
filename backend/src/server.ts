@@ -13,9 +13,11 @@ import {
   datasetTeamDirectory,
   createAccessService,
   createExposureService,
+  createImpactService,
   fixedClock,
   memoizedAccessOwner,
   memoizedExposureOwnership,
+  memoizedImpactExposure,
   memoizedOwnershipState,
   memoryFindingStore,
   seedGraphSource,
@@ -32,6 +34,7 @@ import { createAccessRouter } from './routes/access.js';
 import { createAccountabilityRouter } from './routes/accountability.js';
 import { createExposureRouter } from './routes/exposure.js';
 import { createFindingsRouter } from './routes/findings.js';
+import { createImpactRouter } from './routes/impact.js';
 import { createOffboardingRouter } from './routes/offboarding.js';
 import { createLineageRouter } from './routes/lineage.js';
 import { createOwnershipRouter } from './routes/ownership.js';
@@ -129,6 +132,24 @@ const exposureService = createExposureService({
   ownership: memoizedExposureOwnership(ownershipService),
 });
 
+// Blast Radius. Reads Access Discovery's *uncollapsed* path inventory rather than
+// Exposure Map's `exposure_set`, which the source PRD §4.2 step 1 mandates and
+// `docs/unified-impact-analysis-research.md` §10 overrules: exposure collapses each
+// permission to its worst mechanism, and a counterfactual computed over collapsed
+// routes cannot see that `svc-invoice-poster` keeps reaching `write:invoice-queue`
+// after the hop is cut. Exposure is still consumed, through a port that carries the
+// whole assessment union rather than a number — research §4.2 makes "this module
+// authors no 0-100 score" structural, and a port typed as `number` would have made
+// the copy indistinguishable from an original.
+const impactService = createImpactService({
+  graphSource,
+  clock,
+  access: accessService,
+  ownership: memoizedExposureOwnership(ownershipService),
+  exposure: memoizedImpactExposure(exposureService),
+  policy: accountabilityPolicy,
+});
+
 const sweepService = createSweepService({
   graphSource,
   hr,
@@ -160,6 +181,7 @@ app.use('/api/ownership', createOwnershipRouter(ownershipService));
 app.use('/api/lineage', createLineageRouter(lineageService));
 app.use('/api/access', createAccessRouter(accessService));
 app.use('/api/exposure', createExposureRouter(exposureService));
+app.use('/api/impact', createImpactRouter(impactService));
 app.use('/api/offboarding-sweep', createOffboardingRouter(sweepService));
 app.use('/api/findings', createFindingsRouter(dispositionService));
 
