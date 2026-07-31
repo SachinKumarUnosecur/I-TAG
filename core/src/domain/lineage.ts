@@ -189,6 +189,11 @@ export interface LineageNode {
   readonly name: string;
   /** Hops from the queried identity, not from the root. 0 is the identity itself. */
   readonly distance: number;
+  /**
+   * Same-app hops from this node's own in-app root, so `PRD` §4.3's ancestor
+   * entries carry the field the spec shows. Null when the node has no root (§4.8).
+   */
+  readonly generation: number | null;
   readonly created_at: string | null;
   /**
    * True when the edge reaching this node left the app of the node below it.
@@ -430,6 +435,8 @@ export interface ProvenanceRecord {
    * deliberately *not* a flag — research §4.2 deletes `deep_chain`.
    */
   readonly generation: number | null;
+  /** Root of this identity's in-app tree; itself when generation is 0 (`PRD` §6.5). */
+  readonly root_id: string | null;
   readonly root_kind: LineageRootKind;
   /** Direct children in any app. What the §4.3 fan-out signal measures. */
   readonly fan_out: number;

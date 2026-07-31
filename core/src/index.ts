@@ -128,6 +128,16 @@ export {
   resolveAuthorizingHuman,
 } from './lineage/actors.js';
 
+// Provisioning Lineage — ancestor/descendant resolution (research gaps 3, 4, 7)
+export {
+  ancestorsToRoot,
+  descendants,
+  fanOut,
+  fanOutInApp,
+  inAppRoot,
+  rootKindOf,
+} from './lineage/resolve.js';
+
 // Ownership Assurance — owner resolution (gap 1)
 export type {
   OwnerResolution,
