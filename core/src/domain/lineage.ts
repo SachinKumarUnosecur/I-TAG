@@ -55,6 +55,21 @@ export type HumanResolutionBasis =
   | 'pipeline_trigger'
   /** An IaC review record. Evidence of a second party, which is AC-2(e)'s demand. */
   | 'pr_approver'
+  /**
+   * The principal that performed the create is itself a human account.
+   *
+   * Extends research §4.1's list, which enumerates only bases drawn from audit
+   * events. It is needed because a provider that exposes a creator at all usually
+   * exposes it as an object field with no session context — Salesforce's
+   * `CreatedBy` is the one clear case (§3.2) — and every creation edge in this
+   * repo's dataset is of that kind. Labelling those as
+   * `role_assumption_correlation` would report the app's own record as our
+   * inference, which understates it; labelling them `attested` would overstate it,
+   * because a principal string cannot tell a human's own click from a role session
+   * acting under their name. So it is `correlated`: a real assertion, from a record
+   * that never saw the event.
+   */
+  | 'acting_principal_is_human'
   /** Our own join up the creation graph. The weakest, and the one that misleads. */
   | 'role_assumption_correlation';
 
@@ -151,18 +166,7 @@ export type LineageGapReason =
    * product runs, which is what lets coverage climb from a known date instead of
    * sitting still (§3.2, §4.5).
    */
-  | 'not_yet_captured'
-  /**
-   * A creator was recorded and we cannot follow it.
-   *
-   * Deliberately *not* one of research §4.5's six buckets, and deliberately not
-   * folded into any of them. The six are all "no edge was ever recorded", which is
-   * a statement about the provider's audit trail. This one means the edge exists
-   * and points somewhere we cannot resolve — a data-integrity failure to chase,
-   * not a coverage gap to report. Collapsing them would let a corrupt pointer
-   * quietly improve the coverage number.
-   */
-  | 'unresolvable_creator';
+  | 'not_yet_captured';
 
 /** A countable reason the lineage is absent, with the evidence on screen. */
 export interface LineageGap {
@@ -244,7 +248,16 @@ export type LineageRootKind =
   | 'no_creator_recorded'
   /** An in-app root whose creator lives in another app; lineage continues there. */
   | 'creator_in_other_app'
-  /** A creator was recorded and does not resolve to any identity we hold. */
+  /**
+   * A creator was recorded and does not resolve to any identity we hold.
+   *
+   * Not a coverage gap — we know what acted, we simply do not hold that principal
+   * as an account. AWS `CreateServiceLinkedRole` produces this by construction,
+   * naming an AWS service that is not in the customer's estate at all (§4.8). So
+   * the provenance stays `known` and it is the *walk* that reports
+   * `dangling_reference`; Ownership Assurance already turns that into
+   * `broken_provenance`, which is the correct home for a data-integrity failure.
+   */
   | 'creator_unresolvable'
   /** The in-app walk never terminated, so there is no root. Cycle (§4.8). */
   | 'none';

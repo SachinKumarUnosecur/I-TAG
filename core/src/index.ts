@@ -114,6 +114,20 @@ export { DEFAULT_ORPHAN_RULES, daysSince, rootHumanRecord } from './accountabili
 export type { AccountabilityDeps, AccountabilityService } from './accountability/assess.js';
 export { createAccountabilityService } from './accountability/assess.js';
 
+// Provisioning Lineage — actor normalization and human resolution (research gap 1)
+export type {
+  ActorNormalizationContext,
+  ActorNormalizer,
+  HumanResolutionContext,
+  HumanResolver,
+} from './lineage/actors.js';
+export {
+  DEFAULT_ACTOR_NORMALIZERS,
+  DEFAULT_HUMAN_RESOLVERS,
+  normalizeActor,
+  resolveAuthorizingHuman,
+} from './lineage/actors.js';
+
 // Ownership Assurance — owner resolution (gap 1)
 export type {
   OwnerResolution,
