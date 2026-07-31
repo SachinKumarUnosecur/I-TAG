@@ -23,6 +23,29 @@ export type {
   PermissionRecord,
 } from './domain/types.js';
 
+// Provisioning Lineage vocabulary (renamed from Delegation Chain, research §3.1)
+export type {
+  ActorKind,
+  AuthorizingHuman,
+  CreationActor,
+  CreationAuthoritySignal,
+  FanOutSignal,
+  HumanResolutionBasis,
+  HumanResolutionConfidence,
+  LineageCoverage,
+  LineageGap,
+  LineageGapBucket,
+  LineageGapReason,
+  LineageNode,
+  LineageRootKind,
+  LineageWalk,
+  PersistedCreationEdge,
+  PrivilegeGrantEvent,
+  Provenance,
+  ProvenanceOutcome,
+  ProvenanceRecord,
+} from './domain/lineage.js';
+
 // Ownership vocabulary
 export type {
   DispositionAction,
