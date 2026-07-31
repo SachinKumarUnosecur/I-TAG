@@ -2,7 +2,10 @@
 
 Hackathon project. Traces access backward from any identity (human / service account / AI agent) to the accountable human, flags silent privilege escalation, orphaned accountability, trust decay, stale grants, and off-boarding debt — with an LLM-generated risk narrative.
 
-See `docs/PRD.md` (or the source PDF) for the full spec.
+## Docs
+
+- [`docs/ITAG.md`](./docs/ITAG.md) — the hackathon PRD driving this repo (Sachin, Harshavardhan, Narayana, Pritish, Jayakumar)
+- [`docs/PRD-delegation-chain.md`](./docs/PRD-delegation-chain.md) — related Unosecur IdentityGovern module PRD (Harsha), for reference
 
 ## Stack
 
