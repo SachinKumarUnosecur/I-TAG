@@ -14,7 +14,9 @@
 > Amendments 1–6 are numbered in document order and were written from the research
 > alone. **Amendment 7 is numbered last but appears first**, in §1, because it could
 > only be written after the demo data existed: building the estate this PRD asks for
-> refuted the argument it opens with.
+> refuted the argument it opens with. **Amendment 8** (§6.2) came later still, from
+> implementing the module: the spec names four band chips twice and defines their
+> thresholds nowhere.
 
 ---
 
@@ -287,6 +289,10 @@ The resource map is therefore **not the primary landing view** (the global list 
 - **Search-within-table:** free-text matching identity name or resource name.
 
 > **Two corrections.** "Every identity, one row each" is 115 rows, not 123: groups are excluded as subjects, because a group's grants already appear as its members' indirect paths and counting both double-counts the aggregate (`core/src/access/service.ts`, and the same exclusion in `ownership/classify.ts`). The **Exposure Delta** filter is removed per Amendment 5.
+>
+> **Amendment 8 — the bands are quarters of the scale, and they are not called Critical/High/Medium/Low.** This spec names four chips in two places and defines their cut points in neither, which §4.3's own argument forbids: an unpublished threshold is the kind of invisible number this module exists not to ship. As built they are `extensive` ≥ 75, `substantial` ≥ 50, `limited` ≥ 25, `minimal` ≥ 0 — a frozen `EXPOSURE_BAND_FLOORS` array anchored to the scale itself rather than to a percentile of a 120-identity dataset, which would silently move every threshold whenever the estate changed.
+>
+> The rename is the load-bearing half. `ownership/severity.ts` already owns Critical/High/Medium/Low and uses it to rank *how urgently someone must be found accountable*; exposure ranks *how much is reachable*. Research §7.2 flags two rankers on adjacent columns as the product's real stage risk, and it is not hypothetical here — `GET /api/exposure?band=extensive` returns `user-maya` at 97 with ownership severity `none` sitting directly above `svc-vpn-legacy` at 83 with severity `critical`. Both orderings are right under their own definitions. Reusing one vocabulary for both would make that read as a bug. On this estate the split is 7 / 17 / 1 / 73, so the top band is a reviewable queue rather than a bucket holding half the company. See `docs/identity-exposure-map-research.md` §10.
 
 ### 6.3 Core table — columns
 
@@ -294,7 +300,7 @@ The resource map is therefore **not the primary landing view** (the global list 
 |---|---|---|
 | Identity | Name + type icon | Sortable, clickable → opens the Resource Map detail view (§6.4) |
 | Exposure Score | Numeric 0–100 + colored bar | Primary sort column by default, descending |
-| Exposure Band | Badge: Critical/High/Medium/Low, derived from score | — |
+| Exposure Band | Badge: Critical/High/Medium/Low, derived from score | Renamed per Amendment 8 — `extensive` / `substantial` / `limited` / `minimal`, at published quarter-scale cut points |
 | Total Reachable Resources | Count | Sortable |
 | Highest Sensitivity Reached | Resource name + sensitivity badge | Click jumps straight to that resource's ring in the map |
 | Reached Via | Path type of the highest-sensitivity resource (Direct/Indirect/Hop badge) | Reuses the same gray/amber/red color law as Access Discovery |

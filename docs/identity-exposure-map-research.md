@@ -231,8 +231,8 @@ Mounted at `/api/exposure`, after `/api/access` in `backend/src/server.ts`. Adap
 
 | Route | Returns | Notes |
 |---|---|---|
-| `GET /api/exposure` | `{ count, identities: ExposureRow[] }` | §6.2's landing table. Filters: `app`, `identity_type`, `min_score`, `band`. Sorted by `weighted_sum` desc so ties above the saturation knee still order. |
-| `GET /api/exposure/summary` | `{ scored, unscored, classification_completeness, band_counts, snapshot }` | §7's metrics. `classification_completeness` is the gate metric of §3.2. |
+| `GET /api/exposure` | `{ count, identities: ExposureRow[] }` | §6.2's landing table. Filters: `app`, `identity_type`, `band`, `min_score`, `max_score`, `include_no_paths`. Sorted by `weighted_sum` desc so ties above the saturation knee still order. |
+| `GET /api/exposure/summary` | `{ scored, no_paths, no_classified_permissions, identities_scanned, classification_completeness, band_counts, snapshot }` | §7's metrics. `classification_completeness` is the gate metric of §3.2. **As built, `unscored` is two counts rather than one** — see §10 Q1. |
 | `GET /api/exposure/:id` | `ExposureProfile` \| 404 | §6.4's detail view: exposure set, contributions, rings, `unclassified_permissions`. |
 | `GET /api/exposure/:id/export` | flattened CSV | §6.6, one row per permission. |
 
@@ -305,12 +305,42 @@ The queue row is the one that matters: nine identities were added, the largest b
 
 ---
 
+### Verified as built
+
+The module now exists (`core/src/domain/exposure.ts`, `core/src/exposure/{score,service}.ts`, `backend/src/routes/exposure.ts`). Every §5 number above is reproduced by the implementation and pinned in `core/src/exposure/service.test.ts` at `ITAG_NOW=2026-07-31T00:00:00Z` — 222/222 core tests, `tsc -b core backend` clean.
+
+| Identity | Permissions | `S` | Score | Band |
+|---|---|---|---|---|
+| `user-maya` | 40 (0 sensitive) | 4.00 | **97** | extensive |
+| `agent-support-triage` | 5 (2 sensitive, 3 hop) | 3.35 | **94** | extensive |
+| `user-jane` | 4 (1 sensitive by hop) | 1.80 | **78** | extensive |
+| `user-grace` | 2 (two routes, same multiplier) | 1.10 | **60** | substantial |
+| `svc-invoice-poster` | 2 (two routes, **different** multipliers) | 0.25 | **19** | minimal |
+| `svc-platform-watchdog` | 2 (`indirect` at ring 3) | 0.20 | **15** | minimal |
+| `svc-partner-sync` | 6, all unclassified | — | **no score** | — |
+
+Population: 120 scanned → 98 scored, 1 `no_classified_permissions`, 21 `no_paths` (all `svc-fixture-*`). Catalogue completeness 77/83. Bands 7 / 17 / 1 / 73.
+
+Two verification notes worth keeping:
+
+- **`weighted_sum` is accumulated in integer hundredths.** `1.5 + 0.1 + 0.1 + 0.1` in double precision is `1.8000000000000003`, so a naive sum publishes an anchor that visibly contradicts the slide quoting `S = 1.8`. Re-summing the *published* contribution decimals still drifts by an ulp — that is IEEE-754 and no accumulation order fixes it — so the reconstruction test uses a tolerance while the total itself is exact.
+- **The estate renders the §7.2 disagreement without being asked to.** `GET /api/exposure?band=extensive` returns `user-maya` at 97 with ownership severity `none` directly above `svc-vpn-legacy` at 83 with severity `critical`. Both orderings are correct under their own definitions, which is exactly why `why_these_differ` is a required field rather than a UI footnote.
+
+---
+
 ## 10. Open questions
 
+### Closed during implementation
+
+- **What is the exposure score of an identity with zero paths?** → **Three arms, not two.** `ExposureAssessment` discriminates `scored` / `no_paths` / `no_classified_permissions`, and the scored fields exist only on the first, so no consumer can read a number off a row that has not got one. The split beyond the proposed `{ kind: 'no_paths' }` is because the seed contains both cases and they are different findings: the 21 zero-path identities are all engine fixtures with nothing to act on, while `svc-partner-sync` reaches six real permissions that nobody has ever assessed — a gap to close, not a clean result. The landing table hides `no_paths` by default and never hides `no_classified_permissions`; `min_score=0` returns neither, because a filter on a score cannot match a row without one; the summary counts all three separately rather than publishing one `unscored`.
+- **Which module owns the sensitivity union?** → **`domain/exposure.ts` owns the type; `graph/build.ts` owns the reading.** `IdentityGraph` gains an `unclassifiedPermissions` set alongside `sensitivePermissions`, so `graph/build.ts` remains the engine's only reader of `PermissionRecord.sensitive` and two modules cannot come to disagree about which permissions are sensitive. `ownership/severity.ts` still sees a boolean and is untouched. The containment argument is that the *union* is exposure's vocabulary — nothing else needs three states — while the *field* is catalogue data that one place should interpret.
+- **What are the band cut points?** → **Flat quarters of the scale: `extensive` ≥ 75, `substantial` ≥ 50, `limited` ≥ 25, `minimal` ≥ 0**, published as a frozen `EXPOSURE_BAND_FLOORS` array so the anchor is the scale itself rather than a percentile of a 120-identity dataset that would move every time the estate changed. The vocabulary is deliberately not `Severity`'s critical/high/medium/low: two rankers sharing four words on adjacent columns is the §7.2 stage risk, and familiarity is not worth it. On this estate the split is 7 / 17 / 1 / 73, so the top band is a reviewable queue rather than a degenerate bucket.
+
+### Still open
+
 - **Does ownership severity consume hop paths?** `ownership/reach.ts` walks `inherited_from ∪ delegates_to` and not `permissionBindings`, so it reports `user-jane` at zero sensitive permissions while this module scores her 78. Both are correct under their own definitions, and `seed.test.ts` pins the current behaviour. Changing it is a deliberate act with a pinned blast radius; not changing it means the disagreement is permanent and must be explained in the UI (§7.2).
-- **Which module owns the sensitivity union?** It is catalog-level data consumed by ownership (as a boolean) and exposure (as a union). Putting the union in `domain/types.ts` risks ownership drifting onto it; putting it in `exposure/` duplicates catalog knowledge.
-- **What is the exposure score of an identity with zero paths?** 21 of 120 non-group identities have none. `0` and "not applicable" are different claims, and rule 7 says they must not collapse. Leaning toward a discriminated `{ kind: 'no_paths' }` rather than a zero that sorts alongside real zeros.
-- **Do the two downstream branch owners accept `exposure_set` over `reachable_set`?** (§3.1). Unified Impact Analysis seeds its frontier from this set by name.
+- **Do the two downstream branch owners accept `exposure_set` over `reachable_set`?** (§3.1). Unified Impact Analysis seeds its frontier from this set by name. Now urgent rather than theoretical: the surface below is shipped, and both branches are behind main.
+- **Backend route tests remain absent** (§8 gap 8). This is the fifth router shipped without one. The four new routes were verified by hand against a booted server, but standing up `supertest` would add the first test dependency and the first test script to `backend/`, and that change should cover all seven routers rather than arriving attached to this one.
 - **No public documentation found:** any Kubernetes-native data-classification API; any general SaaS classification API; any published per-identity aggregate exposure weighting from a major CIEM vendor. All three absences are findings, not gaps in the search.
 
 ---
