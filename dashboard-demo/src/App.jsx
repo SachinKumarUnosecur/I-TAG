@@ -49,7 +49,7 @@ function TopStrip({ location, navigate }) {
         <div className="top-strip-divider" />
 
         <button type="button" className="top-strip-nav-item active" onClick={() => navigate('/')}>
-          <Icon name="layers" size={14} />
+          <Icon name="layers" size={17} />
           <span>ITAG</span>
         </button>
 
@@ -64,7 +64,7 @@ function TopStrip({ location, navigate }) {
                 className={`top-strip-nav-item ${activeSection === item.id ? 'active' : ''}`}
                 onClick={() => navigate(item.paths[0])}
               >
-                <Icon name={item.icon} size={14} />
+                <Icon name={item.icon} size={17} />
                 <span>{item.label}</span>
               </button>
             </div>
@@ -76,13 +76,13 @@ function TopStrip({ location, navigate }) {
         <button type="button" className="top-strip-tenant">
           <span className="top-strip-tenant-dot" />
           Unosecur
-          <Icon name="chevronDown" size={12} />
+          <Icon name="chevronDown" size={14} />
         </button>
         <button type="button" className="top-strip-icon-btn" title="Documentation">
-          <Icon name="book" size={16} />
+          <Icon name="book" size={18} />
         </button>
         <button type="button" className="top-strip-icon-btn" title="Notifications">
-          <Icon name="bell" size={16} />
+          <Icon name="bell" size={18} />
           <span className="top-strip-badge">3</span>
         </button>
         <div className="top-strip-avatar" title="Tom Walker">TW</div>

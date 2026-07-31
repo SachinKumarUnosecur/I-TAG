@@ -40,7 +40,7 @@ function IdentityOverview({ navigate }) {
   const cards = [
     {
       key: 'hi',
-      label: 'HI',
+      label: "HI's",
       sub: 'Human identities',
       value: dashboardSummary.humanIdentities,
       accent: '#F8A012',
