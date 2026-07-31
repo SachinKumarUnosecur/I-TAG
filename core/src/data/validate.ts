@@ -1,0 +1,111 @@
+import type { IdentityDataset } from '../domain/types.js';
+
+export class DatasetValidationError extends Error {
+  readonly issues: readonly string[];
+
+  constructor(issues: readonly string[]) {
+    super(`Identity dataset failed validation:\n  - ${issues.join('\n  - ')}`);
+    this.name = 'DatasetValidationError';
+    this.issues = Object.freeze([...issues]);
+  }
+}
+
+/**
+ * Validates referential integrity once, at load time.
+ *
+ * A dangling `provisioned_by` is deliberately *not* an error — lost provenance is
+ * a finding the engine is built to report (see `AccountabilityTrace`). Everything
+ * else that cannot resolve is a typo in the dataset and fails the boot, so no
+ * request ever has to defend against a malformed graph.
+ *
+ * @throws {DatasetValidationError} when the dataset is internally inconsistent.
+ */
+export function validateDataset(dataset: IdentityDataset): IdentityDataset {
+  const issues: string[] = [];
+  const byId = new Map<string, IdentityDataset['identities'][number]>();
+
+  for (const identity of dataset.identities) {
+    if (byId.has(identity.id)) {
+      issues.push(`duplicate identity id "${identity.id}"`);
+      continue;
+    }
+    byId.set(identity.id, identity);
+  }
+
+  const permissionIds = new Set(dataset.permissions.map((permission) => permission.id));
+
+  for (const identity of dataset.identities) {
+    for (const permission of identity.direct_grants) {
+      if (!permissionIds.has(permission)) {
+        issues.push(`"${identity.id}" grants "${permission}", which is not in the permissions table`);
+      }
+    }
+
+    for (const groupId of identity.inherited_from) {
+      const group = byId.get(groupId);
+      if (group === undefined) {
+        issues.push(`"${identity.id}" inherits from "${groupId}", which does not exist`);
+      } else if (group.type !== 'group') {
+        issues.push(
+          `"${identity.id}" inherits from "${groupId}", which is a ${group.type} rather than a group`,
+        );
+      }
+    }
+
+    // `delegates_to` is the denormalised inverse of `provisioned_by`. Unresolvable
+    // entries and disagreements are dataset bugs, not findings.
+    for (const childId of identity.delegates_to) {
+      const child = byId.get(childId);
+      if (child === undefined) {
+        issues.push(`"${identity.id}" delegates to "${childId}", which does not exist`);
+        continue;
+      }
+      if (child.provisioned_by !== identity.id) {
+        issues.push(
+          `"${identity.id}" delegates to "${childId}", but that identity records its provisioner as ` +
+            `${child.provisioned_by === null ? 'null' : `"${child.provisioned_by}"`}`,
+        );
+      }
+    }
+
+    if (identity.type === 'human' && dataset.employee_status[identity.id] === undefined) {
+      issues.push(`human "${identity.id}" has no employee_status record`);
+    }
+  }
+
+  for (const [id, record] of Object.entries(dataset.employee_status)) {
+    const identity = byId.get(id);
+    if (identity === undefined) {
+      issues.push(`employee_status names "${id}", which is not an identity`);
+    } else if (identity.type !== 'human') {
+      issues.push(`employee_status names "${id}", which is a ${identity.type} rather than a human`);
+    }
+    if (Number.isNaN(Date.parse(record.last_reviewed))) {
+      issues.push(`employee_status for "${id}" has unparseable last_reviewed "${record.last_reviewed}"`);
+    }
+  }
+
+  for (const history of dataset.control_history) {
+    if (!byId.has(history.identity_id)) {
+      issues.push(`control_history names "${history.identity_id}", which is not an identity`);
+    }
+  }
+
+  const grantTypes = new Set(dataset.grant_half_lives.map((pattern) => pattern.grant_type));
+  for (const grant of dataset.grant_records) {
+    if (!byId.has(grant.identity_id)) {
+      issues.push(`grant_records names "${grant.identity_id}", which is not an identity`);
+    }
+    if (!grantTypes.has(grant.grant_type)) {
+      issues.push(
+        `grant_records references grant_type "${grant.grant_type}", which has no half-life pattern`,
+      );
+    }
+  }
+
+  if (issues.length > 0) {
+    throw new DatasetValidationError(issues);
+  }
+
+  return Object.freeze(dataset);
+}
