@@ -5,9 +5,13 @@ import { strideFindingCounts, mitreFindings } from '../data/mockData';
 const strideOrder = ['S', 'T', 'R', 'I', 'D', 'E'];
 
 const bandColors = {
+  Critical: { bg: 'rgba(226,75,74,0.12)', border: 'rgba(226,75,74,0.25)', text: 'var(--color-catastrophic)', letter: 'var(--color-catastrophic)' },
+  High: { bg: 'rgba(216,90,48,0.1)', border: 'rgba(216,90,48,0.2)', text: 'var(--color-unacceptable)', letter: 'var(--color-unacceptable)' },
+  Medium: { bg: 'rgba(250,199,117,0.12)', border: 'rgba(186,117,23,0.15)', text: '#B0720D', letter: '#CA7F06' },
+  Low: { bg: 'rgba(99,153,34,0.06)', border: 'rgba(99,153,34,0.12)', text: 'var(--color-acceptable)', letter: 'var(--color-acceptable)' },
   Catastrophic: { bg: 'rgba(226,75,74,0.12)', border: 'rgba(226,75,74,0.25)', text: 'var(--color-catastrophic)', letter: 'var(--color-catastrophic)' },
   Unacceptable: { bg: 'rgba(216,90,48,0.1)', border: 'rgba(216,90,48,0.2)', text: 'var(--color-unacceptable)', letter: 'var(--color-unacceptable)' },
-  Undesirable: { bg: 'rgba(250,199,117,0.12)', border: 'rgba(186,117,23,0.15)', text: '#9a7200', letter: '#ba7517' },
+  Undesirable: { bg: 'rgba(250,199,117,0.12)', border: 'rgba(186,117,23,0.15)', text: '#B0720D', letter: '#CA7F06' },
   Desirable: { bg: 'rgba(99,153,34,0.06)', border: 'rgba(99,153,34,0.12)', text: 'var(--text-tertiary)', letter: 'var(--text-tertiary)' },
 };
 
@@ -35,7 +39,7 @@ export default function ThreatProfile() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {strideOrder.map(letter => {
             const data = strideFindingCounts[letter];
-            const theme = bandColors[data.severity] || bandColors.Desirable;
+            const theme = bandColors[data.severity] || bandColors.Low;
             const isActive = selectedStride === letter;
             return (
               <div key={letter}

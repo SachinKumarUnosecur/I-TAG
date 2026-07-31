@@ -58,6 +58,10 @@ export function SeverityBadge({ band }) {
     Undesirable: 'badge-undesirable',
     Acceptable: 'badge-acceptable',
     Desirable: 'badge-desirable',
+    Critical: 'badge-critical',
+    High: 'badge-high',
+    Medium: 'badge-medium',
+    Low: 'badge-low',
   };
   return <span className={`badge ${map[band] || ''}`}>{band}</span>;
 }
@@ -94,6 +98,10 @@ export function bandColor(band) {
     Undesirable: 'var(--color-undesirable)',
     Acceptable: 'var(--color-acceptable)',
     Desirable: 'var(--color-desirable)',
+    Critical: 'var(--color-catastrophic)',
+    High: 'var(--color-unacceptable)',
+    Medium: 'var(--color-undesirable)',
+    Low: 'var(--color-acceptable)',
   };
   return map[band] || 'var(--text-tertiary)';
 }
@@ -126,6 +134,42 @@ export function DonutChart({ direct, indirect, hop, size = 110 }) {
   );
 }
 
+/** Generic multi-segment donut. segments: [{ value, color }] */
+export function SegmentDonut({ segments, size = 104, strokeWidth = 10 }) {
+  const total = segments.reduce((s, seg) => s + (seg.value || 0), 0);
+  if (total === 0) return null;
+  const r = size * 0.365;
+  const cx = size / 2;
+  const cy = size / 2;
+  const circ = 2 * Math.PI * r;
+  const gap = 0.015;
+  let offset = 0;
+
+  return (
+    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--surface-subtle)" strokeWidth={strokeWidth} />
+      {segments.filter(seg => seg.value > 0).map((seg, i) => {
+        const len = Math.max(0, (seg.value / total) * circ - gap * circ);
+        const dashOffset = -offset;
+        offset += (seg.value / total) * circ;
+        return (
+          <circle
+            key={i}
+            cx={cx}
+            cy={cy}
+            r={r}
+            fill="none"
+            stroke={seg.color}
+            strokeWidth={strokeWidth}
+            strokeDasharray={`${len} ${circ}`}
+            strokeDashoffset={dashOffset}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
 // Completion ring
 export function CompletionRing({ pct, size = 80 }) {
   const r = 30;
@@ -140,20 +184,34 @@ export function CompletionRing({ pct, size = 80 }) {
   );
 }
 
-// Risk arc
-export function RiskArc({ score, size = 100 }) {
-  const r = 38;
-  const circ = Math.PI * r; // half circle
-  const fill = (score / 100) * circ;
-  const color = riskColor(score);
+// Risk arc — semi-circle gauge
+export function RiskArc({ score, size = 140, color, trackColor = 'var(--uno-grey-150)', strokeWidth = 10 }) {
+  const r = size * 0.38;
+  const cx = size / 2;
+  const cy = size * 0.52;
+  const circ = Math.PI * r;
+  const fill = Math.max(0, Math.min(100, score)) / 100 * circ;
+  const stroke = color || riskColor(score);
+  const startX = cx - r;
+  const endX = cx + r;
   return (
-    <svg width={size} height={size / 2 + 10} viewBox={`0 0 ${size} ${size/2 + 10}`}>
-      <path d={`M ${size*0.1} ${size/2} A ${r} ${r} 0 0 1 ${size*0.9} ${size/2}`}
-        fill="none" stroke="var(--surface-subtle)" strokeWidth="9" />
-      <path d={`M ${size*0.1} ${size/2} A ${r} ${r} 0 0 1 ${size*0.9} ${size/2}`}
-        fill="none" stroke={color} strokeWidth="9" strokeLinecap="round"
+    <svg width={size} height={size * 0.62} viewBox={`0 0 ${size} ${size * 0.62}`}>
+      <path
+        d={`M ${startX} ${cy} A ${r} ${r} 0 0 1 ${endX} ${cy}`}
+        fill="none"
+        stroke={trackColor}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+      />
+      <path
+        d={`M ${startX} ${cy} A ${r} ${r} 0 0 1 ${endX} ${cy}`}
+        fill="none"
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
         strokeDasharray={`${fill} ${circ}`}
-        style={{ transition: 'stroke-dasharray 0.6s ease' }} />
+        style={{ transition: 'stroke-dasharray 0.6s ease' }}
+      />
     </svg>
   );
 }

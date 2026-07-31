@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Icon, AccessBadge, SeverityBadge, TypeChip, StatusChip, SlidePanel, HopChain } from './ui';
-import { accessPaths, identities, shadowAdmins } from '../data/mockData';
+import { accessPaths, identities, shadowAdmins, dataSources } from '../data/mockData';
 
 const ALL = 'All';
 
@@ -24,17 +24,39 @@ export default function AccessDiscovery() {
   return (
     <div className="page-content">
       <div className="page-header">
-        <div className="page-title">Access Discovery</div>
-        <div className="page-subtitle">Every access path classified as Direct, Indirect, or Shadow — Shadow access is resource-mediated privilege escalation not visible in native IAM tools</div>
+        <div>
+          <div className="page-title">Access Discovery</div>
+          <div className="page-subtitle">
+            Access paths correlated from AWS, GCP, Azure, Okta, Google Workspace, and Workday HR APIs. Shadow Access is resource-mediated privilege escalation not visible in native IAM tools.
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
+        {dataSources.map(src => (
+          <div key={src.id} style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '5px 10px', borderRadius: 6,
+            background: 'var(--surface)', border: '1px solid var(--border)',
+            fontSize: 11,
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: 50, background: 'var(--color-desirable)', flexShrink: 0 }} />
+            <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{src.provider}</span>
+            <span style={{ color: 'var(--text-tertiary)' }}>{src.category}</span>
+            <span style={{ color: 'var(--text-tertiary)', fontFamily: 'monospace', fontSize: 10 }}>
+              {src.apis.length} APIs
+            </span>
+          </div>
+        ))}
       </div>
 
       {/* Stats row */}
       <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
         {[
           { label: 'Total paths', value: accessPaths.length, color: 'var(--text-primary)' },
-          { label: 'Direct', value: accessPaths.filter(p => p.accessType === 'Direct').length, color: 'var(--color-direct)' },
-          { label: 'Indirect', value: accessPaths.filter(p => p.accessType === 'Indirect').length, color: 'var(--color-indirect)' },
-          { label: 'Shadow access', value: shadowCount, color: 'var(--color-hop)' },
+          { label: 'Direct Access', value: accessPaths.filter(p => p.accessType === 'Direct').length, color: 'var(--color-direct)' },
+          { label: 'Indirect Access', value: accessPaths.filter(p => p.accessType === 'Indirect').length, color: 'var(--color-indirect)' },
+          { label: 'Shadow Access', value: shadowCount, color: 'var(--color-hop)' },
         ].map(s => (
           <div key={s.label} className="stat-card" style={{ flex: '1 1 90px', minWidth: 80 }}>
             <div style={{ fontSize: 24, fontWeight: 800, color: s.color, letterSpacing: -0.5 }}>{s.value}</div>
@@ -238,6 +260,27 @@ export default function AccessDiscovery() {
           </div>
           <div className="section-title">Mechanism</div>
           <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'monospace', marginBottom: 16, wordBreak: 'break-all' }}>{selected.mechanism}</div>
+          {selected.api && (
+            <>
+              <div className="divider" />
+              <div className="section-title">API evidence</div>
+              <div style={{
+                background: 'var(--surface-subtle)', border: '1px solid var(--border)',
+                borderRadius: 8, padding: '10px 12px', marginBottom: 16,
+                fontFamily: 'monospace', fontSize: 11, color: 'var(--text-secondary)',
+                display: 'flex', flexDirection: 'column', gap: 4,
+              }}>
+                {Object.entries(selected.api).map(([k, v]) => (
+                  <div key={k} style={{ display: 'flex', gap: 8 }}>
+                    <span style={{ color: 'var(--text-tertiary)', minWidth: 120 }}>{k}</span>
+                    <span style={{ color: 'var(--text-primary)', wordBreak: 'break-all' }}>
+                      {Array.isArray(v) ? v.join(', ') : typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           {selected.hopChain && (
             <>
               <div className="divider" />

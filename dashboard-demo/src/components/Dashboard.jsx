@@ -1,65 +1,37 @@
 import { useNavigate } from 'react-router-dom';
 import {
-  Icon, DonutChart, CompletionRing, TileExit,
-  riskColor, bandColor
+  Icon, DonutChart, SegmentDonut, CompletionRing, RiskArc, TileExit,
+  bandColor
 } from './ui';
 import {
   dashboardSummary, accessSummary, accessPaths, strideFindingCounts,
-  reviewCampaigns, orphanedAccounts, riskProfiles, ownershipRecords,
-  identities, jmlEvents, mitreFindings, delegationChains, impactGraph
+  reviewCampaigns, orphanedAccounts, riskProfiles,
+  identities, jmlEvents, mitreFindings, impactGraph
 } from '../data/mockData';
-
-const SENSITIVITY_WEIGHT = { critical: 100, high: 70, medium: 40, low: 15 };
-
-function computeExposure(identityId) {
-  const paths = accessPaths.filter(p => p.identityId === identityId && !p.blocked);
-  return paths.reduce((sum, p) => sum + (SENSITIVITY_WEIGHT[p.resourceSensitivity] || 10), 0);
-}
-
-function walkDelegation(node, depth = 0, path = []) {
-  const current = [...path, node];
-  const kids = (node.children || []).flatMap(c => walkDelegation(c, depth + 1, current));
-  return [{ node, depth, path: current }, ...kids];
-}
-
-function riskiestDelegationChains() {
-  return Object.values(delegationChains).map(app => {
-    const flat = walkDelegation(app.root);
-    const risky = flat.filter(e => e.node.status === 'orphaned' || e.node.status === 'departed');
-    const maxDepth = Math.max(0, ...flat.map(e => e.depth));
-    const sample = risky[0] || flat.filter(e => e.node.type === 'service').sort((a, b) => b.depth - a.depth)[0];
-    return {
-      appName: app.appName,
-      riskCount: risky.length,
-      maxDepth,
-      chainLabel: sample
-        ? sample.path.filter(n => n.type !== 'system').map(n => n.name).join(' → ')
-        : app.appName,
-    };
-  }).sort((a, b) => b.riskCount - a.riskCount || b.maxDepth - a.maxDepth);
-}
 
 /* ── Donut tile ─────────────────────────────────────────────── */
 function AccessTile({ navigate }) {
-  const topShadow = accessPaths.filter(p => p.accessType === 'Shadow').slice(0, 2);
-  const shadowAdminList = accessPaths.filter(p => p.shadowAdmin);
+  const topShadowAdmins = accessPaths
+    .filter(p => p.shadowAdmin)
+    .sort((a, b) => (b.hopCount || 0) - (a.hopCount || 0))
+    .slice(0, 5);
   return (
     <div className="tile" onClick={() => navigate('/access-discovery')}>
       <div className="tile-label">Access Discovery</div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 4 }}>
         <div className="donut-wrapper">
-          <DonutChart direct={accessSummary.direct} indirect={accessSummary.indirect} hop={accessSummary.shadow} size={104} />
+          <DonutChart direct={accessSummary.direct} indirect={accessSummary.indirect} hop={accessSummary.shadow} size={96} />
           <div className="donut-center">
             <div className="donut-center-num">{accessSummary.shadow}</div>
-            <div className="donut-center-label">Shadow</div>
+            <div className="donut-center-label">Shadow Access</div>
           </div>
         </div>
-        <div className="legend">
+        <div className="legend" style={{ flex: 1 }}>
           {[
-            { label: 'Direct', color: 'var(--color-direct)', count: accessSummary.direct },
-            { label: 'Indirect', color: 'var(--color-indirect)', count: accessSummary.indirect },
-            { label: 'Shadow', color: 'var(--color-hop)', count: accessSummary.shadow },
+            { label: 'Direct Access', color: 'var(--color-direct)', count: accessSummary.direct },
+            { label: 'Indirect Access', color: 'var(--color-indirect)', count: accessSummary.indirect },
+            { label: 'Shadow Access', color: 'var(--color-hop)', count: accessSummary.shadow },
           ].map(item => (
             <div className="legend-row" key={item.label}>
               <div className="legend-dot" style={{ background: item.color }} />
@@ -67,47 +39,30 @@ function AccessTile({ navigate }) {
               <div className="legend-count">{item.count}</div>
             </div>
           ))}
-          <div style={{ marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--border)', fontSize: 11, color: 'var(--text-tertiary)' }}>
+          <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-tertiary)' }}>
             <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{accessSummary.total}</span> total paths
           </div>
         </div>
       </div>
 
-      {shadowAdminList.length > 0 && (
-        <div style={{
-          display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10,
-          padding: '8px 10px', background: 'rgba(216,90,48,0.06)', borderRadius: 8,
-          border: '1px solid rgba(216,90,48,0.15)',
-        }}>
-          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-unacceptable)', textTransform: 'uppercase', letterSpacing: '0.4px', width: '100%' }}>
-            Shadow admin watchlist
-          </span>
-          {shadowAdminList.map(sa => (
-            <span key={sa.id} style={{
-              fontSize: 11, fontWeight: 600, color: 'var(--text-primary)',
-              background: 'var(--surface)', border: '1px solid var(--border)',
-              borderRadius: 4, padding: '2px 7px',
-            }}>
-              {sa.identityName} <span style={{ color: 'var(--text-tertiary)', fontWeight: 500 }}>· {sa.hopCount} hop{sa.hopCount !== 1 ? 's' : ''}</span>
-            </span>
-          ))}
-        </div>
-      )}
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flex: 1 }}>
-        {topShadow.map(h => (
-          <div key={h.id} style={{
-            padding: '8px 10px',
-            background: 'rgba(226,75,74,0.05)',
-            borderRadius: 8,
-            borderLeft: '2.5px solid var(--color-hop)',
+      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: 12, marginBottom: 2 }}>
+        Top 5 Shadow Admin Access
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-evenly' }}>
+        {topShadowAdmins.map((sa, i) => (
+          <div key={sa.id} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+            padding: '6px 0',
+            borderBottom: i < topShadowAdmins.length - 1 ? '1px solid var(--border)' : 'none',
           }}>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>Shadow access</div>
-            <div style={{ fontSize: 12, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-              <strong>{h.identityName}</strong> → <span style={{ fontFamily: 'monospace', fontSize: 11, color: 'var(--color-hop)' }}>{h.resource.split('//')[1]}</span>
-              {h.shadowAdmin && <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 700, color: 'var(--color-hop)', background: 'rgba(226,75,74,0.1)', padding: '1px 5px', borderRadius: 3 }}>Shadow Admin</span>}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2, fontFamily: 'monospace' }}>{h.mechanism.split(' →')[0]}</div>
+            <span style={{
+              fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>{sa.identityName}</span>
+            <span style={{
+              fontSize: 12, fontWeight: 700, color: 'var(--color-hop)', flexShrink: 0,
+              fontVariantNumeric: 'tabular-nums',
+            }}>{sa.hopCount} hop{sa.hopCount !== 1 ? 's' : ''}</span>
           </div>
         ))}
       </div>
@@ -119,61 +74,103 @@ function AccessTile({ navigate }) {
 
 /* ── Risk tile ──────────────────────────────────────────────── */
 function RiskTile({ navigate }) {
-  const topRisks = riskProfiles.slice().sort((a, b) => b.score - a.score).slice(0, 4);
-  const bands = [
-    { band: 'Catastrophic', color: 'var(--color-catastrophic)', count: riskProfiles.filter(r => r.band === 'Catastrophic').length },
-    { band: 'Unacceptable', color: 'var(--color-unacceptable)', count: riskProfiles.filter(r => r.band === 'Unacceptable').length },
-    { band: 'Undesirable', color: 'var(--color-undesirable)', count: riskProfiles.filter(r => r.band === 'Undesirable').length },
-    { band: 'Acceptable', color: 'var(--color-acceptable)', count: riskProfiles.filter(r => r.band === 'Acceptable').length },
-    { band: 'Desirable', color: 'var(--color-desirable)', count: riskProfiles.filter(r => r.band === 'Desirable').length },
+  const SEV = [
+    { band: 'Critical', color: 'var(--uno-red-500)' },
+    { band: 'High', color: 'var(--uno-orange-500)' },
+    { band: 'Medium', color: 'var(--uno-yellow-500)' },
+    { band: 'Low', color: 'var(--uno-green-500)' },
   ];
+  const WEIGHT = { Critical: 40, High: 25, Medium: 12, Low: 5 };
+  const ORDER = { Critical: 0, High: 1, Medium: 2, Low: 3 };
+
+  const severityCounts = SEV.map(s => ({
+    ...s,
+    count: mitreFindings.filter(f => f.severity === s.band).length,
+  }));
+  const openCount = mitreFindings.length;
+  const riskPosture = Math.min(100, Math.round(
+    mitreFindings.reduce((sum, f) => sum + (WEIGHT[f.severity] || 5), 0) / Math.max(openCount, 1) * 2.2
+  ));
+  const gaugeColor = riskPosture >= 70
+    ? 'var(--uno-red-500)'
+    : riskPosture >= 40
+      ? 'var(--uno-orange-500)'
+      : 'var(--uno-yellow-500)';
+
+  const humanIds = new Set(identities.filter(i => i.type === 'human').map(i => i.id));
+  const byUser = {};
+  mitreFindings.forEach(f => {
+    if (!humanIds.has(f.identityId)) return;
+    if (!byUser[f.identityId]) {
+      byUser[f.identityId] = {
+        identityId: f.identityId,
+        name: f.identityName,
+        score: 0,
+        topSeverity: 'Low',
+      };
+    }
+    const u = byUser[f.identityId];
+    u.score += WEIGHT[f.severity] || 5;
+    if ((ORDER[f.severity] ?? 9) < (ORDER[u.topSeverity] ?? 9)) u.topSeverity = f.severity;
+  });
+  const topUsers = Object.values(byUser).sort((a, b) => b.score - a.score).slice(0, 5);
 
   return (
-    <div className="tile" onClick={() => navigate('/risk-profiles')}>
-      <div className="tile-label">Incidents and risk</div>
+    <div className="tile" onClick={() => navigate('/threat-profile')}>
+      <div className="tile-label">Incidents to Identities</div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-        <div>
-          <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: -1.5, color: 'var(--color-catastrophic)', lineHeight: 1 }}>
-            {dashboardSummary.criticalFindings}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <div style={{ position: 'relative', width: 120, flexShrink: 0 }}>
+          <RiskArc score={riskPosture} size={120} color={gaugeColor} />
+          <div style={{
+            position: 'absolute', left: 0, right: 0, top: '42%',
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+          }}>
+            <div style={{ fontSize: 26, fontWeight: 800, color: gaugeColor, lineHeight: 1, letterSpacing: -1 }}>
+              {riskPosture}
+            </div>
+            <div style={{
+              fontSize: 9, fontWeight: 600, color: 'var(--text-tertiary)',
+              textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: 3,
+            }}>
+              risk posture
+            </div>
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 3, fontWeight: 500 }}>Catastrophic-band identities</div>
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', height: 32, borderRadius: 6, overflow: 'hidden', gap: 2 }}>
-            {bands.filter(b => b.count > 0).map(b => (
-              <div key={b.band}
-                title={`${b.band}: ${b.count}`}
-                style={{ flex: b.count, background: b.color, opacity: 0.85, minWidth: 6 }}
-              />
-            ))}
-          </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 7, flexWrap: 'wrap' }}>
-            {bands.filter(b => b.count > 0).map(b => (
-              <div key={b.band} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: 6, height: 6, borderRadius: 50, background: b.color }} />
-                <span style={{ fontSize: 10.5, color: 'var(--text-tertiary)' }}>
-                  {b.band.slice(0, 4)} <strong style={{ color: 'var(--text-primary)' }}>{b.count}</strong>
-                </span>
-              </div>
-            ))}
-          </div>
+
+        <div className="legend" style={{ flex: 1 }}>
+          {severityCounts.map(s => (
+            <div className="legend-row" key={s.band}>
+              <div className="legend-dot" style={{ background: s.color }} />
+              <div className="legend-label">{s.band}</div>
+              <div className="legend-count" style={{ color: s.color }}>{s.count}</div>
+            </div>
+          ))}
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5, flex: 1 }}>
-        {topRisks.map(r => (
-          <div key={r.identityId} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 28, textAlign: 'right', fontWeight: 700, fontSize: 12.5, color: riskColor(r.score), flexShrink: 0 }}>{r.score}</div>
-            <div style={{ flex: 1, height: 4, background: 'var(--surface-inset)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${r.score}%`, background: riskColor(r.score), borderRadius: 2 }} />
-            </div>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', width: 130, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</div>
+      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.4px', marginTop: 14, marginBottom: 2 }}>
+        Highest risk users
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-evenly' }}>
+        {topUsers.map((u, i) => (
+          <div key={u.identityId} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+            padding: '6px 0',
+            borderBottom: i < topUsers.length - 1 ? '1px solid var(--border)' : 'none',
+          }}>
+            <span style={{
+              fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>{u.name}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: bandColor(u.topSeverity), flexShrink: 0 }}>
+              {u.topSeverity}
+            </span>
           </div>
         ))}
       </div>
 
-      <TileExit label="View risk profiles" onClick={() => navigate('/risk-profiles')} />
+      <TileExit label="View threat profile" onClick={() => navigate('/threat-profile')} />
     </div>
   );
 }
@@ -183,10 +180,10 @@ function ReviewTile({ navigate }) {
   const campaigns = reviewCampaigns;
   const primary = campaigns[0];
   const avatars = [
-    { label: 'TW', color: '#5254F0' },
-    { label: 'JD', color: '#E24B4A' },
-    { label: 'PS', color: '#047857' },
-    { label: 'MC', color: '#BA7517' },
+    { label: 'TW', color: 'var(--uno-blue-500)' },
+    { label: 'JD', color: 'var(--uno-red-500)' },
+    { label: 'PS', color: 'var(--uno-green-700)' },
+    { label: 'MC', color: 'var(--uno-yellow-600)' },
   ];
 
   return (
@@ -338,154 +335,100 @@ function ThreatTile({ navigate }) {
 
 /* ── Lifecycle tile ─────────────────────────────────────────── */
 function LifecycleTile({ navigate }) {
-  const failed = jmlEvents.filter(e => e.status === 'failed' || e.status === 'partial');
-  const leaversFailed = jmlEvents.filter(e => e.eventType === 'leaver' && e.status === 'failed');
-  const liveAccess = leaversFailed.reduce((s, e) => s + e.liveAccess, 0);
-  const departed = identities.filter(i => i.status === 'departed');
+  const STATUS_META = {
+    'Not offboarded': { color: 'var(--color-hop)', rank: 0 },
+    'Partially offboarded': { color: 'var(--color-undesirable)', rank: 1 },
+  };
+  const statusOrder = ['Not offboarded', 'Partially offboarded'];
+
+  // NHI → HI mapping: offboarding state is measured on NHIs, surfaced on the human identity
+  const nhiToHi = [
+    { nhiId: 'id-105', nhi: 'svc-old-payments-worker', hiId: 'id-005', hiName: 'alice.brooks', status: 'Not offboarded' },
+    { nhiId: 'id-104', nhi: 'svc-orphaned-etl', hiId: 'id-006', hiName: 'raj.patel', status: 'Not offboarded' },
+    { nhiId: 'id-105b', nhi: 'svc-finance-reporter', hiId: 'id-005', hiName: 'alice.brooks', status: 'Not offboarded' },
+    { nhiId: 'id-107', nhi: 'svc-billing-sync', hiId: 'id-001', hiName: 'jane.doe', status: 'Partially offboarded' },
+    { nhiId: 'id-101', nhi: 'svc-payments-api', hiId: 'id-001', hiName: 'jane.doe', status: 'Partially offboarded' },
+    { nhiId: 'id-103', nhi: 'svc-ci-runner', hiId: 'id-002', hiName: 'mark.chen', status: 'Partially offboarded' },
+    { nhiId: 'id-102', nhi: 'svc-data-ingest', hiId: 'id-003', hiName: 'priya.sharma', status: 'Partially offboarded' },
+    { nhiId: 'id-106', nhi: 'svc-monitoring', hiId: 'id-002', hiName: 'mark.chen', status: 'Partially offboarded' },
+    { nhiId: 'id-108', nhi: 'svc-legacy-batch', hiId: 'id-004', hiName: 'tom.walker', status: 'Partially offboarded' },
+  ];
+
+  // Donut counts are NHI-based
+  const counts = Object.fromEntries(
+    statusOrder.map(s => [s, nhiToHi.filter(n => n.status === s).length])
+  );
+  const totalNhis = nhiToHi.length;
+
+  // Roll up to unique human identities (worst NHI offboarding status wins)
+  const byHi = {};
+  nhiToHi.forEach(row => {
+    const rank = STATUS_META[row.status]?.rank ?? 9;
+    if (!byHi[row.hiId]) {
+      byHi[row.hiId] = { id: row.hiId, name: row.hiName, status: row.status };
+      return;
+    }
+    if (rank < (STATUS_META[byHi[row.hiId].status]?.rank ?? 9)) {
+      byHi[row.hiId].status = row.status;
+    }
+  });
+
+  const top5 = Object.values(byHi)
+    .sort((a, b) => (STATUS_META[a.status]?.rank ?? 9) - (STATUS_META[b.status]?.rank ?? 9) || a.name.localeCompare(b.name))
+    .slice(0, 5);
 
   return (
     <div className="tile" onClick={() => navigate('/identity-lifecycle')}>
-      <div className="tile-label">Identity lifecycle</div>
+      <div className="tile-label">Identities Lifecycle</div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-        <div>
-          <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: -1.5, color: 'var(--color-catastrophic)', lineHeight: 1 }}>{failed.length}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 3 }}>Failed / partial JML events</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 14 }}>
+        <div className="donut-wrapper">
+          <SegmentDonut
+            size={104}
+            segments={statusOrder.map(s => ({
+              value: counts[s],
+              color: STATUS_META[s].color,
+            }))}
+          />
+          <div className="donut-center">
+            <div className="donut-center-num" style={{ color: 'var(--text-primary)' }}>{totalNhis}</div>
+            <div className="donut-center-label">NHIs</div>
+          </div>
         </div>
-        <div style={{ flex: 1, display: 'flex', gap: 0, background: 'var(--surface-subtle)', borderRadius: 8, overflow: 'hidden', border: '1px solid var(--border)' }}>
-          {[
-            { label: 'Live access', value: liveAccess, color: 'var(--color-hop)' },
-            { label: 'Departed', value: departed.length, color: 'var(--color-unacceptable)' },
-            { label: 'Orphaned', value: orphanedAccounts.length, color: 'var(--color-undesirable)' },
-          ].map((s, i) => (
-            <div key={s.label} style={{
-              flex: 1, padding: '10px 8px', textAlign: 'center',
-              borderRight: i < 2 ? '1px solid var(--border)' : 'none',
-            }}>
-              <div style={{ fontSize: 18, fontWeight: 800, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 1 }}>{s.label}</div>
+        <div className="legend">
+          {statusOrder.map(label => (
+            <div className="legend-row" key={label}>
+              <div className="legend-dot" style={{ background: STATUS_META[label].color }} />
+              <div className="legend-label">{label}</div>
+              <div className="legend-count">{counts[label]}</div>
             </div>
           ))}
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flex: 1 }}>
-        {failed.slice(0, 3).map(e => (
-          <div key={e.id} style={{
-            padding: '8px 10px',
-            background: e.status === 'failed' ? 'rgba(226,75,74,0.05)' : 'rgba(186,117,23,0.06)',
-            borderRadius: 8,
-            borderLeft: `2.5px solid ${e.status === 'failed' ? 'var(--color-hop)' : 'var(--color-undesirable)'}`,
+      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>
+        Top 5 identities
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+        {top5.map((h, i) => (
+          <div key={h.id} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+            padding: '8px 0',
+            borderBottom: i < top5.length - 1 ? '1px solid var(--border)' : 'none',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>{e.identityName}</div>
-              <span style={{
-                fontSize: 10, fontWeight: 700, textTransform: 'uppercase',
-                color: e.status === 'failed' ? 'var(--color-hop)' : 'var(--color-undesirable)',
-              }}>{e.eventType} · {e.status}</span>
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-              {e.liveAccess} live grants{e.orphanedAccounts.length > 0 ? ` · ${e.orphanedAccounts.length} orphaned SA` : ''}
-            </div>
+            <span style={{
+              fontSize: 13, fontWeight: 600, color: 'var(--text-primary)',
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>{h.name}</span>
+            <span style={{
+              fontSize: 12, fontWeight: 700, flexShrink: 0,
+              color: STATUS_META[h.status]?.color || 'var(--text-tertiary)',
+            }}>{h.status}</span>
           </div>
         ))}
       </div>
 
       <TileExit label="View lifecycle events" onClick={() => navigate('/identity-lifecycle')} />
-    </div>
-  );
-}
-
-/* ── Exposure tile ──────────────────────────────────────────── */
-function ExposureTile({ navigate }) {
-  const exposures = identities.map(id => ({
-    ...id,
-    exposureScore: computeExposure(id.id),
-    reachesCritical: accessPaths.some(p => p.identityId === id.id && !p.blocked && p.resourceSensitivity === 'critical'),
-  })).sort((a, b) => b.exposureScore - a.exposureScore);
-
-  const top = exposures.slice(0, 4);
-  const maxScore = Math.max(...exposures.map(e => e.exposureScore), 1);
-  const criticalReach = exposures.filter(e => e.reachesCritical).length;
-
-  return (
-    <div className="tile" onClick={() => navigate('/exposure-map')}>
-      <div className="tile-label">Exposure map</div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-        <div>
-          <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: -1.5, color: 'var(--color-hop)', lineHeight: 1 }}>
-            {exposures[0]?.exposureScore ?? 0}
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 3 }}>Highest blast-radius score</div>
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', marginTop: 2 }}>{exposures[0]?.name}</div>
-        </div>
-        <div style={{ flex: 1, padding: '10px 12px', background: 'rgba(216,90,48,0.06)', borderRadius: 8, borderLeft: '2.5px solid var(--color-unacceptable)' }}>
-          <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-unacceptable)', lineHeight: 1 }}>{criticalReach}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>Identities reaching critical resources</div>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flex: 1 }}>
-        {top.map(e => (
-          <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ width: 100, fontSize: 12, color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</div>
-            <div style={{ flex: 1, height: 5, background: 'var(--surface-inset)', borderRadius: 2, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${(e.exposureScore / maxScore) * 100}%`, background: riskColor(Math.min(100, e.exposureScore / 3)), borderRadius: 2 }} />
-            </div>
-            <div style={{ width: 36, textAlign: 'right', fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>{e.exposureScore}</div>
-          </div>
-        ))}
-      </div>
-
-      <TileExit label="View exposure map" onClick={() => navigate('/exposure-map')} />
-    </div>
-  );
-}
-
-/* ── Delegation tile ────────────────────────────────────────── */
-function DelegationTile({ navigate }) {
-  const chains = riskiestDelegationChains();
-  const totalRisky = chains.reduce((s, c) => s + c.riskCount, 0);
-
-  return (
-    <div className="tile" onClick={() => navigate('/delegation-chain')}>
-      <div className="tile-label">Delegation chains</div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
-        <div>
-          <div style={{ fontSize: 42, fontWeight: 800, letterSpacing: -1.5, color: 'var(--color-unacceptable)', lineHeight: 1 }}>{totalRisky}</div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 3 }}>Departed / orphaned in lineage</div>
-        </div>
-        <div style={{ flex: 1, padding: '8px 12px', background: 'var(--surface-subtle)', borderRadius: 8, border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Deepest chain</div>
-          <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginTop: 2 }}>{Math.max(...chains.map(c => c.maxDepth))} hops</div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{chains[0]?.appName}</div>
-        </div>
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flex: 1 }}>
-        {chains.slice(0, 3).map(c => (
-          <div key={c.appName} style={{
-            padding: '8px 10px',
-            background: c.riskCount > 0 ? 'rgba(216,90,48,0.05)' : 'var(--surface-subtle)',
-            borderRadius: 8,
-            borderLeft: `2.5px solid ${c.riskCount > 0 ? 'var(--color-unacceptable)' : 'var(--border)'}`,
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, marginBottom: 2 }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)' }}>{c.appName}</span>
-              {c.riskCount > 0 && (
-                <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--color-unacceptable)' }}>{c.riskCount} risky</span>
-              )}
-            </div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'monospace', lineHeight: 1.4 }}>
-              {c.chainLabel}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <TileExit label="View creator lineage" onClick={() => navigate('/delegation-chain')} />
     </div>
   );
 }
@@ -597,48 +540,21 @@ function ImpactTile({ navigate }) {
 /* ── Summary bar ────────────────────────────────────────────── */
 function SummaryBar({ navigate }) {
   const items = [
-    { label: 'Total identities', value: dashboardSummary.totalIdentities, color: 'var(--text-primary)', to: '/access-discovery' },
-    { label: 'Human', value: dashboardSummary.humanIdentities, color: '#4338ca', to: '/access-discovery' },
-    { label: 'Service accounts', value: dashboardSummary.serviceIdentities, color: '#047857', to: '/access-discovery' },
-    { label: 'Shadow access paths', value: dashboardSummary.shadowPaths, color: 'var(--color-hop)', to: '/access-discovery' },
-    { label: 'Shadow admins', value: dashboardSummary.shadowAdminCount, color: 'var(--color-unacceptable)', to: '/access-discovery' },
-    {
-      label: 'Overall risk band',
-      value: dashboardSummary.overallRiskBand,
-      color: bandColor(dashboardSummary.overallRiskBand),
-      to: '/risk-profiles',
-      isBand: true,
-    },
+    { label: 'Total Identities', value: dashboardSummary.totalIdentities, color: 'var(--text-primary)', to: '/access-discovery' },
+    { label: 'Human', value: dashboardSummary.humanIdentities, color: 'var(--uno-blue-600)', to: '/access-discovery' },
+    { label: 'Service Accounts', value: dashboardSummary.serviceIdentities, color: 'var(--uno-green-700)', to: '/access-discovery' },
+    { label: 'Shadow Access', value: dashboardSummary.shadowPaths, color: 'var(--color-hop)', to: '/access-discovery' },
+    { label: 'Shadow Admins', value: dashboardSummary.shadowAdminCount, color: 'var(--color-unacceptable)', to: '/access-discovery' },
+    { label: 'Orphaned Accounts', value: orphanedAccounts.length, color: 'var(--uno-red-500)', to: '/identity-lifecycle' },
   ];
   return (
     <div className="summary-bar summary-bar-6">
       {items.map(item => (
         <div key={item.label} className="stat-card" onClick={() => navigate(item.to)}>
-          {item.isBand ? (
-            <div style={{
-              fontSize: 15, fontWeight: 800, letterSpacing: -0.3, color: item.color, lineHeight: 1.2,
-              padding: '4px 0',
-            }}>{item.value}</div>
-          ) : (
-            <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.8, color: item.color, lineHeight: 1 }}>{item.value}</div>
-          )}
+          <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: -0.8, color: item.color, lineHeight: 1 }}>{item.value}</div>
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4, fontWeight: 500, lineHeight: 1.3 }}>{item.label}</div>
         </div>
       ))}
-    </div>
-  );
-}
-
-/* ── Alert ──────────────────────────────────────────────────── */
-function AlertBanner() {
-  if (orphanedAccounts.length === 0 && ownershipRecords.filter(o => o.orphaned).length === 0) return null;
-  return (
-    <div className="alert-banner alert-danger">
-      <Icon name="alert" size={15} color="var(--color-hop)" style={{ flexShrink: 0, marginTop: 1 }} />
-      <div>
-        <strong>{orphanedAccounts.length} orphaned accounts</strong> with live access after leaver sweep failure — immediate deprovisioning required.
-        {' '}{ownershipRecords.filter(o => o.orphaned).length} access chains have no accountable owner.
-      </div>
     </div>
   );
 }
@@ -650,33 +566,14 @@ export default function Dashboard() {
       <div className="page-header">
         <div>
           <div className="page-title">Overview</div>
-          <div className="page-subtitle">Security posture across all identities — last scan 14:22 UTC</div>
-        </div>
-        <div className="risk-band-chip" style={{
-          display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2,
-        }}>
-          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.6px', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
-            Tenant risk
-          </span>
-          <span style={{
-            fontSize: 13, fontWeight: 800,
-            color: bandColor(dashboardSummary.overallRiskBand),
-            background: `color-mix(in srgb, ${bandColor(dashboardSummary.overallRiskBand)} 12%, transparent)`,
-            border: `1px solid color-mix(in srgb, ${bandColor(dashboardSummary.overallRiskBand)} 28%, transparent)`,
-            padding: '5px 12px', borderRadius: 6,
-          }}>
-            {dashboardSummary.overallRiskBand}
-          </span>
+          <div className="page-subtitle">Security posture across all identities</div>
         </div>
       </div>
-      <AlertBanner />
       <SummaryBar navigate={navigate} />
       <div className="dashboard-grid">
         <AccessTile navigate={navigate} />
         <RiskTile navigate={navigate} />
         <LifecycleTile navigate={navigate} />
-        <ExposureTile navigate={navigate} />
-        <DelegationTile navigate={navigate} />
         <HygieneTile navigate={navigate} />
         <ImpactTile navigate={navigate} />
         <ReviewTile navigate={navigate} />

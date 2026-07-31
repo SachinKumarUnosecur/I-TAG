@@ -79,7 +79,7 @@ function Sidebar({ location, navigate }) {
 
       <div className="sidebar-footer">
         <div className="sidebar-scan-info">
-          Last scan: <span className="sidebar-scan-time">14:22 UTC</span>
+          Last sync: <span className="sidebar-scan-time">14:20 UTC</span>
         </div>
         <div className="sidebar-scan-info" style={{ marginTop: 2 }}>
           Tenant: <span className="sidebar-scan-time">Unosecur Demo</span>

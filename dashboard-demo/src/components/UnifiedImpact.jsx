@@ -4,11 +4,11 @@ import { Icon, AccessBadge } from './ui';
 import { impactGraph } from '../data/mockData';
 
 const nodeColors = {
-  origin: '#6366f1',
-  hop: '#E24B4A',
-  compromised: '#D85A30',
-  reachable: '#BA7517',
-  downstream: '#059669',
+  origin: '#025DFD',
+  hop: '#E72E21',
+  compromised: '#F97316',
+  reachable: '#CA7F06',
+  downstream: '#00B44A',
 };
 
 const nodeSize = {
@@ -20,9 +20,9 @@ const nodeSize = {
 };
 
 const linkColors = {
-  Hop: '#E24B4A',
-  Indirect: '#BA7517',
-  Direct: '#888780',
+  Hop: '#E72E21',
+  Indirect: '#CA7F06',
+  Direct: '#8D97AE',
 };
 
 export default function UnifiedImpact() {
@@ -165,7 +165,7 @@ export default function UnifiedImpact() {
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 16, flexWrap: 'wrap' }}>
         <div className="card" style={{ flex: '0 0 auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Simulated origin</div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#6366f1' }}>jane.doe</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#025DFD' }}>jane.doe</div>
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Hypothetically compromised</div>
         </div>
         <div className="card" style={{ flex: '0 0 auto' }}>
