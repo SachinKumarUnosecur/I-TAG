@@ -520,6 +520,155 @@ filter. All six are asserted in `core/src/access/classify.test.ts`.
 
 ---
 
+## Beats 24-33 — Identity Exposure Map and Blast Radius
+
+**Not written.** Both modules shipped; their beats did not. Beats 24-29 belong to
+Identity Exposure Map and 30-33 to Unified Impact Analysis, and the numbers each
+needs are pinned in `core/src/data/seed-exposure.test.ts` and
+`core/src/impact/choke.test.ts` respectively. Beat 30's row is
+`mcp:connect-prod-runbook` at −12 access and −8 mechanisms. Nothing checks this
+document, so this gap is recorded here rather than discovered on stage.
+
+---
+
+## Beat 34 — Four independent signals, one identity
+
+**Click:** Identity Risk Profile in the nav. Default sort, top row.
+
+> "Every screen so far has ranked one thing. Ownership ranked findings by urgency.
+> Exposure ranked identities by footprint. Blast Radius ranked what to revoke. This
+> screen ranks nothing. It reports which of those independent checks fired on the
+> same identity, and how many."
+>
+> "Top row: `svc-vpn-legacy`. Four factors. Its owner is a deactivated employee —
+> that severity is Ownership's word, copied, not ours. Its footprint is extensive —
+> that band is Exposure's word, copied. Its MFA was turned off 271 days ago and the
+> temporary exception covering that is still live after 167 days. And a VPN grant on
+> it is 1,914 days old, against a 180-day median revocation for that grant type
+> across nine observed grants."
+>
+> "Notice what the row does not have. There is no composite score, and there is no
+> average. Four sources found four different things, and the row says four, not a
+> number between them. We measured the alternative: fusing these six factors with
+> the weights the spec proposed moves this identity — the one every other screen
+> puts first — down to rank nine."
+
+**Evidences:** NIST SP 800-30 Rev 1 (combination rules made explicit) · OECD/JRC
+*Handbook on Constructing Composite Indicators* (additive aggregation implies full
+compensability) · `ITAG.md` §F9, §F10
+
+| | |
+| --- | --- |
+| Row | `svc-vpn-legacy` — rank 1, `factors_firing` 4, `worst_level` critical |
+| Quoted | `ownership` critical · `exposure` high (band extensive, score 83) |
+| Computed here | `control_drift` critical · `grant_staleness` high |
+| Not a field | `risk_score`, `peer_percentile`, `score_drift` — see PRD Amendments 2-4 |
+
+---
+
+## Beat 35 — Six rows, not a hundred and twenty-seven
+
+**Click:** set the factor filter to 3 or more.
+
+> "One hundred and twenty-seven identities go in. Six come out with three or more
+> independent signals against them. This is the week's list."
+>
+> "`svc-backup` is second, and it is worth one sentence. Its conditional-access
+> exception is ninety days old today — exactly ninety. The rule written eighteen
+> months ago says an exception still active ninety-plus days later is a serious
+> control failure, so the comparison is greater-than-or-equal and this row reads
+> critical rather than high. It is the only identity in the estate sitting on that
+> boundary, which is why it has a test of its own."
+>
+> "The distribution behind the filter is one identity with four factors, five with
+> three, seventeen with two, twenty-seven with one, and seventy-seven with none. I
+> can defend a six-row queue to an auditor. Under the composite the same estate
+> produced thirty-three distinct values and forty-two identities tied on the number
+> eight."
+
+**Evidences:** `ITAG.md` §F9 (MFA disabled = high impact; exception still active 90+
+days) · NIST/SEMATECH e-Handbook §7.2.6.2 (percentile behaviour at small N)
+
+| | |
+| --- | --- |
+| Filter | `min_factors=3` → 6 of 127 |
+| The six | `svc-vpn-legacy` 4 · `svc-backup`, `svc-batch-recon`, `svc-legacy-export`, `svc-quarter-close`, `svc-etl` 3 |
+| Distribution | 4:1 · 3:5 · 2:17 · 1:27 · 0:77 |
+| Worst level over the 50 with findings | critical 19 · high 8 · medium 19 · low 4 |
+
+---
+
+## Beat 36 — What we did not look at
+
+**Click:** the coverage block at the top of the summary.
+
+> "This is the number most products do not show you, so I want to show it first.
+> Hop access was evaluated on all 127 identities. Exposure on 126. Ownership on 122.
+> Control drift on **four**, because four identities in this estate have a control
+> history table. Grant staleness on **seven**."
+>
+> "So seventy-seven identities report no findings, and not one of them is described
+> as clean. They come back as partially evaluated, naming the factors we could not
+> run. A clean bill of health and a missing input are different claims, and they are
+> different shapes in the API — the fields that carry a ranking exist only on the
+> arm that has one, so nothing can read a score off a row that has not got one."
+>
+> "Read the last line separately. Access-review staleness: fourteen evaluated, zero
+> unavailable, **one hundred and thirteen not applicable**. No provider records an
+> access review for a service account, and none will. That is a scope statement, not
+> a backlog item, and it is the distinction the six products we surveyed collapse
+> into one grey badge."
+
+**Evidences:** NIST SP 800-53 AC-2(3) · architecture rule 9 (`unknown` is
+structurally excluded from counts)
+
+| Factor | Evaluated | Unavailable | Not applicable | Findings |
+| --- | --- | --- | --- | --- |
+| `hop_access` | 127 | 0 | 0 | 11 |
+| `exposure` | 126 | 1 | 0 | 31 |
+| `ownership` | 122 | 5 | 0 | 24 |
+| `control_drift` | 4 | 123 | 0 | 4 |
+| `grant_staleness` | 7 | 120 | 0 | 7 |
+| `review_staleness` | 14 | 0 | 113 | 3 |
+
+---
+
+## Beat 37 — The disagreement is the product
+
+**Click:** `user-maya` — highest exposure score in the estate, and not near the top
+of this table.
+
+> "Maya has the widest footprint of any identity here. Exposure scores her 97, the
+> highest number on that screen. On this screen she has one factor firing, and the
+> row says so: exposure high, everything else either clean or unevaluated."
+>
+> "`svc-vpn-legacy` scores 83 — lower — and outranks her here, because four
+> independent checks fired on it and one fired on her."
+>
+> "Both readings are correct. Exposure is asking how much this identity could reach.
+> This screen is asking how many independent checks object to it. If we had averaged
+> them, Maya would have landed at rank 62 of 127 — we measured that — and the widest
+> footprint in the estate would have been invisible on both screens."
+>
+> "The sentence explaining that ships on every row, from the engine, not the
+> frontend, because it is an answer about how the engine works."
+
+**Evidences:** OECD/JRC Handbook (weights in additive aggregation are substitution
+rates, not importance) · FIRST EPSS/CVSS guidance on override versus weighting
+
+| | |
+| --- | --- |
+| `user-maya` | exposure 97, `factors_firing` 1, unevaluated: `control_drift`, `grant_staleness` |
+| `svc-vpn-legacy` | exposure 83, `factors_firing` 4 — ranks above her |
+| Ordering | `factors_firing`, then `worst_level`, then id. Never a sum. |
+| On every row | `RISK_VERSUS_RANKERS` — the four-surface reconciliation |
+
+Every number in beats 34-37 is asserted in `core/src/data/seed-risk.test.ts`, and the
+guards that keep this module from authoring a fourth ranking are in
+`core/src/risk/service.test.ts`.
+
+---
+
 ## Appendix A — Every curated identity
 
 The contract the UI is built against. Ages and inactivity are days as of
@@ -595,6 +744,8 @@ about.
 | Disable SLA, non-human | 14 days | Local policy. NIST AC-2(3) requires a defined period and does not set a number. |
 | Disable SLA, human | 30 days | Local policy, same basis. |
 | Max chain depth | 16 | Engineering limit, not a control. Exceeding it is reported as a finding, never as a silent truncation. |
+| Exception staleness | 90 days | `ITAG.md` §F9, "still active 90+ days later". `DEFAULT_RISK_POLICY.exceptionStaleDays`, kept separate from the attestation floor so the two cannot be retuned together by accident. |
+| Grant staleness | per grant type | Not a constant. `grant_half_lives` carries an observed median revocation age and a sample size per grant type; the evidence string states both, so a reviewer can judge whether n is large enough. |
 
 ## Appendix C — What this dataset does not prove
 
@@ -608,3 +759,10 @@ Say these before a judge finds them.
 - **Agent ownership semantics.** Beat 3 makes the question concrete and takes the
   position that an agent's chain resolves through its spawner to a human. That is a
   defensible default, not a settled answer.
+- **Factor coverage.** Beat 36 says this out loud rather than hiding it, but say it
+  here too: two of the six risk factors read fixture tables covering four and seven
+  identities. The *rules* are tested; the claim "60% of this estate is unassessed" is
+  a property of the fixture, not a finding about a real environment.
+- **Grant half-lives.** The medians in `grant_half_lives` are seeded constants with
+  seeded sample sizes, not measured from an observed revocation history. The
+  methodology is what the evidence string exposes; the numbers are invented.
