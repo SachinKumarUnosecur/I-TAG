@@ -45,6 +45,10 @@ export type {
   ProvenanceOutcome,
   ProvenanceRecord,
   LineageCoverageReport,
+  LineageRow,
+  LineageTree,
+  LineageTreeOutcome,
+  CreatorStatus,
 } from './domain/lineage.js';
 
 // Ownership vocabulary
@@ -161,6 +165,10 @@ export {
 // Provisioning Lineage — explanation coverage (research 4.5, the landing view)
 export { buildCoverage } from './lineage/coverage.js';
 
+// Provisioning Lineage — the service and its query surface (research 6)
+export type { LineageDeps, LineageQuery, LineageService } from './lineage/service.js';
+export { createLineageService } from './lineage/service.js';
+
 // Ownership Assurance — owner resolution (gap 1)
 export type {
   OwnerResolution,
@@ -212,6 +220,7 @@ export {
   datasetTeamDirectory,
 } from './adapters/dataset-directories.js';
 export { memoryFindingStore } from './adapters/memory-finding-store.js';
+export { memoizedOwnershipState } from './adapters/ownership-state.js';
 export { fixedClock, systemClock } from './adapters/clock.js';
 export { seedGraphSource } from './adapters/seed-source.js';
 

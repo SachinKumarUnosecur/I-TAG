@@ -462,6 +462,77 @@ export type ProvenanceOutcome =
   | { readonly ok: true; readonly record: ProvenanceRecord }
   | { readonly ok: false; readonly error: 'unknown_identity'; readonly identity_id: string };
 
+/**
+ * Employment status of the creator, alongside whether the created identity is live.
+ *
+ * `PRD` §6.3's "Creator Status" column, which the spec describes as "the
+ * orphaned-creator signal made visible without needing to open the flag detail".
+ * Research §4.4 demotes `orphaned_creator` from "the core differentiating finding"
+ * (`PRD` L171) to exactly this: a column. It is real, but it is the weakest
+ * ownership signal — `ownership/resolve.ts` puts `creator_fallback` last on purpose
+ * — and `ownership/rules.ts` already owns the finding through `creator_deactivated`.
+ */
+export type CreatorStatus =
+  | 'active'
+  | 'departed'
+  | 'role_changed'
+  /** The creator is not a person: a bot, a role, a provider service. */
+  | 'not_a_person'
+  /** No creator on record, or one we cannot resolve to check. */
+  | 'unknown';
+
+/**
+ * One row of the `PRD` §6.3 table.
+ *
+ * Deliberately lighter than `ProvenanceRecord`: it carries no ancestor or descendant
+ * walk, so a row costs `O(1)` given the generation memo and the two inverse indexes.
+ * Research §5 names the table view recomputing lineage per row as the one thing that
+ * actually breaks at 100k identities, and this type is where that is prevented — the
+ * walks are the drill-down's cost, paid once for the identity a reviewer clicked.
+ */
+export interface LineageRow {
+  readonly identity_id: string;
+  readonly name: string;
+  readonly identity_type: IdentityType;
+  readonly app: string;
+  /** The acting principal, or null when there is no creator on record. */
+  readonly created_by: string | null;
+  readonly generation: number | null;
+  readonly root_id: string | null;
+  readonly root_kind: LineageRootKind;
+  readonly fan_out: number;
+  readonly fan_out_in_app: number;
+  readonly created_at: string | null;
+  readonly revoked: boolean;
+  readonly provenance: Provenance;
+  readonly creator_status: CreatorStatus;
+  /** The AC-2(e) violation (§4.4). The one badge that replaces the PRD's four. */
+  readonly self_authorized: boolean;
+  readonly creator_privilege_mismatch: boolean;
+  /** Rate against the actor's own baseline (§4.3), never a lifetime total. */
+  readonly fan_out_exceeds_baseline: boolean;
+}
+
+/**
+ * The `PRD` §6.5 collapsible tree, ancestors above and descendants below.
+ *
+ * Depth-bounded by the caller, because §6.5's own worked example is "a provisioning
+ * bot that created 40 accounts" and an unbounded subtree is how one row becomes a
+ * megabyte of payload.
+ */
+export interface LineageTree {
+  readonly identity_id: string;
+  readonly app: string;
+  readonly root_id: string | null;
+  readonly depth: number;
+  readonly ancestors: LineageWalk;
+  readonly descendants: LineageWalk;
+}
+
+export type LineageTreeOutcome =
+  | { readonly ok: true; readonly tree: LineageTree }
+  | { readonly ok: false; readonly error: 'unknown_identity'; readonly identity_id: string };
+
 /** One gap bucket's share of the unexplained population. */
 export interface LineageGapBucket {
   readonly reason: LineageGapReason;

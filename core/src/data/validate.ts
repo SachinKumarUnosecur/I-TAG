@@ -178,6 +178,74 @@ export function validateDataset(dataset: IdentityDataset): IdentityDataset {
     }
   }
 
+  // Persisted creation events are evidence for edges the identity table already
+  // asserts, so the two have to agree. A record naming a different creator than
+  // `provisioned_by` is a bug in ingestion, not a finding: the graph would traverse
+  // one answer while the UI displayed the other.
+  const seenEdges = new Set<string>();
+  for (const edge of dataset.creation_edges ?? []) {
+    const child = byId.get(edge.child_id);
+    if (child === undefined) {
+      issues.push(`creation_edges names child "${edge.child_id}", which is not an identity`);
+      continue;
+    }
+    if (child.app !== edge.app) {
+      issues.push(
+        `creation_edges scopes "${edge.child_id}" to app "${edge.app}", but that identity lives in "${child.app}"`,
+      );
+    }
+    if (child.provisioned_by !== edge.actor.raw_principal) {
+      issues.push(
+        `creation_edges records "${edge.actor.raw_principal}" as the actor for "${edge.child_id}", ` +
+          `but that identity records its provisioner as ` +
+          `${child.provisioned_by === null ? 'null' : `"${child.provisioned_by}"`}`,
+      );
+    }
+    // Append-only means several rows per child are legal; several *live* rows are
+    // not, because then "who created this" has two current answers.
+    if (edge.superseded_by === null) {
+      const key = creationEdgeKey(edge.app, edge.child_id);
+      if (seenEdges.has(key)) {
+        issues.push(`creation_edges holds more than one live record for "${edge.child_id}"`);
+      }
+      seenEdges.add(key);
+    }
+    if (Number.isNaN(Date.parse(edge.observed_at))) {
+      issues.push(`creation_edges for "${edge.child_id}" has unparseable observed_at "${edge.observed_at}"`);
+    }
+  }
+
+  for (const grant of dataset.privilege_grant_events ?? []) {
+    const subject = byId.get(grant.identity_id);
+    if (subject === undefined) {
+      issues.push(`privilege_grant_events names "${grant.identity_id}", which is not an identity`);
+    } else if (subject.app !== grant.app) {
+      issues.push(
+        `privilege_grant_events scopes "${grant.identity_id}" to app "${grant.app}", ` +
+          `but that identity lives in "${subject.app}"`,
+      );
+    }
+    if (!permissionIds.has(grant.permission)) {
+      issues.push(
+        `privilege_grant_events grants "${grant.permission}" to "${grant.identity_id}", ` +
+          `which is not in the permissions table`,
+      );
+    }
+    if (Number.isNaN(Date.parse(grant.occurred_at))) {
+      issues.push(
+        `privilege_grant_events for "${grant.identity_id}" has unparseable occurred_at "${grant.occurred_at}"`,
+      );
+    }
+    // The approver is the AC-2(e) evidence, so a name that resolves to nothing would
+    // let an unverifiable approval clear a real self-authorization finding.
+    if (grant.approved_by !== null && byId.get(grant.approved_by)?.type !== 'human') {
+      issues.push(
+        `privilege_grant_events for "${grant.identity_id}" names approver "${grant.approved_by}", ` +
+          `which is not a human identity`,
+      );
+    }
+  }
+
   const grantTypes = new Set(dataset.grant_half_lives.map((pattern) => pattern.grant_type));
   for (const grant of dataset.grant_records) {
     if (!byId.has(grant.identity_id)) {
