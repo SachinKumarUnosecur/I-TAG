@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Icon } from './components/ui';
 import Dashboard from './components/Dashboard';
@@ -11,117 +10,109 @@ import ThreatProfile from './components/ThreatProfile';
 import IdentityOwnership from './components/IdentityOwnership';
 import AccessReviews from './components/AccessReviews';
 import IdentityLifecycle from './components/IdentityLifecycle';
-import { orphanedAccounts, dashboardSummary } from './data/mockData';
 
-const NAV = [
-  {
-    section: 'Traceability',
-    items: [
-      { path: '/', label: 'Overview', icon: 'home' },
-      { path: '/access-discovery', label: 'Identity risk', icon: 'activity' },
-      { path: '/delegation-chain', label: 'Delegation Chain', icon: 'gitBranch' },
-      { path: '/exposure-map', label: 'Exposure Map', icon: 'eye' },
-      { path: '/risk-profiles', label: 'Identity Risk Profile', icon: 'activity' },
-      { path: '/unified-impact', label: 'Unified Impact Analysis', icon: 'zap' },
-      { path: '/threat-profile', label: 'Identity Threat Profile', icon: 'target' },
-    ],
-  },
-  {
-    section: 'Accountability',
-    items: [
-      { path: '/identity-ownership', label: 'Identity Ownership', icon: 'lock', badge: dashboardSummary.orphanedAccountability },
-    ],
-  },
-  {
-    section: 'Governance',
-    items: [
-      { path: '/access-reviews', label: 'Access Reviews', icon: 'clipboard' },
-      { path: '/identity-lifecycle', label: 'Identity Lifecycle', icon: 'users', badge: orphanedAccounts.length },
-    ],
-  },
+const SIDE_NAV = [
+  { path: '/', label: 'Overview', icon: 'home' },
+  { path: '/access-discovery', label: 'Discovery', icon: 'search' },
+  { path: '/delegation-chain', label: 'Delegation', icon: 'gitBranch' },
+  { path: '/exposure-map', label: 'Exposure', icon: 'eye' },
+  { path: '/risk-profiles', label: 'Risk', icon: 'activity' },
+  { path: '/unified-impact', label: 'Impact', icon: 'zap' },
+  { path: '/threat-profile', label: 'Threat', icon: 'target' },
+  { path: '/identity-ownership', label: 'Ownership', icon: 'lock' },
+  { path: '/access-reviews', label: 'Reviews', icon: 'clipboard' },
+  { path: '/identity-lifecycle', label: 'Lifecycle', icon: 'users' },
 ];
 
-function Sidebar({ location, navigate }) {
+const TOP_SECTIONS = [
+  { id: 'trace', label: 'Traceability', icon: 'target', paths: ['/', '/access-discovery', '/delegation-chain', '/exposure-map', '/risk-profiles', '/unified-impact', '/threat-profile'] },
+  { id: 'account', label: 'Accountability', icon: 'lock', paths: ['/identity-ownership'] },
+  { id: 'gov', label: 'Governance', icon: 'clipboard', paths: ['/access-reviews', '/identity-lifecycle'] },
+];
+
+function TopStrip({ location, navigate }) {
+  const activeSection = TOP_SECTIONS.find(s => s.paths.includes(location.pathname))?.id || 'trace';
+
   return (
-    <aside className="sidebar">
-      <div className="sidebar-logo">
-        <div className="sidebar-logo-mark">
-          <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5z" />
-            <path d="M2 17l10 5 10-5" />
-            <path d="M2 12l10 5 10-5" />
-          </svg>
-        </div>
-        <div>
-          <div className="sidebar-logo-text">ITAG</div>
-          <div className="sidebar-logo-sub">by Unosecur</div>
-        </div>
-      </div>
-
-      <nav className="sidebar-nav">
-        {NAV.map(group => (
-          <div key={group.section} className="nav-section">
-            <div className="nav-section-label">{group.section}</div>
-            {group.items.map(item => (
-              <div key={item.path}
-                className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
-                onClick={() => navigate(item.path)}>
-                <span className="nav-icon"><Icon name={item.icon} size={15} /></span>
-                <span style={{ flex: 1 }}>{item.label}</span>
-                {item.badge > 0 && (
-                  <span className="nav-badge">{item.badge}</span>
-                )}
-              </div>
-            ))}
+    <header className="top-strip">
+      <div className="top-strip-left">
+        <div className="top-strip-brand">
+          <div className="top-strip-logo">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+              <path d="M12 2l8 3.5v6.2c0 5.1-3.4 9.7-8 10.8-4.6-1.1-8-5.7-8-10.8V5.5L12 2z" fill="#00B44A" />
+              <text x="12" y="15" textAnchor="middle" fill="#fff" fontSize="9" fontWeight="800" fontFamily="Inter, sans-serif">1</text>
+            </svg>
           </div>
-        ))}
-      </nav>
+          <span className="top-strip-brand-name">unosecur</span>
+        </div>
 
-      <div className="sidebar-footer">
-        <div className="sidebar-scan-info">
-          Last sync: <span className="sidebar-scan-time">14:20 UTC</span>
-        </div>
-        <div className="sidebar-scan-info" style={{ marginTop: 2 }}>
-          Tenant: <span className="sidebar-scan-time">Unosecur Demo</span>
-        </div>
+        <div className="top-strip-divider" />
+
+        <button type="button" className="top-strip-nav-item active" onClick={() => navigate('/')}>
+          <Icon name="layers" size={14} />
+          <span>ITAG</span>
+        </button>
+
+        <div className="top-strip-divider" />
+
+        <nav className="top-strip-nav">
+          {TOP_SECTIONS.map((item, i) => (
+            <div key={item.id} className="top-strip-nav-wrap">
+              {i > 0 && <div className="top-strip-divider" />}
+              <button
+                type="button"
+                className={`top-strip-nav-item ${activeSection === item.id ? 'active' : ''}`}
+                onClick={() => navigate(item.paths[0])}
+              >
+                <Icon name={item.icon} size={14} />
+                <span>{item.label}</span>
+              </button>
+            </div>
+          ))}
+        </nav>
       </div>
-    </aside>
+
+      <div className="top-strip-right">
+        <button type="button" className="top-strip-tenant">
+          <span className="top-strip-tenant-dot" />
+          Unosecur
+          <Icon name="chevronDown" size={12} />
+        </button>
+        <button type="button" className="top-strip-icon-btn" title="Documentation">
+          <Icon name="book" size={16} />
+        </button>
+        <button type="button" className="top-strip-icon-btn" title="Notifications">
+          <Icon name="bell" size={16} />
+          <span className="top-strip-badge">3</span>
+        </button>
+        <div className="top-strip-avatar" title="Tom Walker">TW</div>
+      </div>
+    </header>
   );
 }
 
-const PAGE_TITLES = {
-  '/': 'Overview',
-  '/access-discovery': 'Identity risk',
-  '/delegation-chain': 'Delegation Chain',
-  '/exposure-map': 'Exposure Map',
-  '/risk-profiles': 'Identity Risk Profile',
-  '/unified-impact': 'Unified Impact Analysis',
-  '/threat-profile': 'Identity Threat Profile',
-  '/identity-ownership': 'Identity Ownership',
-  '/access-reviews': 'Access Reviews',
-  '/identity-lifecycle': 'Identity Lifecycle',
-};
+function SideStrip({ location, navigate }) {
+  const isActive = (path) =>
+    path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
 
-function Topbar({ location }) {
-  const title = PAGE_TITLES[location.pathname] || 'ITAG';
-  const section = NAV.find(g => g.items.some(i => i.path === location.pathname))?.section;
   return (
-    <header className="topbar">
-      {section && <span className="topbar-breadcrumb">{section}</span>}
-      {section && <Icon name="chevronRight" size={12} color="var(--text-tertiary)" />}
-      <span className="topbar-page-title">{title}</span>
-      <div className="topbar-spacer" />
-      <div className="topbar-scan-badge">
-        <div className="topbar-scan-dot" />
-        Live scan active
-      </div>
-      <div className="topbar-tenant">
-        <div className="topbar-tenant-dot" />
-        Unosecur Demo
-        <Icon name="chevronDown" size={12} color="var(--text-tertiary)" />
-      </div>
-      <div className="topbar-avatar" title="Tom Walker (Security)">TW</div>
-    </header>
+    <aside className="side-strip">
+      <nav className="side-strip-nav">
+        {SIDE_NAV.map(item => (
+          <button
+            key={item.path}
+            type="button"
+            className={`side-strip-item ${isActive(item.path) ? 'active' : ''}`}
+            onClick={() => navigate(item.path)}
+          >
+            <span className="side-strip-icon">
+              <Icon name={item.icon} size={18} />
+            </span>
+            <span className="side-strip-label">{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    </aside>
   );
 }
 
@@ -131,21 +122,23 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <Sidebar location={location} navigate={navigate} />
-      <div className="main-area">
-        <Topbar location={location} />
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/access-discovery" element={<AccessDiscovery />} />
-          <Route path="/delegation-chain" element={<DelegationChain />} />
-          <Route path="/exposure-map" element={<ExposureMap />} />
-          <Route path="/risk-profiles" element={<RiskProfiles />} />
-          <Route path="/unified-impact" element={<UnifiedImpact />} />
-          <Route path="/threat-profile" element={<ThreatProfile />} />
-          <Route path="/identity-ownership" element={<IdentityOwnership />} />
-          <Route path="/access-reviews" element={<AccessReviews />} />
-          <Route path="/identity-lifecycle" element={<IdentityLifecycle />} />
-        </Routes>
+      <TopStrip location={location} navigate={navigate} />
+      <div className="app-body">
+        <SideStrip location={location} navigate={navigate} />
+        <div className="main-area">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/access-discovery" element={<AccessDiscovery />} />
+            <Route path="/delegation-chain" element={<DelegationChain />} />
+            <Route path="/exposure-map" element={<ExposureMap />} />
+            <Route path="/risk-profiles" element={<RiskProfiles />} />
+            <Route path="/unified-impact" element={<UnifiedImpact />} />
+            <Route path="/threat-profile" element={<ThreatProfile />} />
+            <Route path="/identity-ownership" element={<IdentityOwnership />} />
+            <Route path="/access-reviews" element={<AccessReviews />} />
+            <Route path="/identity-lifecycle" element={<IdentityLifecycle />} />
+          </Routes>
+        </div>
       </div>
     </div>
   );

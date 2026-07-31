@@ -35,6 +35,10 @@ export function Icon({ name, size = 16, color = 'currentColor' }) {
     clock: <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
     alertTriangle: <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
     sparkles: <><path d="M12 3l1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3z"/><path d="M19 15l.75 2.25L22 18l-2.25.75L19 21l-.75-2.25L16 18l2.25-.75L19 15z"/></>,
+    layers: <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
+    settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></>,
+    bell: <><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></>,
+    book: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -111,10 +115,10 @@ export function bandColor(band) {
 }
 
 // Donut SVG
-export function DonutChart({ direct, indirect, hop, size = 110 }) {
+export function DonutChart({ direct, indirect, hop, size = 110, strokeWidth = 12 }) {
   const total = direct + indirect + hop;
   if (total === 0) return null;
-  const r = 38;
+  const r = size * 0.38;
   const cx = size / 2, cy = size / 2;
   const circ = 2 * Math.PI * r;
   const pDirect = direct / total;
@@ -130,10 +134,10 @@ export function DonutChart({ direct, indirect, hop, size = 110 }) {
 
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--surface-subtle)" strokeWidth="10" />
-      {dLen > 0 && <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--color-direct)" strokeWidth="10" strokeDasharray={`${dLen} ${circ}`} strokeDashoffset={dOff} />}
-      {iLen > 0 && <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--color-indirect)" strokeWidth="10" strokeDasharray={`${iLen} ${circ}`} strokeDashoffset={iOff} />}
-      {hLen > 0 && <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--color-hop)" strokeWidth="10" strokeDasharray={`${hLen} ${circ}`} strokeDashoffset={hOff} />}
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--surface-subtle)" strokeWidth={strokeWidth} />
+      {dLen > 0 && <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--color-direct)" strokeWidth={strokeWidth} strokeDasharray={`${dLen} ${circ}`} strokeDashoffset={dOff} />}
+      {iLen > 0 && <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--color-indirect)" strokeWidth={strokeWidth} strokeDasharray={`${iLen} ${circ}`} strokeDashoffset={iOff} />}
+      {hLen > 0 && <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--color-hop)" strokeWidth={strokeWidth} strokeDasharray={`${hLen} ${circ}`} strokeDashoffset={hOff} />}
     </svg>
   );
 }
@@ -175,14 +179,17 @@ export function SegmentDonut({ segments, size = 104, strokeWidth = 10 }) {
 }
 
 // Completion ring
-export function CompletionRing({ pct, size = 80 }) {
-  const r = 30;
+export function CompletionRing({ pct, size = 80, color = 'var(--color-desirable)', trackColor = 'var(--surface-subtle)', strokeWidth }) {
+  const sw = strokeWidth ?? Math.max(8, size * 0.1);
+  const r = size * 0.38;
   const circ = 2 * Math.PI * r;
   const fill = (pct / 100) * circ;
+  const cx = size / 2;
+  const cy = size / 2;
   return (
     <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--surface-subtle)" strokeWidth="8" />
-      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--color-desirable)" strokeWidth="8"
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={trackColor} strokeWidth={sw} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke={color} strokeWidth={sw}
         strokeDasharray={`${fill} ${circ}`} strokeLinecap="round" style={{ transition: 'stroke-dasharray 0.6s ease' }} />
     </svg>
   );
@@ -217,6 +224,308 @@ export function RiskArc({ score, size = 140, color, trackColor = 'var(--uno-grey
         style={{ transition: 'stroke-dasharray 0.6s ease' }}
       />
     </svg>
+  );
+}
+
+/** Radar / spider chart — hexagonal blast-radius style. */
+export function RadarChart({
+  axes,
+  series,
+  size = 240,
+  levels = 4,
+}) {
+  const n = axes.length;
+  if (!n) return null;
+
+  const pad = 36;
+  const plot = size - pad * 2;
+  const cx = size / 2;
+  const cy = size / 2;
+  const radius = plot * 0.42;
+  const angleStep = (Math.PI * 2) / n;
+  const startAngle = -Math.PI / 2;
+
+  const pointAt = (i, t) => {
+    const a = startAngle + i * angleStep;
+    return {
+      x: cx + Math.cos(a) * radius * t,
+      y: cy + Math.sin(a) * radius * t,
+    };
+  };
+
+  const ringPoints = (t) =>
+    Array.from({ length: n }, (_, i) => {
+      const p = pointAt(i, t);
+      return `${p.x},${p.y}`;
+    }).join(' ');
+
+  const seriesPath = (values) => values.map((v, i) => {
+    const p = pointAt(i, Math.max(0, Math.min(1, v)));
+    return `${p.x},${p.y}`;
+  }).join(' ');
+
+  const labelPos = (i) => {
+    const a = startAngle + i * angleStep;
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
+    let x = cx + cos * radius * 1.34;
+    let y = cy + sin * radius * 1.34;
+    x = Math.max(8, Math.min(size - 8, x));
+    y = Math.max(10, Math.min(size - 8, y));
+    let anchor = 'middle';
+    if (cos < -0.4) anchor = 'end';
+    else if (cos > 0.4) anchor = 'start';
+    return { x, y, anchor };
+  };
+
+  return (
+    <svg width="100%" height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block', overflow: 'visible' }}>
+      <circle cx={cx} cy={cy} r={radius} fill="var(--uno-grey-100)" opacity="0.55" />
+      {Array.from({ length: levels }, (_, li) => {
+        const t = (li + 1) / levels;
+        return (
+          <polygon
+            key={`ring-${li}`}
+            points={ringPoints(t)}
+            fill="none"
+            stroke="var(--uno-grey-200)"
+            strokeWidth="1"
+          />
+        );
+      })}
+
+      {axes.map((axis, i) => {
+        const tip = pointAt(i, 1);
+        return (
+          <line
+            key={axis.key || axis.label}
+            x1={cx}
+            y1={cy}
+            x2={tip.x}
+            y2={tip.y}
+            stroke="var(--uno-grey-300)"
+            strokeWidth="1"
+          />
+        );
+      })}
+
+      {series.map((s, si) => (
+        <g key={s.name || si}>
+          <polygon
+            points={seriesPath(s.values)}
+            fill={s.color}
+            fillOpacity={s.fillOpacity ?? 0.15}
+            stroke={s.color}
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+          {s.values.map((v, i) => {
+            const p = pointAt(i, Math.max(0, Math.min(1, v)));
+            return (
+              <circle
+                key={i}
+                cx={p.x}
+                cy={p.y}
+                r="3"
+                fill={s.color}
+                stroke="#fff"
+                strokeWidth="1.5"
+              />
+            );
+          })}
+        </g>
+      ))}
+
+      {axes.map((axis, i) => {
+        const p = labelPos(i);
+        const lines = axis.lines || [axis.label];
+        return (
+          <text
+            key={`label-${axis.key || i}`}
+            x={p.x}
+            y={p.y - ((lines.length - 1) * 5)}
+            textAnchor={p.anchor}
+            style={{ fontSize: 10, fontWeight: 700, fill: 'var(--text-secondary)' }}
+          >
+            {lines.map((line, li) => (
+              <tspan key={li} x={p.x} dy={li === 0 ? 0 : 11}>{line}</tspan>
+            ))}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
+/** Stepped funnel chart — bars with slope connectors; per-step colors supported. */
+export function StepFunnel({
+  steps,
+  activeIndex = 0,
+  onSelect,
+  height = 132,
+  color = 'var(--uno-blue-500)',
+  colW = 64,
+  barW = 22,
+}) {
+  const n = steps.length;
+  if (!n) return null;
+
+  const max = Math.max(...steps.map(s => s.value), 1);
+  const labelLinesMax = Math.max(...steps.map(s => (s.lines || [s.shortLabel || s.label]).length), 1);
+  const topPad = 28 + labelLinesMax * 13 + 22;
+  const bottomPad = 14;
+  const plotH = height - topPad - bottomPad;
+  const width = colW * n;
+  const uid = `funnel-${steps.map(s => s.key || s.label).join('-')}`;
+
+  const bars = steps.map((s, i) => {
+    const h = Math.max(12, (s.value / max) * plotH);
+    const x = i * colW + (colW - barW) / 2;
+    const y = topPad + (plotH - h);
+    const c = s.color || color;
+    const lines = s.lines || String(s.shortLabel || s.label).split('\n');
+    return { ...s, i, h, x, y, cx: x + barW / 2, c, lines };
+  });
+
+  return (
+    <div style={{ width: '100%', overflow: 'hidden' }}>
+      <svg
+        width="100%"
+        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="xMidYMid meet"
+        style={{ display: 'block' }}
+      >
+        <defs>
+          {bars.map(bar => (
+            <g key={`defs-${bar.key || bar.i}`}>
+              <pattern
+                id={`${uid}-stripe-${bar.i}`}
+                width="6"
+                height="6"
+                patternUnits="userSpaceOnUse"
+                patternTransform="rotate(45)"
+              >
+                <rect width="2.5" height="6" fill={bar.c} opacity="0.32" />
+              </pattern>
+              <linearGradient id={`${uid}-solid-${bar.i}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={bar.c} stopOpacity="1" />
+                <stop offset="100%" stopColor={bar.c} stopOpacity="0.72" />
+              </linearGradient>
+              <linearGradient id={`${uid}-col-${bar.i}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={bar.c} stopOpacity="0.14" />
+                <stop offset="100%" stopColor={bar.c} stopOpacity="0.02" />
+              </linearGradient>
+            </g>
+          ))}
+        </defs>
+
+        {[0.25, 0.5, 0.75, 1].map(t => {
+          const y = topPad + plotH * (1 - t);
+          return (
+            <line key={t} x1={0} x2={width} y1={y} y2={y} stroke="var(--border)" strokeWidth="1" />
+          );
+        })}
+
+        {bars.slice(0, -1).map((a, i) => {
+          const b = bars[i + 1];
+          return (
+            <polygon
+              key={`slope-${i}`}
+              points={`${a.x + barW},${a.y} ${b.x},${b.y} ${b.x},${topPad + plotH} ${a.x + barW},${topPad + plotH}`}
+              fill={a.c}
+              opacity="0.08"
+            />
+          );
+        })}
+
+        {bars.map(bar => {
+          const active = bar.i === activeIndex;
+          const prev = bar.i > 0 ? bars[bar.i - 1] : null;
+          const conversion = prev ? Math.round((bar.value / Math.max(prev.value, 1)) * 100) : 100;
+          const drop = prev ? conversion - 100 : 0;
+          const valueY = 14 + bar.lines.length * 13;
+          return (
+            <g
+              key={bar.key || bar.label}
+              style={{ cursor: onSelect ? 'pointer' : 'default' }}
+              onClick={e => {
+                e.stopPropagation();
+                onSelect?.(bar.i);
+              }}
+            >
+              {active && (
+                <rect
+                  x={bar.i * colW + 4}
+                  y={0}
+                  width={colW - 8}
+                  height={height}
+                  rx="10"
+                  fill={`url(#${uid}-col-${bar.i})`}
+                />
+              )}
+              {bar.lines.map((line, li) => (
+                <text
+                  key={li}
+                  x={bar.cx}
+                  y={14 + li * 13}
+                  textAnchor="middle"
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fill: active ? bar.c : 'var(--text-secondary)',
+                  }}
+                >
+                  {line}
+                </text>
+              ))}
+              <text
+                x={bar.cx}
+                y={valueY + 4}
+                textAnchor="middle"
+                style={{
+                  fontSize: 17,
+                  fontWeight: 800,
+                  fill: active ? bar.c : 'var(--text-primary)',
+                }}
+              >
+                {bar.value}
+              </text>
+              <rect
+                x={bar.x}
+                y={bar.y}
+                width={barW}
+                height={bar.h}
+                rx="5"
+                fill={active ? `url(#${uid}-solid-${bar.i})` : `url(#${uid}-stripe-${bar.i})`}
+              />
+              {active && prev && (
+                <g>
+                  <rect
+                    x={Math.max(4, bar.cx - 62)}
+                    y={Math.max(valueY + 8, bar.y - 26)}
+                    width="124"
+                    height="20"
+                    rx="10"
+                    fill="var(--surface)"
+                    stroke="var(--border)"
+                    strokeWidth="1"
+                  />
+                  <text
+                    x={bar.cx}
+                    y={Math.max(valueY + 8, bar.y - 26) + 13.5}
+                    textAnchor="middle"
+                    style={{ fontSize: 10, fontWeight: 600, fill: 'var(--text-secondary)' }}
+                  >
+                    {conversion}% keep · {drop}% drop
+                  </text>
+                </g>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+    </div>
   );
 }
 

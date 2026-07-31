@@ -3,7 +3,7 @@
 // UI-facing fields stay stable; `api` / `sources` hold provider-native shapes.
 
 export const tenant = {
-  name: "Unosecur Demo Tenant",
+  name: "Unosecur",
   id: "tenant-001",
   lastScan: "2026-07-31T14:22:00Z",
   cloudProviders: ["AWS", "GCP", "Azure"],
@@ -760,56 +760,101 @@ export const ownershipRecords = [
   { identityId: "id-003", grantId: "grant-006", resource: "bigquery://analytics-prod", owner: "priya.sharma", ownerStatus: "active", lastConfirmed: "2026-07-18", orphaned: false },
 ];
 
-// ─── STRIDE / Threat Profile ─────────────────────────────────────────────────
+// ─── PTRACE / Threat Profile ─────────────────────────────────────────────────
+// PTRACE: Probing → Trust Exploitation → Rights Escalation → Account Spoofing →
+//         Concealment & Persistence → Exfiltration & Lateral Movement
 
-export const strideFindingCounts = {
-  S: { label: "Spoofing", count: 3, severity: "High" },
-  T: { label: "Tampering", count: 1, severity: "Low" },
-  R: { label: "Repudiation", count: 3, severity: "Critical" },
-  I: { label: "Information disclosure", count: 4, severity: "Critical" },
-  D: { label: "Denial of service", count: 1, severity: "Medium" },
-  E: { label: "Elevation of privilege", count: 5, severity: "Critical" },
+export const ptraceFindingCounts = {
+  P: {
+    label: "Probing (Reconnaissance & Discovery)",
+    count: 3,
+    severity: "Medium",
+    question: "Is the attacker mapping accounts, groups, or trust relationships before acting?",
+  },
+  T: {
+    label: "Trust Exploitation",
+    count: 2,
+    severity: "High",
+    question: "Is a trust relationship being abused rather than a credential?",
+  },
+  R: {
+    label: "Rights Escalation",
+    count: 4,
+    severity: "Critical",
+    question: "Can this identity get more than it started with?",
+  },
+  A: {
+    label: "Account Spoofing / Assumption",
+    count: 2,
+    severity: "Critical",
+    question: "Can someone become this identity?",
+  },
+  C: {
+    label: "Concealment & Persistence",
+    count: 2,
+    severity: "High",
+    question: "Can the attacker keep access without being noticed?",
+  },
+  E: {
+    label: "Exfiltration & Lateral Movement",
+    count: 2,
+    severity: "Critical",
+    question: "What can this identity now reach, and what does it enable next?",
+  },
 };
 
+/** @deprecated use ptraceFindingCounts */
+export const traceFindingCounts = ptraceFindingCounts;
+/** @deprecated use ptraceFindingCounts */
+export const strideFindingCounts = ptraceFindingCounts;
+
 export const mitreFindings = [
-  { id: "mf-001", technique: "T1078", name: "Valid Accounts", tactic: "Initial Access", strideCategory: "S", identityId: "id-005", identityName: "alice.brooks", description: "Departed user still has live AWS credentials after Workday termination", severity: "Critical", triggeredAt: "2026-07-28T09:12:00Z" },
-  { id: "mf-002", technique: "T1548.002", name: "Abuse Elevation Control Mechanism", tactic: "Privilege Escalation", strideCategory: "E", identityId: "id-001", identityName: "jane.doe", description: "SSM session to EC2 instance profile escalates to account-root-admin", severity: "Critical", triggeredAt: "2026-07-31T08:00:00Z" },
-  { id: "mf-003", technique: "T1078.004", name: "Cloud Accounts", tactic: "Defense Evasion", strideCategory: "R", identityId: "id-006", identityName: "raj.patel", description: "Terminated engineer principal still authenticates to GCP after Okta deprovision", severity: "Critical", triggeredAt: "2026-07-22T14:40:00Z" },
-  { id: "mf-004", technique: "T1078.004", name: "Cloud Accounts", tactic: "Defense Evasion", strideCategory: "R", identityId: "id-104", identityName: "svc-orphaned-etl", description: "Orphaned service account with no owner creates repudiation risk", severity: "Critical", triggeredAt: "2026-07-10T03:00:00Z" },
-  { id: "mf-005", technique: "T1552.001", name: "Credentials in Files", tactic: "Credential Access", strideCategory: "I", identityId: "id-003", identityName: "priya.sharma", description: "Workload identity on data-pipeline-vm reaches data-admin with iam:*", severity: "Critical", triggeredAt: "2026-07-30T11:20:00Z" },
-  { id: "mf-006", technique: "T1530", name: "Data from Cloud Storage Object", tactic: "Collection", strideCategory: "I", identityId: "id-104", identityName: "svc-orphaned-etl", description: "Orphaned ETL SA can read raw PII from GCS", severity: "Critical", triggeredAt: "2026-07-10T03:05:00Z" },
-  { id: "mf-007", technique: "T1548", name: "Abuse Elevation Control Mechanism", tactic: "Privilege Escalation", strideCategory: "E", identityId: "id-003", identityName: "priya.sharma", description: "GCE OS Login path binds to data-admin role", severity: "High", triggeredAt: "2026-07-30T11:21:00Z" },
-  { id: "mf-008", technique: "T1078", name: "Valid Accounts", tactic: "Initial Access", strideCategory: "S", identityId: "id-001", identityName: "jane.doe", description: "Okta group AWS-PowerUsers grants broad IAM simulate hits on production roles", severity: "High", triggeredAt: "2026-07-29T16:10:00Z" },
-  { id: "mf-009", technique: "T1098", name: "Account Manipulation", tactic: "Persistence", strideCategory: "E", identityId: "id-002", identityName: "mark.chen", description: "kubectl exec into GKE pod assumes cluster-admin via workload identity", severity: "High", triggeredAt: "2026-07-28T16:00:00Z" },
-  { id: "mf-010", technique: "T1550", name: "Use Alternate Authentication Material", tactic: "Defense Evasion", strideCategory: "S", identityId: "id-005", identityName: "alice.brooks", description: "Stale Azure token used against finance Key Vault after HR termination", severity: "High", triggeredAt: "2026-07-25T09:00:00Z" },
-  { id: "mf-011", technique: "T1087", name: "Account Discovery", tactic: "Discovery", strideCategory: "I", identityId: "id-002", identityName: "mark.chen", description: "Repeated IAM enumeration from devops workstation against prod accounts", severity: "Medium", triggeredAt: "2026-07-27T11:00:00Z" },
-  { id: "mf-012", technique: "T1526", name: "Cloud Service Discovery", tactic: "Discovery", strideCategory: "I", identityId: "id-007", identityName: "sara.jones", description: "Unusual ListBuckets volume from new joiner outside assigned OU", severity: "Medium", triggeredAt: "2026-07-26T13:30:00Z" },
-  { id: "mf-013", technique: "T1496", name: "Resource Hijacking", tactic: "Impact", strideCategory: "D", identityId: "id-004", identityName: "tom.walker", description: "Burst of KMS Decrypt calls outside normal review hours", severity: "Medium", triggeredAt: "2026-07-24T02:15:00Z" },
-  { id: "mf-014", technique: "T1082", name: "System Information Discovery", tactic: "Discovery", strideCategory: "T", identityId: "id-007", identityName: "sara.jones", description: "Low-volume metadata probing on payments-logs bucket", severity: "Low", triggeredAt: "2026-07-23T10:00:00Z" },
-  { id: "mf-015", technique: "T1199", name: "Trusted Relationship", tactic: "Initial Access", strideCategory: "S", identityId: "id-004", identityName: "tom.walker", description: "Cross-account AssumeRole denied attempts from security audit role", severity: "Low", triggeredAt: "2026-07-21T15:45:00Z" },
+  { id: "mf-001", technique: "T1078", name: "Valid Accounts", tactic: "Initial Access", ptraceCategory: "A", identityId: "id-005", identityName: "alice.brooks", description: "Departed user still has live AWS credentials after Workday termination", severity: "Critical", triggeredAt: "2026-07-28T09:12:00Z" },
+  { id: "mf-002", technique: "T1548.002", name: "Abuse Elevation Control Mechanism", tactic: "Privilege Escalation", ptraceCategory: "R", identityId: "id-001", identityName: "jane.doe", description: "SSM session to EC2 instance profile escalates to account-root-admin", severity: "Critical", triggeredAt: "2026-07-31T08:00:00Z" },
+  { id: "mf-003", technique: "T1078.004", name: "Cloud Accounts", tactic: "Defense Evasion", ptraceCategory: "A", identityId: "id-006", identityName: "raj.patel", description: "Terminated engineer principal still authenticates to GCP after Okta deprovision", severity: "Critical", triggeredAt: "2026-07-22T14:40:00Z" },
+  { id: "mf-004", technique: "T1078.004", name: "Cloud Accounts", tactic: "Defense Evasion", ptraceCategory: "C", identityId: "id-104", identityName: "svc-orphaned-etl", description: "Orphaned service account with no owner creates repudiation risk", severity: "Critical", triggeredAt: "2026-07-10T03:00:00Z" },
+  { id: "mf-005", technique: "T1552.001", name: "Credentials in Files", tactic: "Credential Access", ptraceCategory: "R", identityId: "id-003", identityName: "priya.sharma", description: "Workload identity on data-pipeline-vm reaches data-admin with iam:*", severity: "Critical", triggeredAt: "2026-07-30T11:20:00Z" },
+  { id: "mf-006", technique: "T1530", name: "Data from Cloud Storage Object", tactic: "Collection", ptraceCategory: "E", identityId: "id-104", identityName: "svc-orphaned-etl", description: "Orphaned ETL SA can read raw PII from GCS", severity: "Critical", triggeredAt: "2026-07-10T03:05:00Z" },
+  { id: "mf-007", technique: "T1548", name: "Abuse Elevation Control Mechanism", tactic: "Privilege Escalation", ptraceCategory: "R", identityId: "id-003", identityName: "priya.sharma", description: "GCE OS Login path binds to data-admin role", severity: "High", triggeredAt: "2026-07-30T11:21:00Z" },
+  { id: "mf-008", technique: "T1078", name: "Valid Accounts", tactic: "Initial Access", ptraceCategory: "R", identityId: "id-001", identityName: "jane.doe", description: "Okta group AWS-PowerUsers grants broad IAM simulate hits on production roles", severity: "High", triggeredAt: "2026-07-29T16:10:00Z" },
+  { id: "mf-009", technique: "T1098", name: "Account Manipulation", tactic: "Persistence", ptraceCategory: "C", identityId: "id-002", identityName: "mark.chen", description: "kubectl exec into GKE pod assumes cluster-admin via workload identity", severity: "High", triggeredAt: "2026-07-28T16:00:00Z" },
+  { id: "mf-010", technique: "T1550", name: "Use Alternate Authentication Material", tactic: "Defense Evasion", ptraceCategory: "T", identityId: "id-005", identityName: "alice.brooks", description: "Stale Azure token used against finance Key Vault after HR termination", severity: "High", triggeredAt: "2026-07-25T09:00:00Z" },
+  { id: "mf-011", technique: "T1087", name: "Account Discovery", tactic: "Discovery", ptraceCategory: "P", identityId: "id-002", identityName: "mark.chen", description: "Repeated IAM enumeration from devops workstation against prod accounts", severity: "Medium", triggeredAt: "2026-07-27T11:00:00Z" },
+  { id: "mf-012", technique: "T1526", name: "Cloud Service Discovery", tactic: "Discovery", ptraceCategory: "P", identityId: "id-007", identityName: "sara.jones", description: "Unusual ListBuckets volume from new joiner outside assigned OU", severity: "Medium", triggeredAt: "2026-07-26T13:30:00Z" },
+  { id: "mf-013", technique: "T1496", name: "Resource Hijacking", tactic: "Impact", ptraceCategory: "E", identityId: "id-004", identityName: "tom.walker", description: "Burst of KMS Decrypt calls outside normal review hours", severity: "Medium", triggeredAt: "2026-07-24T02:15:00Z" },
+  { id: "mf-014", technique: "T1082", name: "System Information Discovery", tactic: "Discovery", ptraceCategory: "P", identityId: "id-007", identityName: "sara.jones", description: "Low-volume metadata probing on payments-logs bucket", severity: "Low", triggeredAt: "2026-07-23T10:00:00Z" },
+  { id: "mf-015", technique: "T1199", name: "Trusted Relationship", tactic: "Initial Access", ptraceCategory: "T", identityId: "id-004", identityName: "tom.walker", description: "Cross-account AssumeRole denied attempts from security audit role", severity: "Low", triggeredAt: "2026-07-21T15:45:00Z" },
 ];
+
+// Back-compat aliases for older field names
+mitreFindings.forEach(f => {
+  f.traceCategory = f.ptraceCategory;
+  f.strideCategory = f.ptraceCategory;
+});
 
 // ─── Access Reviews ──────────────────────────────────────────────────────────
 
 export const reviewCampaigns = [
   {
     id: "camp-001",
-    name: "Q3 2026 Payments Access Review",
-    scope: "payments",
+    name: "Identities Access Review",
+    scope: "identities",
     reviewer: "tom.walker",
+    reviewers: ["tom.walker", "priya.sharma", "sara.jones"],
     dueDate: "2026-08-15",
     totalItems: 22,
     approvedItems: 10,
     revokedItems: 4,
     pendingItems: 8,
     status: "in_progress",
-    completionPct: 73,
+    completionPct: 64,
   },
   {
     id: "camp-002",
     name: "Data Pipeline Quarterly Attestation",
     scope: "data-pipeline",
     reviewer: "priya.sharma",
+    reviewers: ["priya.sharma"],
     dueDate: "2026-08-30",
     totalItems: 14,
     approvedItems: 0,
@@ -823,12 +868,16 @@ export const reviewCampaigns = [
 export const reviewItems = [
   { id: "ri-001", campaignId: "camp-001", identityName: "jane.doe", resource: "iam://account-root-admin", accessType: "Shadow", riskBand: "Catastrophic", owner: "jane.doe", decision: "pending", shadowAdmin: true },
   { id: "ri-002", campaignId: "camp-001", identityName: "alice.brooks", resource: "s3://finance-audit-logs", accessType: "Shadow", riskBand: "Catastrophic", owner: null, decision: "pending", shadowAdmin: false },
-  { id: "ri-003", campaignId: "camp-001", identityName: "svc-payments-api", resource: "dynamodb://payments-table", accessType: "Indirect", riskBand: "Unacceptable", owner: "jane.doe", decision: "approved", shadowAdmin: false },
-  { id: "ri-004", campaignId: "camp-001", identityName: "svc-old-payments-worker", resource: "rds://payments-db-prod", accessType: "Shadow", riskBand: "Catastrophic", owner: null, decision: "pending", shadowAdmin: false },
-  { id: "ri-005", campaignId: "camp-001", identityName: "sara.jones", resource: "s3://payments-logs", accessType: "Direct", riskBand: "Acceptable", owner: "sara.jones", decision: "approved", shadowAdmin: false },
-  { id: "ri-006", campaignId: "camp-001", identityName: "svc-billing-sync", resource: "rds://payments-db-prod", accessType: "Indirect", riskBand: "Undesirable", owner: "jane.doe", decision: "revoked", shadowAdmin: false },
-  { id: "ri-007", campaignId: "camp-001", identityName: "jane.doe", resource: "rds://payments-db-prod", accessType: "Indirect", riskBand: "Unacceptable", owner: "jane.doe", decision: "approved", shadowAdmin: false },
-  { id: "ri-008", campaignId: "camp-001", identityName: "alice.brooks", resource: "iam://finance-auditor-role", accessType: "Direct", riskBand: "Catastrophic", owner: null, decision: "pending", shadowAdmin: false },
+  { id: "ri-003", campaignId: "camp-001", identityName: "svc-payments-api", resource: "dynamodb://payments-table", accessType: "Indirect", riskBand: "Unacceptable", owner: "jane.doe", decision: "pending", shadowAdmin: false },
+  { id: "ri-004", campaignId: "camp-001", identityName: "svc-old-payments-worker", resource: "rds://payments-db-prod", accessType: "Shadow", riskBand: "Unacceptable", owner: null, decision: "pending", shadowAdmin: false },
+  { id: "ri-005", campaignId: "camp-001", identityName: "mark.chen", resource: "eks://payments-cluster", accessType: "Indirect", riskBand: "Undesirable", owner: "mark.chen", decision: "pending", shadowAdmin: false },
+  { id: "ri-006", campaignId: "camp-001", identityName: "priya.sharma", resource: "gcs://data-lake-raw", accessType: "Shadow", riskBand: "Undesirable", owner: "priya.sharma", decision: "pending", shadowAdmin: false },
+  { id: "ri-007", campaignId: "camp-001", identityName: "tom.walker", resource: "kms://prod-key-ring", accessType: "Direct", riskBand: "Acceptable", owner: "tom.walker", decision: "pending", shadowAdmin: false },
+  { id: "ri-008", campaignId: "camp-001", identityName: "sara.jones", resource: "s3://payments-logs", accessType: "Direct", riskBand: "Acceptable", owner: "sara.jones", decision: "pending", shadowAdmin: false },
+  { id: "ri-009", campaignId: "camp-001", identityName: "svc-billing-sync", resource: "rds://payments-db-prod", accessType: "Indirect", riskBand: "Undesirable", owner: "jane.doe", decision: "revoked", shadowAdmin: false },
+  { id: "ri-010", campaignId: "camp-001", identityName: "svc-finance-reporter", resource: "s3://finance-reports", accessType: "Direct", riskBand: "Acceptable", owner: null, decision: "revoked", shadowAdmin: false },
+  { id: "ri-011", campaignId: "camp-001", identityName: "raj.patel", resource: "iam://legacy-power-user", accessType: "Direct", riskBand: "Unacceptable", owner: null, decision: "revoked", shadowAdmin: false },
+  { id: "ri-012", campaignId: "camp-001", identityName: "chris.huang", resource: "s3://archive-cold", accessType: "Direct", riskBand: "Desirable", owner: "chris.huang", decision: "revoked", shadowAdmin: false },
 ];
 
 // ─── JML / Lifecycle Events ──────────────────────────────────────────────────
@@ -878,6 +927,11 @@ export const dashboardSummary = {
   totalIdentities: identities.length,
   humanIdentities: identities.filter(i => i.type === "human").length,
   serviceIdentities: identities.filter(i => i.type === "service").length,
+  keysAndSecrets: [...new Set(
+    accessPaths
+      .map(p => p.resource)
+      .filter(r => /secret|kms:\/\/|key|kv-/i.test(r || ""))
+  )].length,
   orphanedAccounts: orphanedAccounts.length,
   shadowPaths: accessPaths.filter(p => p.accessType === "Shadow").length,
   shadowAdminCount: 6,
