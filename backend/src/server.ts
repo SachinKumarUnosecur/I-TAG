@@ -14,6 +14,8 @@ import {
   createAccessService,
   createExposureService,
   createImpactService,
+  createRiskService,
+  datasetLifecycleDirectory,
   fixedClock,
   memoizedAccessOwner,
   memoizedExposureOwnership,
@@ -26,6 +28,7 @@ import {
   DEFAULT_LINEAGE_POLICY,
   DEFAULT_ORPHAN_RULES,
   DEFAULT_OWNERSHIP_POLICY,
+  DEFAULT_RISK_POLICY,
   type AccountabilityPolicy,
   type Clock,
 } from '@itag/core';
@@ -38,6 +41,7 @@ import { createImpactRouter } from './routes/impact.js';
 import { createOffboardingRouter } from './routes/offboarding.js';
 import { createLineageRouter } from './routes/lineage.js';
 import { createOwnershipRouter } from './routes/ownership.js';
+import { createRiskProfileRouter } from './routes/risk-profile.js';
 
 /** Pin `ITAG_NOW` to keep a rehearsed demo's day counts identical on any date. */
 function resolveClock(): Clock {
@@ -141,13 +145,43 @@ const exposureService = createExposureService({
 // whole assessment union rather than a number — research §4.2 makes "this module
 // authors no 0-100 score" structural, and a port typed as `number` would have made
 // the copy indistinguishable from an original.
+// Hoisted out of the two services that read them so both share one cache. Ownership
+// classification runs an accountability traversal per identity and exposure scoring runs
+// the model over a full path inventory, while Blast Radius touches every affected identity
+// across seven candidates and Risk Profile touches all 127 — two caches would mean the same
+// verdicts computed twice, and two *instances* would make the byte-identity guards weaker
+// than they read.
+const exposureOwnershipPort = memoizedExposureOwnership(ownershipService);
+const impactExposurePort = memoizedImpactExposure(exposureService);
+
 const impactService = createImpactService({
   graphSource,
   clock,
   access: accessService,
-  ownership: memoizedExposureOwnership(ownershipService),
-  exposure: memoizedImpactExposure(exposureService),
+  ownership: exposureOwnershipPort,
+  exposure: impactExposurePort,
   policy: accountabilityPolicy,
+});
+
+// Identity Risk Profile. The join, and the only module in the engine that deliberately
+// ranks nothing: `docs/identity-risk-profile-research.md` §7.2 reaches verdict (c) because
+// sixteen of the source PRD composite's top twenty rows were already surfaced by the two
+// shipped rankers, and fusing them dropped `svc-vpn-legacy` from ownership queue rank 1 to
+// composite rank 9. It reads both ranking authorities through the *same* ports Blast Radius
+// uses — the values are quotations, asserted byte-identical in `risk/service.test.ts` — and
+// reads `ITAG.md` §F9's and §F10's lifecycle tables through a directory of their own,
+// because a control-plane audit stream and an entitlement register are other systems on
+// other clocks.
+const riskService = createRiskService({
+  graphSource,
+  clock,
+  access: accessService,
+  ownership: exposureOwnershipPort,
+  exposure: impactExposurePort,
+  lifecycle: datasetLifecycleDirectory(dataset),
+  hr,
+  policy: DEFAULT_RISK_POLICY,
+  accountabilityPolicy,
 });
 
 const sweepService = createSweepService({
@@ -182,6 +216,7 @@ app.use('/api/lineage', createLineageRouter(lineageService));
 app.use('/api/access', createAccessRouter(accessService));
 app.use('/api/exposure', createExposureRouter(exposureService));
 app.use('/api/impact', createImpactRouter(impactService));
+app.use('/api/risk-profile', createRiskProfileRouter(riskService));
 app.use('/api/offboarding-sweep', createOffboardingRouter(sweepService));
 app.use('/api/findings', createFindingsRouter(dispositionService));
 
