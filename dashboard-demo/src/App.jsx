@@ -18,7 +18,7 @@ const NAV = [
     section: 'Traceability',
     items: [
       { path: '/', label: 'Overview', icon: 'home' },
-      { path: '/access-discovery', label: 'Access Discovery', icon: 'search' },
+      { path: '/access-discovery', label: 'Identity risk', icon: 'activity' },
       { path: '/delegation-chain', label: 'Delegation Chain', icon: 'gitBranch' },
       { path: '/exposure-map', label: 'Exposure Map', icon: 'eye' },
       { path: '/risk-profiles', label: 'Identity Risk Profile', icon: 'activity' },
@@ -91,7 +91,7 @@ function Sidebar({ location, navigate }) {
 
 const PAGE_TITLES = {
   '/': 'Overview',
-  '/access-discovery': 'Access Discovery',
+  '/access-discovery': 'Identity risk',
   '/delegation-chain': 'Delegation Chain',
   '/exposure-map': 'Exposure Map',
   '/risk-profiles': 'Identity Risk Profile',

@@ -1,309 +1,417 @@
-import { useState } from 'react';
-import { Icon, AccessBadge, SeverityBadge, TypeChip, StatusChip, SlidePanel, HopChain } from './ui';
-import { accessPaths, identities, shadowAdmins, dataSources } from '../data/mockData';
+import { useMemo, useState } from 'react';
+import { Icon, SlidePanel } from './ui';
 
-const ALL = 'All';
+const VIEW_STATES = ['Populated', 'Loading', 'Empty', 'Error'];
+
+const IDENTITY_ROWS = [
+  {
+    id: 'jane.doe',
+    name: 'jane.doe',
+    initials: 'JD',
+    avatar: '#3B5BDB',
+    type: 'Human',
+    risk: 91,
+    hopPaths: 2,
+    owner: 'sarah.chen',
+    ownerTag: 'Departed',
+    lastUpdated: '2 hours ago',
+    needsAttention: true,
+  },
+  {
+    id: 'svc-billing',
+    name: 'svc-billing',
+    initials: 'SB',
+    avatar: '#7C3AED',
+    type: 'Service',
+    risk: 76,
+    hopPaths: 1,
+    owner: 'mike.torres',
+    ownerTag: null,
+    lastUpdated: '1 day ago',
+    needsAttention: true,
+    subtitle: 'Service account',
+  },
+  {
+    id: 'agent-pipeline-ci',
+    name: 'agent-pipeline-ci',
+    initials: 'AI',
+    avatar: '#0D9488',
+    type: 'AI agent',
+    risk: 70,
+    hopPaths: 1,
+    owner: null,
+    ownerTag: 'Unassigned',
+    lastUpdated: '3 days ago',
+    needsAttention: true,
+  },
+  {
+    id: 'mike.torres',
+    name: 'mike.torres',
+    initials: 'MT',
+    avatar: '#EA580C',
+    type: 'Human',
+    risk: 42,
+    hopPaths: 0,
+    owner: 'mike.torres',
+    ownerTag: null,
+    lastUpdated: '1 week ago',
+    needsAttention: false,
+  },
+  {
+    id: 'priya.sharma',
+    name: 'priya.sharma',
+    initials: 'PS',
+    avatar: '#2563EB',
+    type: 'Human',
+    risk: 38,
+    hopPaths: 0,
+    owner: 'priya.sharma',
+    ownerTag: null,
+    lastUpdated: '2 weeks ago',
+    needsAttention: false,
+  },
+  {
+    id: 'svc-monitoring',
+    name: 'svc-monitoring',
+    initials: 'SM',
+    avatar: '#64748B',
+    type: 'Service',
+    risk: 18,
+    hopPaths: 0,
+    owner: 'mark.chen',
+    ownerTag: null,
+    lastUpdated: '3 weeks ago',
+    needsAttention: false,
+    subtitle: 'Service account',
+  },
+];
+
+function riskMeta(score) {
+  if (score >= 80) return { label: 'Critical', tone: 'critical' };
+  if (score >= 60) return { label: 'High', tone: 'high' };
+  if (score >= 40) return { label: 'Moderate', tone: 'moderate' };
+  return { label: 'Low', tone: 'low' };
+}
+
+function SummaryCard({ icon, tone, value, label, footer }) {
+  return (
+    <div className="ir-summary-card">
+      <div className={`ir-summary-icon ir-summary-icon--${tone}`}>
+        <Icon name={icon} size={16} />
+      </div>
+      <div className="ir-summary-value">{value}</div>
+      <div className="ir-summary-label">{label}</div>
+      <div className="ir-summary-footer">{footer}</div>
+    </div>
+  );
+}
+
+function RiskCell({ score }) {
+  const meta = riskMeta(score);
+  return (
+    <div className={`ir-risk ir-risk--${meta.tone}`}>
+      <div className="ir-risk-text">
+        <span className="ir-risk-score">{score}</span>
+        <span className="ir-risk-label">{meta.label}</span>
+      </div>
+      <div className="ir-risk-track">
+        <div className="ir-risk-fill" style={{ width: `${score}%` }} />
+      </div>
+    </div>
+  );
+}
 
 export default function AccessDiscovery() {
-  const [typeFilter, setTypeFilter] = useState(ALL);
+  const [tab, setTab] = useState('all');
   const [search, setSearch] = useState('');
-  const [providerFilter, setProviderFilter] = useState(ALL);
+  const [viewState, setViewState] = useState('Populated');
   const [selected, setSelected] = useState(null);
-  const [showShadowAdmins, setShowShadowAdmins] = useState(false);
 
-  const filtered = accessPaths.filter(p => {
-    const matchType = typeFilter === ALL || p.accessType === typeFilter;
-    const matchSearch = !search || p.identityName.includes(search) || p.resource.includes(search) || p.mechanism.includes(search);
-    const matchProvider = providerFilter === ALL || p.cloudProvider === providerFilter;
-    return matchType && matchSearch && matchProvider;
-  });
+  const counts = useMemo(() => ({
+    all: IDENTITY_ROWS.length,
+    attention: IDENTITY_ROWS.filter(r => r.needsAttention).length,
+    human: IDENTITY_ROWS.filter(r => r.type === 'Human').length,
+    service: IDENTITY_ROWS.filter(r => r.type === 'Service').length,
+    agent: IDENTITY_ROWS.filter(r => r.type === 'AI agent').length,
+  }), []);
 
-  const shadowCount = accessPaths.filter(p => p.accessType === 'Shadow').length;
-  const shadowAdminCount = shadowAdmins.length;
+  const tabs = [
+    { id: 'all', label: `All (${counts.all})` },
+    { id: 'attention', label: `Needs attention (${counts.attention})` },
+    { id: 'human', label: `Human (${counts.human})` },
+    { id: 'service', label: `Service (${counts.service})` },
+    { id: 'agent', label: `AI agent (${counts.agent})` },
+  ];
+
+  const filtered = useMemo(() => {
+    return IDENTITY_ROWS.filter(row => {
+      const matchTab =
+        tab === 'all' ||
+        (tab === 'attention' && row.needsAttention) ||
+        (tab === 'human' && row.type === 'Human') ||
+        (tab === 'service' && row.type === 'Service') ||
+        (tab === 'agent' && row.type === 'AI agent');
+      const q = search.trim().toLowerCase();
+      const matchSearch = !q || row.name.includes(q) || (row.owner || '').includes(q);
+      return matchTab && matchSearch;
+    });
+  }, [tab, search]);
+
+  const avgRisk = (
+    IDENTITY_ROWS.reduce((sum, r) => sum + r.risk, 0) / IDENTITY_ROWS.length
+  ).toFixed(1);
+  const hopTotal = IDENTITY_ROWS.reduce((sum, r) => sum + r.hopPaths, 0);
 
   return (
     <div className="page-content">
       <div className="page-header">
         <div>
-          <div className="page-title">Access Discovery</div>
+          <div className="page-title">Identity risk</div>
           <div className="page-subtitle">
-            Access paths correlated from AWS, GCP, Azure, Okta, Google Workspace, and Workday HR APIs. Shadow Access is resource-mediated privilege escalation not visible in native IAM tools.
+            Composite risk scores across every identity, weighted by exposure, hop-access presence, credential hygiene, and ownership status.
           </div>
+        </div>
+        <div className="ir-page-actions">
+          <button type="button" className="btn btn-ghost">
+            <Icon name="download" size={13} />
+            Export
+          </button>
+          <button type="button" className="btn btn-brand">
+            <Icon name="plus" size={13} />
+            Start review campaign
+          </button>
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>
-        {dataSources.map(src => (
-          <div key={src.id} style={{
-            display: 'flex', alignItems: 'center', gap: 6,
-            padding: '5px 10px', borderRadius: 6,
-            background: 'var(--surface)', border: '1px solid var(--border)',
-            fontSize: 11,
-          }}>
-            <span style={{ width: 6, height: 6, borderRadius: 50, background: 'var(--color-desirable)', flexShrink: 0 }} />
-            <span style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{src.provider}</span>
-            <span style={{ color: 'var(--text-tertiary)' }}>{src.category}</span>
-            <span style={{ color: 'var(--text-tertiary)', fontFamily: 'monospace', fontSize: 10 }}>
-              {src.apis.length} APIs
-            </span>
-          </div>
-        ))}
+      <div className="ir-summary-grid">
+        <SummaryCard
+          icon="user"
+          tone="blue"
+          value="4,812"
+          label="Total identities"
+          footer={<span className="ir-trend ir-trend--up">↑ 3.1% this month</span>}
+        />
+        <SummaryCard
+          icon="alertTriangle"
+          tone="red"
+          value={String(counts.attention)}
+          label="Need attention today"
+          footer={<span className="ir-pill ir-pill--danger">Owner gap + active hop path</span>}
+        />
+        <SummaryCard
+          icon="clock"
+          tone="amber"
+          value={avgRisk}
+          label="Average risk score"
+          footer={<span className="ir-trend ir-trend--down">↓ 4 pts vs last week</span>}
+        />
+        <SummaryCard
+          icon="sparkles"
+          tone="violet"
+          value={String(hopTotal)}
+          label="Hop-access paths found"
+          footer={<span className="ir-pill ir-pill--danger">The differentiator metric</span>}
+        />
       </div>
 
-      {/* Stats row */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 14, flexWrap: 'wrap' }}>
-        {[
-          { label: 'Total paths', value: accessPaths.length, color: 'var(--text-primary)' },
-          { label: 'Direct Access', value: accessPaths.filter(p => p.accessType === 'Direct').length, color: 'var(--color-direct)' },
-          { label: 'Indirect Access', value: accessPaths.filter(p => p.accessType === 'Indirect').length, color: 'var(--color-indirect)' },
-          { label: 'Shadow Access', value: shadowCount, color: 'var(--color-hop)' },
-        ].map(s => (
-          <div key={s.label} className="stat-card" style={{ flex: '1 1 90px', minWidth: 80 }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: s.color, letterSpacing: -0.5 }}>{s.value}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 3 }}>{s.label}</div>
-          </div>
-        ))}
-
-        {/* Shadow Admins — always prominently shown */}
-        <div
-          className="stat-card"
-          style={{
-            flex: '1 1 140px', cursor: 'pointer',
-            background: showShadowAdmins ? 'rgba(226,75,74,0.05)' : 'var(--surface)',
-            borderColor: showShadowAdmins ? 'rgba(226,75,74,0.25)' : 'var(--border)',
-          }}
-          onClick={() => setShowShadowAdmins(!showShadowAdmins)}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-            <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-hop)', letterSpacing: -0.5 }}>{shadowAdminCount}</div>
-            <div style={{ background: 'rgba(226,75,74,0.1)', color: 'var(--color-hop)', fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.4px' }}>Shadow Admins</div>
-          </div>
-          <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Identities with effective admin access via shadow paths</div>
-          <div style={{ fontSize: 11, color: 'var(--color-hop)', marginTop: 4, fontWeight: 500 }}>{showShadowAdmins ? 'Hide details ↑' : 'View details →'}</div>
-        </div>
-      </div>
-
-      {/* Shadow Admins panel — expanded on click */}
-      {showShadowAdmins && (
-        <div style={{
-          marginBottom: 16, padding: 0,
-          background: 'var(--surface)', border: '1px solid rgba(226,75,74,0.2)',
-          borderRadius: 12, overflow: 'hidden', boxShadow: 'var(--shadow-sm)',
-        }}>
-          <div style={{
-            padding: '12px 18px', background: 'rgba(226,75,74,0.05)',
-            borderBottom: '1px solid rgba(226,75,74,0.12)',
-            display: 'flex', alignItems: 'center', gap: 10,
-          }}>
-            <div style={{ width: 8, height: 8, background: 'var(--color-hop)', borderRadius: '50%' }} />
-            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-hop)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Shadow admins</div>
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 4 }}>— identities with effective admin-level access gained through shadow paths. Not visible in native IAM tools (AWS IAM Analyzer, GCP Policy Analyzer, Azure PIM).</div>
-          </div>
-          {shadowAdmins.map((sa, i) => (
-            <div key={sa.identityId} style={{
-              padding: '16px 18px',
-              borderBottom: i < shadowAdmins.length - 1 ? '1px solid rgba(226,75,74,0.08)' : 'none',
-              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16,
-            }}>
-              {/* Identity */}
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>{sa.identityName}</div>
-                  <span style={{ fontSize: 10, fontWeight: 700, background: 'rgba(226,75,74,0.12)', color: 'var(--color-hop)', padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.4px' }}>Shadow Admin</span>
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 3 }}>{sa.department} · {sa.cloudProvider}</div>
-                <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
-                  Visible to native tools: <strong style={{ color: 'var(--color-hop)' }}>No</strong>
-                </div>
-              </div>
-              {/* Effective admin role */}
-              <div>
-                <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Effective admin role</div>
-                <div style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--color-hop)', fontWeight: 600, marginBottom: 4 }}>{sa.adminRoleLabel}</div>
-                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 6 }}>
-                  {sa.effectivePermissions.map(p => (
-                    <span key={p} style={{ fontSize: 10, fontFamily: 'monospace', background: 'rgba(226,75,74,0.08)', color: 'var(--color-hop)', padding: '1px 5px', borderRadius: 3 }}>{p}</span>
-                  ))}
-                </div>
-                <div style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>Pivot: <span style={{ fontFamily: 'monospace', color: 'var(--text-secondary)' }}>{sa.pivotResource}</span></div>
-              </div>
-              {/* Path + risk note */}
-              <div>
-                <div style={{ fontSize: 10, color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Shadow path</div>
-                <div style={{ fontSize: 11, fontFamily: 'monospace', color: 'var(--text-secondary)', marginBottom: 6, lineHeight: 1.5, wordBreak: 'break-all' }}>
-                  {sa.shadowPath.split(' → ').map((seg, idx, arr) => (
-                    <span key={idx}>
-                      {idx > 0 && <span style={{ color: 'var(--color-hop)', margin: '0 3px' }}>→</span>}
-                      <span style={{ color: idx === arr.length - 1 ? 'var(--color-hop)' : 'var(--text-secondary)', fontWeight: idx === arr.length - 1 ? 700 : 400 }}>{seg}</span>
-                    </span>
-                  ))}
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>{sa.riskNote}</div>
-              </div>
-            </div>
+      <div className="ir-toolbar">
+        <div className="ir-tabs">
+          {tabs.map(t => (
+            <button
+              key={t.id}
+              type="button"
+              className={`ir-tab ${tab === t.id ? 'active' : ''}`}
+              onClick={() => setTab(t.id)}
+            >
+              {t.label}
+            </button>
           ))}
+        </div>
+        <div className="ir-toolbar-right">
+          <div className="search-input ir-filter-search">
+            <Icon name="search" size={14} color="var(--text-tertiary)" />
+            <input
+              placeholder="Filter by name..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          <button type="button" className="btn btn-ghost">
+            <Icon name="filter" size={13} />
+            Filters
+          </button>
+        </div>
+      </div>
+
+      <div className="ir-state-bar">
+        {VIEW_STATES.map(state => (
+          <button
+            key={state}
+            type="button"
+            className={`ir-state-chip ${viewState === state ? 'active' : ''}`}
+            onClick={() => setViewState(state)}
+          >
+            {state}
+          </button>
+        ))}
+      </div>
+
+      {viewState === 'Loading' && (
+        <div className="ir-state-panel">
+          <div className="ir-spinner" />
+          <div className="ir-state-title">Loading identity risk…</div>
+          <div className="ir-state-copy">Correlating exposure, hop paths, and ownership signals.</div>
         </div>
       )}
 
-      {/* Filters */}
-      <div className="filter-bar">
-        <div className="search-input">
-          <Icon name="search" size={14} color="var(--text-tertiary)" />
-          <input placeholder="Search identity, resource, or mechanism..."
-            value={search} onChange={e => setSearch(e.target.value)} />
+      {viewState === 'Empty' && (
+        <div className="ir-state-panel">
+          <div className="ir-state-icon">
+            <Icon name="search" size={22} color="var(--text-tertiary)" />
+          </div>
+          <div className="ir-state-title">No identities match</div>
+          <div className="ir-state-copy">Try clearing filters or expanding the selected identity type.</div>
         </div>
-        {[ALL, 'Direct', 'Indirect', 'Shadow'].map(t => (
-          <button key={t}
-            className={`filter-chip ${typeFilter === t ? (t === ALL ? 'active' : `active-${t === 'Shadow' ? 'hop' : t.toLowerCase()}`) : ''}`}
-            onClick={() => setTypeFilter(t)}>
-            {t === ALL ? 'All types' : t}
+      )}
+
+      {viewState === 'Error' && (
+        <div className="ir-state-panel ir-state-panel--error">
+          <div className="ir-state-icon ir-state-icon--error">
+            <Icon name="alertTriangle" size={22} color="var(--color-hop)" />
+          </div>
+          <div className="ir-state-title">Couldn’t load identity risk</div>
+          <div className="ir-state-copy">The risk scoring service returned an error. Retry when the scan finishes.</div>
+          <button type="button" className="btn btn-ghost" onClick={() => setViewState('Populated')}>
+            <Icon name="refresh" size={13} />
+            Retry
           </button>
-        ))}
-        <select className="select-control" value={providerFilter} onChange={e => setProviderFilter(e.target.value)}>
-          {[ALL, 'AWS', 'GCP', 'Azure'].map(p => <option key={p} value={p}>{p === ALL ? 'All providers' : p}</option>)}
-        </select>
-      </div>
+        </div>
+      )}
 
-      {/* Table */}
-      <div className="table-wrapper">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Identity</th>
-              <th>Resource</th>
-              <th>Access type</th>
-              <th>Shadow admin</th>
-              <th>Pivot count</th>
-              <th>Effective permissions</th>
-              <th>Mechanism</th>
-              <th>Provider</th>
-              <th>Last confirmed</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 && (
-              <tr><td colSpan={9} style={{ textAlign: 'center', padding: 32, color: 'var(--text-tertiary)' }}>No access paths match current filters</td></tr>
-            )}
-            {filtered.map(p => (
-              <tr key={p.id}
-                className={p.accessType === 'Shadow' ? 'row-hop' : ''}
-                onClick={() => setSelected(p)}>
-                <td>
-                  <div style={{ fontWeight: 500 }}>{p.identityName}</div>
-                </td>
-                <td style={{ maxWidth: 180 }}>
-                  <div style={{ fontSize: 11.5, fontFamily: 'monospace', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 165 }} title={p.resource}>{p.resource}</div>
-                </td>
-                <td><AccessBadge type={p.accessType} /></td>
-                <td>
-                  {p.shadowAdmin
-                    ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, background: 'rgba(226,75,74,0.1)', color: 'var(--color-hop)', padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                        <Icon name="alert" size={9} color="var(--color-hop)" /> Shadow Admin
-                      </span>
-                    : <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>—</span>}
-                </td>
-                <td>
-                  <span style={{ color: p.hopCount > 0 ? 'var(--color-hop)' : 'var(--text-tertiary)', fontWeight: p.hopCount > 0 ? 700 : 400 }}>
-                    {p.hopCount || '—'}
-                  </span>
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', maxWidth: 200 }}>
-                    {p.effectivePermissions.slice(0, 2).map(perm => (
-                      <span key={perm} className="fact-pill" style={{ fontSize: 10 }}>{perm}</span>
-                    ))}
-                    {p.effectivePermissions.length > 2 && <span className="fact-pill" style={{ fontSize: 10 }}>+{p.effectivePermissions.length - 2}</span>}
-                  </div>
-                </td>
-                <td style={{ maxWidth: 180 }}>
-                  <span style={{ fontSize: 11, color: 'var(--text-secondary)', display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 165, fontFamily: 'monospace' }} title={p.mechanism}>{p.mechanism.split(' →')[0]}{p.mechanism.includes('→') ? ' →…' : ''}</span>
-                </td>
-                <td>
-                  <span className="fact-pill">{p.cloudProvider}</span>
-                </td>
-                <td style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{p.lastConfirmed}</td>
+      {viewState === 'Populated' && (
+        <div className="table-wrapper">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Identity</th>
+                <th>Type</th>
+                <th>Risk score</th>
+                <th>Hop paths</th>
+                <th>Owner</th>
+                <th>Last updated</th>
+                <th aria-label="Open" />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: 36, color: 'var(--text-tertiary)' }}>
+                    No identities match current filters
+                  </td>
+                </tr>
+              )}
+              {filtered.map(row => (
+                <tr key={row.id} onClick={() => setSelected(row)}>
+                  <td>
+                    <div className="ir-identity">
+                      <div className="ir-avatar" style={{ background: row.avatar }}>{row.initials}</div>
+                      <div>
+                        <div className="ir-identity-name">{row.name}</div>
+                        {row.needsAttention ? (
+                          <div className="ir-attention">• Needs attention</div>
+                        ) : row.subtitle ? (
+                          <div className="ir-identity-meta">{row.subtitle}</div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`ir-type ir-type--${row.type === 'AI agent' ? 'agent' : row.type.toLowerCase()}`}>
+                      {row.type}
+                    </span>
+                  </td>
+                  <td><RiskCell score={row.risk} /></td>
+                  <td>
+                    {row.hopPaths > 0 ? (
+                      <span className="ir-hop-pill">
+                        <Icon name="gitBranch" size={11} />
+                        {row.hopPaths}
+                      </span>
+                    ) : (
+                      <span className="ir-hop-zero">0</span>
+                    )}
+                  </td>
+                  <td>
+                    <div className="ir-owner">
+                      {row.owner ? <span>{row.owner}</span> : null}
+                      {row.ownerTag && (
+                        <span className={`ir-owner-tag ir-owner-tag--${row.ownerTag.toLowerCase()}`}>
+                          {row.ownerTag}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <span className="ir-updated">
+                      <Icon name="clock" size={12} color="var(--text-tertiary)" />
+                      {row.lastUpdated}
+                    </span>
+                  </td>
+                  <td>
+                    <Icon name="chevronRight" size={14} color="var(--text-tertiary)" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
-      {/* Detail panel */}
       {selected && (
         <SlidePanel
-          title={selected.resource}
-          subtitle={`${selected.identityName} · ${selected.accessType} access`}
-          onClose={() => setSelected(null)}>
-
-          {/* Shadow Admin warning */}
-          {selected.shadowAdmin && (
-            <div style={{ padding: '10px 12px', background: 'rgba(226,75,74,0.06)', border: '1px solid rgba(226,75,74,0.2)', borderRadius: 8, marginBottom: 14 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-                <Icon name="alert" size={13} color="var(--color-hop)" />
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--color-hop)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Shadow admin confirmed</span>
-              </div>
-              <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                This identity gains effective admin-level access through a shadow path. This access is <strong>not visible in native IAM tools</strong> (AWS IAM Analyzer, GCP Policy Analyzer, Azure PIM).
+          title={selected.name}
+          subtitle={`${selected.type} · risk ${selected.risk}`}
+          onClose={() => setSelected(null)}
+        >
+          {selected.needsAttention && (
+            <div className="ir-panel-alert">
+              <Icon name="alertTriangle" size={14} color="var(--color-hop)" />
+              <div>
+                <div className="ir-panel-alert-title">Needs attention</div>
+                <div className="ir-panel-alert-copy">
+                  Owner gap and/or active hop-access path elevates this identity’s composite risk.
+                </div>
               </div>
             </div>
           )}
-
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-            <AccessBadge type={selected.accessType} />
-            <span className="fact-pill">{selected.cloudProvider}</span>
-            <span className="fact-pill">{selected.resourceSensitivity} sensitivity</span>
-          </div>
-          <div className="divider" />
-          <div className="section-title">Effective permissions</div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
-            {selected.effectivePermissions.map(p => <span key={p} className="fact-pill">{p}</span>)}
-          </div>
-          <div className="section-title">Mechanism</div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)', fontFamily: 'monospace', marginBottom: 16, wordBreak: 'break-all' }}>{selected.mechanism}</div>
-          {selected.api && (
-            <>
-              <div className="divider" />
-              <div className="section-title">API evidence</div>
-              <div style={{
-                background: 'var(--surface-subtle)', border: '1px solid var(--border)',
-                borderRadius: 8, padding: '10px 12px', marginBottom: 16,
-                fontFamily: 'monospace', fontSize: 11, color: 'var(--text-secondary)',
-                display: 'flex', flexDirection: 'column', gap: 4,
-              }}>
-                {Object.entries(selected.api).map(([k, v]) => (
-                  <div key={k} style={{ display: 'flex', gap: 8 }}>
-                    <span style={{ color: 'var(--text-tertiary)', minWidth: 120 }}>{k}</span>
-                    <span style={{ color: 'var(--text-primary)', wordBreak: 'break-all' }}>
-                      {Array.isArray(v) ? v.join(', ') : typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-          {selected.hopChain && (
-            <>
-              <div className="divider" />
-              <div className="section-title" style={{ color: 'var(--color-hop)', marginBottom: 12 }}>Shadow access chain</div>
-              <HopChain steps={selected.hopChain} />
-              <div style={{ marginTop: 16, display: 'flex', gap: 8 }}>
-                <button className="btn btn-ghost">
-                  <Icon name="download" size={12} /> Export as JSON
-                </button>
-                <button className="btn btn-ghost">
-                  Copy chain as text
-                </button>
-              </div>
-            </>
-          )}
+          <div className="section-title">Risk breakdown</div>
+          <RiskCell score={selected.risk} />
           <div className="divider" />
           <div className="info-row">
-            <span className="info-row-label">Last confirmed</span>
-            <span className="info-row-value">{selected.lastConfirmed}</span>
+            <span className="info-row-label">Hop-access paths</span>
+            <span className="info-row-value">{selected.hopPaths}</span>
           </div>
           <div className="info-row">
-            <span className="info-row-label">Blocked by boundary policy</span>
-            <span className="info-row-value">{selected.blocked ? 'Yes' : 'No — live access'}</span>
+            <span className="info-row-label">Owner</span>
+            <span className="info-row-value">
+              {selected.owner || 'Unassigned'}
+              {selected.ownerTag ? ` · ${selected.ownerTag}` : ''}
+            </span>
+          </div>
+          <div className="info-row">
+            <span className="info-row-label">Last updated</span>
+            <span className="info-row-value">{selected.lastUpdated}</span>
+          </div>
+          <div className="divider" />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" className="btn btn-brand">
+              <Icon name="plus" size={12} />
+              Start review
+            </button>
+            <button type="button" className="btn btn-ghost">
+              <Icon name="download" size={12} />
+              Export
+            </button>
           </div>
         </SlidePanel>
       )}
