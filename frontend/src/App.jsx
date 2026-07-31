@@ -37,6 +37,7 @@ const DEFAULT_TABS = {
 export default function App() {
   const [authed, setAuthed] = useState(() => localStorage.getItem('aegis-authed') === '1');
   const [page, setPage] = useState('overview');
+  const [pageFading, setPageFading] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('aegis-theme') || 'dark');
   const [tabs, setTabs] = useState(DEFAULT_TABS);
   const [drawer, setDrawer] = useState({ open: false, kind: null, payload: null });
@@ -58,8 +59,13 @@ export default function App() {
   }, [authed]);
 
   const navigate = (next) => {
-    setPage(next);
-    if (mainRef.current) mainRef.current.scrollTop = 0;
+    if (next === page || pageFading) return;
+    setPageFading(true);
+    window.setTimeout(() => {
+      setPage(next);
+      if (mainRef.current) mainRef.current.scrollTop = 0;
+      setPageFading(false);
+    }, 350);
   };
 
   const setTab = (tabId) => {
@@ -88,7 +94,9 @@ export default function App() {
     );
   }
 
-  const pageClass = (id) => cn(ui.page, page !== id && 'hidden');
+  const pageClass = (id) =>
+    cn(ui.page, page === id ? 'block' : 'hidden');
+  const sectionKey = (id) => (page === id ? id : `${id}-off`);
 
   return (
     <div className={ui.shell}>
@@ -99,51 +107,51 @@ export default function App() {
       />
       <Sidebar page={page} onNavigate={navigate} sync={sync} />
 
-      <div className={ui.main} id="main" ref={mainRef}>
-        <section className={pageClass('overview')}>
+      <div className={cn(ui.main, pageFading && ui.mainFadeOut)} id="main" ref={mainRef}>
+        <section className={pageClass('overview')} key={sectionKey('overview')}>
           <OverviewPage {...pageProps} />
         </section>
-        <section className={pageClass('security')}>
+        <section className={pageClass('security')} key={sectionKey('security')}>
           <SecurityOverviewPage {...pageProps} />
         </section>
-        <section className={pageClass('threats')}>
+        <section className={pageClass('threats')} key={sectionKey('threats')}>
           <ThreatsPage {...pageProps} />
         </section>
-        <section className={pageClass('incidents')}>
+        <section className={pageClass('incidents')} key={sectionKey('incidents')}>
           <IncidentsPage {...pageProps} />
         </section>
-        <section className={pageClass('alerts')}>
+        <section className={pageClass('alerts')} key={sectionKey('alerts')}>
           <AlertsPage {...pageProps} />
         </section>
-        <section className={pageClass('vulns')}>
+        <section className={pageClass('vulns')} key={sectionKey('vulns')}>
           <VulnsPage {...pageProps} />
         </section>
-        <section className={pageClass('assets')}>
+        <section className={pageClass('assets')} key={sectionKey('assets')}>
           <AssetsPage {...pageProps} />
         </section>
-        <section className={pageClass('endpoints')}>
+        <section className={pageClass('endpoints')} key={sectionKey('endpoints')}>
           <EndpointsPage {...pageProps} />
         </section>
-        <section className={pageClass('identity')}>
+        <section className={pageClass('identity')} key={sectionKey('identity')}>
           <IdentityPage {...pageProps} />
         </section>
-        <section className={pageClass('cloud')}>
+        <section className={pageClass('cloud')} key={sectionKey('cloud')}>
           <CloudPage {...pageProps} />
         </section>
-        <section className={pageClass('compliance')}>
+        <section className={pageClass('compliance')} key={sectionKey('compliance')}>
           <CompliancePage {...pageProps} />
         </section>
-        <section className={pageClass('reports')}>
+        <section className={pageClass('reports')} key={sectionKey('reports')}>
           <ReportsPage {...pageProps} />
         </section>
-        <section className={pageClass('integrations')}>
+        <section className={pageClass('integrations')} key={sectionKey('integrations')}>
           <SettingsPage initial="Integrations" />
         </section>
-        <section className={pageClass('settings')}>
+        <section className={pageClass('settings')} key={sectionKey('settings')}>
           <SettingsPage />
         </section>
 
-        <section className={pageClass('discover')}>
+        <section className={pageClass('discover')} key={sectionKey('discover')}>
           <DiscoverPage
             {...pageProps}
             activeTab={tabs.discover}
@@ -156,19 +164,19 @@ export default function App() {
             }}
           />
         </section>
-        <section className={pageClass('trace')}>
+        <section className={pageClass('trace')} key={sectionKey('trace')}>
           <TracePage {...pageProps} activeTab={tabs.trace} onTab={setTab} />
         </section>
-        <section className={pageClass('analyze')}>
+        <section className={pageClass('analyze')} key={sectionKey('analyze')}>
           <AnalyzePage {...pageProps} activeTab={tabs.analyze} onTab={setTab} />
         </section>
-        <section className={pageClass('protect')}>
+        <section className={pageClass('protect')} key={sectionKey('protect')}>
           <ProtectPage {...pageProps} />
         </section>
-        <section className={pageClass('govern')}>
+        <section className={pageClass('govern')} key={sectionKey('govern')}>
           <GovernPage {...pageProps} activeTab={tabs.govern} onTab={setTab} />
         </section>
-        <section className={pageClass('copilot')}>
+        <section className={pageClass('copilot')} key={sectionKey('copilot')}>
           <CopilotPage {...pageProps} />
         </section>
       </div>

@@ -40,8 +40,9 @@ export const ui = {
   sidebarFoot: "mt-auto border-t border-border px-2.5 py-3 text-[11.5px] text-text-3",
   pulse: "mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-success shadow-[0_0_0_3px_var(--success-bg)]",
 
-  main: "col-start-2 row-start-2 overflow-y-auto px-[30px] pt-[26px] pb-[60px]",
-  page: "animate-[fadein_0.25s_ease]",
+  main: "col-start-2 row-start-2 overflow-y-auto px-[30px] pt-[26px] pb-[60px] transition-[opacity,transform] duration-500 ease-in-out",
+  mainFadeOut: "pointer-events-none opacity-0 translate-y-3",
+  page: "animate-[pageEnter_0.55s_ease-out_both]",
 
   pageHead: "mb-[22px] flex items-start justify-between gap-5",
   pageHeadTitle: "m-0 mb-1 font-display text-[23px] font-bold tracking-tight",
@@ -69,7 +70,7 @@ export const ui = {
   g126: "grid-cols-[2fr_1fr] max-[1180px]:grid-cols-1",
   g75: "grid-cols-[1.4fr_1fr] max-[1180px]:grid-cols-1",
 
-  card: "display: flex; flex-direction: column align-items: justify-around relative rounded-md border border-border bg-card p-[18px] shadow-card transition-[border-color,transform,box-shadow] duration-200 hover:border-border-strong",
+  card: "relative flex flex-col rounded-md border border-border bg-card p-[18px] shadow-card transition-[border-color,transform,box-shadow] duration-1000 hover:border-border-strong",
   cardGlass: "bg-glass backdrop-blur-[14px]",
   cardTitle: "m-0 mb-0.5 flex items-center gap-2 text-[13px] font-bold",
   cardHead: "mb-3.5 text-size-24px flex items-center justify-between",
@@ -86,27 +87,15 @@ export const ui = {
   kpiTrend: "mt-1.5 flex items-center gap-[3px] text-[11.5px] font-bold",
   upGood: "text-success",
   upBad: "text-critical",
+
   insightCard:
-    "flex min-h-[220px] flex-col rounded-md border border-border bg-card p-5 shadow-card transition-[border-color,transform,box-shadow] duration-200 hover:-translate-y-1.5 hover:bg-[#f4f4f4] hover:shadow-card",
-  insightCardHead: "mb-4 flex items-start justify-between gap-3",
-  insightCardTitle:
-    "flex flex-wrap items-baseline gap-x-2 gap-y-0.5 font-display text-[20px] font-extrabold tracking-tight text-text-1",
-  insightCardLabel: "text-size-40px text-blue-500  text-centerflex items-center gap-[7px] font-bold",
-  insightCardTrend: "flex shrink-0 flex-col items-end gap-1",
-  insightCardTrendLabel: "mb-1.5 flex items-center gap-1.5 font-display text-[24px] font-bold tracking-[0.08em] text-grey-100 primary-color uppercase",
-  insightCardTrendPill:
-    "inline-flex items-center gap-1 rounded-md bg-success-bg px-2 py-0.5 text-[12px] font-bold text-success",
-  insightCardTrendPillBad:
-    "inline-flex items-center gap-1 rounded-md bg-critical-bg px-2 py-0.5 text-[12px] font-bold text-critical",
-  insightCardPeriod: "text-[11px] font-medium text-text-3",
-  insightCardBody: "flex flex-1 flex-col items-center justify-center gap-2.5 text-center",
-  insightCardEmptyIcon: "text-cyan opacity-70",
-  insightCardEmptyText: "text-[13px] font-medium text-text-3",
-  insightCardList: "flex w-full flex-1 flex-col justify-center gap-2",
-  insightCardRow:
-    "flex items-center justify-between gap-2 rounded-[9px] border border-border bg-card-2 px-3 py-2 text-left",
-  insightCardRowTitle: "truncate text-[12.5px] font-semibold text-text-1",
-  insightCardRowMeta: "truncate text-[11px] text-text-3",
+    "insight-card relative flex h-[220px] flex-col overflow-hidden rounded-lg border border-border bg-card p-6 shadow-card",
+  insightCardHeading: "m-0 flex h-full w-full flex-col",
+  insightCardLink: "insight-card-link",
+  insightCardValue:
+    "relative z-[1] font-display text-[52px] font-extrabold leading-none tracking-tight text-text-1",
+  insightCardLabel:
+    "relative z-[1] max-w-full truncate px-1 text-[17px] font-semibold text-text-2",
 
   badge:
     "inline-flex items-center gap-[5px] whitespace-nowrap rounded-full px-[9px] py-[3px] text-[11px] font-bold before:block before:h-1.5 before:w-1.5 before:rounded-full before:bg-current",

@@ -510,6 +510,17 @@
   }
 }
 
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes slidein {
   from {
     transform: translateX(24px);
@@ -568,6 +579,81 @@
   to {
     transform: translateY(0);
     opacity: 1;
+  }
+}
+
+/* Namaste-style accessible insight cards: fixed size, stable hover, heading link hit target */
+.insight-card-grid {
+  grid-auto-rows: 220px;
+}
+
+.insight-card {
+  position: relative;
+  box-sizing: border-box;
+  transition:
+    border-color 0.25s ease,
+    background-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.insight-card:hover,
+.insight-card:focus-within {
+  border-color: #ccc;
+  box-shadow:
+    inset 0 0 0 1px rgba(37, 99, 235, 0.18),
+    var(--shadow-card);
+}
+
+[data-theme="light"] .insight-card:hover,
+[data-theme="light"] .insight-card:focus-within {
+  background-color: #f4f4f4;
+}
+
+[data-theme="dark"] .insight-card:hover,
+[data-theme="dark"] .insight-card:focus-within {
+  background-color: var(--card-2);
+  border-color: var(--border-strong);
+}
+
+.insight-card:focus-within {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+.insight-card-link {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+.insight-card-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.insight-card-link:focus,
+.insight-card-link:focus-visible {
+  outline: none;
+}
+
+.insight-card:hover .insight-card-link span:last-child,
+.insight-card:focus-within .insight-card-link span:last-child {
+  color: var(--text-1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .insight-card {
+    transition: none;
   }
 }
 

@@ -2,8 +2,6 @@ import { ui } from "../lib/ui";
 import { cn } from "../lib/cn";
 import { sevClass } from "../lib/badges";
 
-const spark = [40, 55, 48, 62, 58, 70, 66, 78, 74, 82, 80, 88];
-
 const IMPACTS = [
   "Catastrophic 5",
   "Significant 4",
@@ -75,6 +73,36 @@ const RISK_LEGEND = [
   { level: "desirable", label: "Desirable", action: "No Action" },
 ];
 
+const INSIGHT_CARDS = [
+  { label: "Shadow Admins", value: "2", page: "identity" },
+  { label: "Incidents & Risks", value: "7", page: "incidents" },
+  { label: "Access Requests", value: "18", page: "govern" },
+];
+
+function InsightCards({ onNavigate }) {
+  return (
+    <div className={cn(ui.g3, "insight-card-grid mb-10 grid gap-4")} role="list">
+      {INSIGHT_CARDS.map((k) => (
+        <article className={ui.insightCard} key={k.label} role="listitem">
+          <h3 className={ui.insightCardHeading}>
+            <a
+              href={`#${k.page}`}
+              className={ui.insightCardLink}
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate(k.page);
+              }}
+            >
+              <span className={ui.insightCardValue}>{k.value}</span>
+              <span className={ui.insightCardLabel}>{k.label}</span>
+            </a>
+          </h3>
+        </article>
+      ))}
+    </div>
+  );
+}
+
 export default function OverviewPage({ onNavigate }) {
   return (
     <>
@@ -99,89 +127,7 @@ export default function OverviewPage({ onNavigate }) {
         </div>
       </div>
 
-      <div className={cn(ui.g3, "mb-10 grid gap-4")}>
-        {[
-          {
-            label: "Shadow Admins",
-            value: "2",
-            trend: "+100%",
-            good: false,
-            empty: false,
-            emptyText: "No shadow admins found",
-            items: [
-              { title: "jdoe · platform-sre", meta: "Path to Tier-0" },
-              { title: "svc-deploy-bot", meta: "Unmanaged privilege" },
-            ],
-            page: "identity",
-          },
-          {
-            label: "Incidents & Risks",
-            value: "7",
-            trend: "+28%",
-            good: false,
-            empty: false,
-            emptyText: "No incidents found",
-            items: [
-              { title: "INC-2841 · vault access", meta: "Critical · 1h 12m" },
-              { title: "INC-2837 · finance EDR", meta: "High · 3h 40m" },
-            ],
-            page: "incidents",
-          },
-          {
-            label: "Access Requests",
-            value: "18",
-            trend: "+12%",
-            good: false,
-            empty: false,
-            emptyText: "No access requests found",
-            items: [
-              { title: "Prod vault read", meta: "Pending · finance" },
-              { title: "AWS admin elevate", meta: "Pending · platform" },
-            ],
-            page: "govern",
-          },
-        ].map((k) => (
-          <div
-            className={cn(ui.insightCard, "cursor-pointer")}
-            key={k.label}
-            onClick={() => onNavigate(k.page)}
-          >
-            <div className={ui.insightCardHead}>
-              <div className={ui.insightCardTitle}>
-                <span className="text-size-40px text-black">{k.value}</span>
-                <span className={ui.insightCardTrendLabel}>{k.label}</span>
-              </div>
-              <div className={ui.insightCardTrend}>
-                <span
-                  className={
-                    k.good
-                      ? ui.insightCardTrendPill
-                      : ui.insightCardTrendPillBad
-                  }
-                >
-                  {k.trend}
-                  <svg
-                    width="12"
-                    height="12"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d={k.good ? "M7 14l5-5 5 5" : "M7 10l5 5 5-5"}
-                      stroke="currentColor"
-                      strokeWidth="2.2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-                <span className={ui.insightCardPeriod}>Last 7 days</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+      <InsightCards onNavigate={onNavigate} />
 
       <div className={cn(ui.grid, ui.g75, "mb-4")}>
         <div className={ui.card}>
