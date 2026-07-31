@@ -7,6 +7,13 @@ import type { IdentityDataset } from '../domain/types.js';
  * literal is checked against `IdentityDataset` at compile time. Intent is
  * unchanged: one static dataset, loaded once into memory, no database.
  *
+ * Lineage is stored per app and left unmerged (§4.2), so most chains sit inside a
+ * single app. The canonical chain deliberately does not: agent-report lives in
+ * mcp-gateway while its provisioner lives in aws-iam, which puts one edge into
+ * `graph.crossAppEdges`. That edge is the whole point — each app holds a fragment
+ * that looks unremarkable alone, and the accountability finding only appears once
+ * the fragments are joined.
+ *
  * Identities prefixed `*-fixture-*` exist only to make the pathological
  * accountability terminal states reachable and should be filtered out of the
  * happy-path demo view.
@@ -17,12 +24,25 @@ import type { IdentityDataset } from '../domain/types.js';
  * the escalation F3 catches, while Alice's departure is what F5 catches.
  */
 export const SEED_DATASET: IdentityDataset = {
+  apps: [
+    // `creation_data_from` is the audit-retention floor: identities created before
+    // it have no recoverable provisioner, which must read as a data gap rather
+    // than as "nobody owns this".
+    { id: 'aws-iam', name: 'AWS IAM', creation_data_from: '2025-01-01' },
+    { id: 'snowflake', name: 'Snowflake', creation_data_from: '2025-06-01' },
+    { id: 'github', name: 'GitHub', creation_data_from: null },
+    { id: 'mcp-gateway', name: 'MCP Gateway', creation_data_from: null },
+    // Predates any usable audit trail, which is why its roots are unattributable.
+    { id: 'legacy-ldap', name: 'Legacy LDAP', creation_data_from: '2019-01-01' },
+  ],
+
   identities: [
     // --- Canonical demo chain: departed owner, escalation via group ---------
     {
       id: 'user-alice',
       type: 'human',
       name: 'Alice Chen',
+      app: 'aws-iam',
       direct_grants: ['read:finance-db'],
       inherited_from: ['group-finance'],
       delegates_to: ['svc-backup'],
@@ -32,6 +52,7 @@ export const SEED_DATASET: IdentityDataset = {
       id: 'svc-backup',
       type: 'service_account',
       name: 'backup-service',
+      app: 'aws-iam',
       direct_grants: ['write:s3-backup'],
       inherited_from: ['group-eng'],
       delegates_to: ['agent-report'],
@@ -42,6 +63,9 @@ export const SEED_DATASET: IdentityDataset = {
       id: 'agent-report',
       type: 'ai_agent',
       name: 'report-agent',
+      // Registered in the agent gateway, not in the cloud account that spawned it.
+      // This is the seed's one cross-app creation edge.
+      app: 'mcp-gateway',
       direct_grants: ['mcp:gmail-read'],
       inherited_from: [],
       delegates_to: [],
@@ -49,40 +73,12 @@ export const SEED_DATASET: IdentityDataset = {
       revoked: false,
     },
 
-    // --- Stale-review chain: owner still employed, never re-reviewed --------
-    {
-      id: 'user-bob',
-      type: 'human',
-      name: 'Bob Iyer',
-      direct_grants: ['read:warehouse'],
-      inherited_from: [],
-      delegates_to: ['svc-etl'],
-      provisioned_by: null,
-    },
-    {
-      id: 'svc-etl',
-      type: 'service_account',
-      name: 'etl-runner',
-      direct_grants: ['read:warehouse'],
-      inherited_from: ['group-data'],
-      delegates_to: ['agent-analytics'],
-      provisioned_by: 'user-bob',
-    },
-    {
-      id: 'agent-analytics',
-      type: 'ai_agent',
-      name: 'analytics-agent',
-      direct_grants: ['mcp:sheets-read'],
-      inherited_from: [],
-      delegates_to: [],
-      provisioned_by: 'svc-etl',
-    },
-
-    // --- Role-changed owner ------------------------------------------------
+    // --- Role-changed owner, same app so it shares group-eng ----------------
     {
       id: 'user-carol',
       type: 'human',
       name: 'Carol Dsouza',
+      app: 'aws-iam',
       direct_grants: ['deploy:staging'],
       inherited_from: [],
       delegates_to: ['svc-deploy'],
@@ -92,30 +88,11 @@ export const SEED_DATASET: IdentityDataset = {
       id: 'svc-deploy',
       type: 'service_account',
       name: 'deploy-bot',
+      app: 'aws-iam',
       direct_grants: ['deploy:prod'],
       inherited_from: ['group-eng'],
       delegates_to: [],
       provisioned_by: 'user-carol',
-    },
-
-    // --- Healthy baseline: active owner, recently reviewed ------------------
-    {
-      id: 'user-dan',
-      type: 'human',
-      name: 'Dan Ferreira',
-      direct_grants: ['read:metrics'],
-      inherited_from: [],
-      delegates_to: ['svc-monitor'],
-      provisioned_by: null,
-    },
-    {
-      id: 'svc-monitor',
-      type: 'service_account',
-      name: 'monitor-agent',
-      direct_grants: ['read:metrics'],
-      inherited_from: [],
-      delegates_to: [],
-      provisioned_by: 'user-dan',
     },
 
     // --- Second departed employee with a live sensitive footprint (F11) -----
@@ -123,6 +100,7 @@ export const SEED_DATASET: IdentityDataset = {
       id: 'user-erin',
       type: 'human',
       name: 'Erin Blake',
+      app: 'aws-iam',
       direct_grants: ['read:finance-db'],
       inherited_from: ['group-finance'],
       delegates_to: ['svc-legacy-export'],
@@ -132,18 +110,18 @@ export const SEED_DATASET: IdentityDataset = {
       id: 'svc-legacy-export',
       type: 'service_account',
       name: 'legacy-export',
+      app: 'aws-iam',
       direct_grants: ['export:finance-report'],
       inherited_from: ['group-finance'],
       delegates_to: [],
       provisioned_by: 'user-erin',
       revoked: false,
     },
-
-    // --- Groups ------------------------------------------------------------
     {
       id: 'group-eng',
       type: 'group',
       name: 'Engineering',
+      app: 'aws-iam',
       direct_grants: ['mcp:notion-write'],
       inherited_from: [],
       delegates_to: [],
@@ -153,19 +131,75 @@ export const SEED_DATASET: IdentityDataset = {
       id: 'group-finance',
       type: 'group',
       name: 'Finance',
+      app: 'aws-iam',
       direct_grants: ['read:finance-db', 'export:finance-report'],
       inherited_from: [],
       delegates_to: [],
       provisioned_by: null,
     },
+
+    // --- Stale-review chain: owner still employed, never re-reviewed --------
+    {
+      id: 'user-bob',
+      type: 'human',
+      name: 'Bob Iyer',
+      app: 'snowflake',
+      direct_grants: ['read:warehouse'],
+      inherited_from: [],
+      delegates_to: ['svc-etl'],
+      provisioned_by: null,
+    },
+    {
+      id: 'svc-etl',
+      type: 'service_account',
+      name: 'etl-runner',
+      app: 'snowflake',
+      direct_grants: ['read:warehouse'],
+      inherited_from: ['group-data'],
+      delegates_to: ['agent-analytics'],
+      provisioned_by: 'user-bob',
+    },
+    {
+      id: 'agent-analytics',
+      type: 'ai_agent',
+      name: 'analytics-agent',
+      app: 'snowflake',
+      direct_grants: ['mcp:sheets-read'],
+      inherited_from: [],
+      delegates_to: [],
+      provisioned_by: 'svc-etl',
+    },
     {
       id: 'group-data',
       type: 'group',
       name: 'Data Platform',
+      app: 'snowflake',
       direct_grants: ['write:warehouse', 'admin:warehouse'],
       inherited_from: [],
       delegates_to: [],
       provisioned_by: null,
+    },
+
+    // --- Healthy baseline: active owner, recently reviewed, team-owned -------
+    {
+      id: 'user-dan',
+      type: 'human',
+      name: 'Dan Ferreira',
+      app: 'github',
+      direct_grants: ['read:metrics'],
+      inherited_from: [],
+      delegates_to: ['svc-monitor'],
+      provisioned_by: null,
+    },
+    {
+      id: 'svc-monitor',
+      type: 'service_account',
+      name: 'monitor-agent',
+      app: 'github',
+      direct_grants: ['read:metrics'],
+      inherited_from: [],
+      delegates_to: [],
+      provisioned_by: 'user-dan',
     },
 
     // --- Non-human root: nobody ever owned this branch ----------------------
@@ -173,6 +207,7 @@ export const SEED_DATASET: IdentityDataset = {
       id: 'svc-systemroot',
       type: 'service_account',
       name: 'platform-bootstrap',
+      app: 'legacy-ldap',
       direct_grants: ['admin:platform'],
       inherited_from: [],
       delegates_to: ['agent-legacy-sweeper'],
@@ -182,6 +217,7 @@ export const SEED_DATASET: IdentityDataset = {
       id: 'agent-legacy-sweeper',
       type: 'ai_agent',
       name: 'legacy-sweeper-agent',
+      app: 'legacy-ldap',
       direct_grants: ['mcp:drive-read'],
       inherited_from: [],
       delegates_to: [],
@@ -193,6 +229,7 @@ export const SEED_DATASET: IdentityDataset = {
       id: 'svc-fixture-dangling-owner',
       type: 'service_account',
       name: 'orphaned-import-svc',
+      app: 'legacy-ldap',
       direct_grants: ['read:warehouse'],
       inherited_from: [],
       delegates_to: [],
@@ -205,6 +242,7 @@ export const SEED_DATASET: IdentityDataset = {
       id: 'svc-fixture-cycle-a',
       type: 'service_account',
       name: 'cycle-probe-a',
+      app: 'legacy-ldap',
       direct_grants: [],
       inherited_from: [],
       delegates_to: ['svc-fixture-cycle-b'],
@@ -214,6 +252,7 @@ export const SEED_DATASET: IdentityDataset = {
       id: 'svc-fixture-cycle-b',
       type: 'service_account',
       name: 'cycle-probe-b',
+      app: 'legacy-ldap',
       direct_grants: [],
       inherited_from: [],
       delegates_to: ['svc-fixture-cycle-a'],
@@ -222,12 +261,58 @@ export const SEED_DATASET: IdentityDataset = {
   ],
 
   employee_status: {
-    'user-alice': { status: 'departed', last_reviewed: '2026-06-01' },
+    // `effective_from` is when the person actually left or moved, so SLA age is
+    // measured from the event rather than from whenever a scan noticed it.
+    'user-alice': { status: 'departed', last_reviewed: '2026-06-01', effective_from: '2026-06-15' },
     'user-bob': { status: 'active', last_reviewed: '2026-01-15' },
-    'user-carol': { status: 'role_changed', last_reviewed: '2026-05-20' },
+    'user-carol': {
+      status: 'role_changed',
+      last_reviewed: '2026-05-20',
+      effective_from: '2026-05-25',
+    },
     'user-dan': { status: 'active', last_reviewed: '2026-07-10' },
-    'user-erin': { status: 'departed', last_reviewed: '2026-02-02' },
+    'user-erin': { status: 'departed', last_reviewed: '2026-02-02', effective_from: '2026-03-10' },
   },
+
+  teams: [
+    {
+      id: 'team-platform',
+      name: 'Platform Engineering',
+      members: ['user-dan'],
+      owns_group: 'group-eng',
+    },
+    { id: 'team-data', name: 'Data Platform', members: ['user-bob'], owns_group: 'group-data' },
+    // Every member has departed, so this team cannot carry accountability even
+    // though an owner record still names it.
+    { id: 'team-finance-ops', name: 'Finance Operations', members: ['user-erin'] },
+  ],
+
+  owner_assignments: [
+    // Healthy: team-owned, named backup, recently attested.
+    {
+      identity_id: 'svc-monitor',
+      app: 'github',
+      owner_kind: 'team',
+      owner_id: 'team-platform',
+      backup_id: 'user-dan',
+      attested_at: '2026-07-05',
+    },
+    // Owner record exists but the owning team has no remaining active member.
+    {
+      identity_id: 'svc-legacy-export',
+      app: 'aws-iam',
+      owner_kind: 'team',
+      owner_id: 'team-finance-ops',
+      attested_at: '2025-09-01',
+    },
+    // Named individual, departed, and never attested.
+    {
+      identity_id: 'svc-backup',
+      app: 'aws-iam',
+      owner_kind: 'user',
+      owner_id: 'user-alice',
+    },
+  ],
 
   permissions: [
     { id: 'read:finance-db' },

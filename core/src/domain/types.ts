@@ -6,12 +6,24 @@
  * them (§3). Nothing in this file may branch on `type`.
  */
 
+import type { OwnerKind, SuppressionReason } from './ownership.js';
+
 export type IdentityType = 'human' | 'service_account' | 'ai_agent' | 'group';
 
 export interface Identity {
   readonly id: string;
   readonly type: IdentityType;
   readonly name: string;
+  /**
+   * The app/system this identity and its relationships live in.
+   *
+   * Required, and never merged away at ingestion: `docs/PRD-delegation-chain.md`
+   * §4.2 treats creation lineage as app-scoped, because a person's AWS IAM chain
+   * and their Okta chain are separate stories rather than one graph. Cross-app
+   * correlation is an analysis-layer concern (see `graph.byApp`), not a storage
+   * one.
+   */
+  readonly app: string;
   /** Permissions attached directly to this identity. */
   readonly direct_grants: readonly string[];
   /** Groups/roles this identity draws permissions from. */
@@ -28,6 +40,33 @@ export interface Identity {
   readonly provisioned_by: string | null;
   /** True once the identity has been decommissioned. Consumed by F11. */
   readonly revoked?: boolean;
+  /** ISO-8601 creation date, used to test against an app's audit-retention floor. */
+  readonly created_at?: string;
+  /**
+   * ISO-8601 date of last use. Drives the PCI DSS v4.0.1 Req 8.2.6 inactivity
+   * clock, which is a different question from whether the owner is still valid.
+   */
+  readonly last_activity_at?: string;
+  /**
+   * How the identity came to exist. `sso_federated` and `bulk_import` identities
+   * legitimately have no creator in the app's audit log, so reading their empty
+   * lineage as "unowned" would fabricate a finding (§4.6).
+   */
+  readonly provisioning_source?: 'app_native' | 'sso_federated' | 'bulk_import' | 'self_registered';
+}
+
+/**
+ * A registered reason an identity is exempt from the orphan queue.
+ *
+ * Break-glass and shared system accounts are unowned *by design*; a detector
+ * that reports them is uninstalled within a month (§4.6).
+ */
+export interface SuppressionEntry {
+  readonly identity_id: string;
+  readonly reason: SuppressionReason;
+  readonly detail: string;
+  /** ISO-8601. Required for anything granted as an exception rather than a fact. */
+  readonly expires_at?: string;
 }
 
 export type EmploymentStatus = 'active' | 'departed' | 'role_changed';
@@ -36,6 +75,41 @@ export interface EmployeeRecord {
   readonly status: EmploymentStatus;
   /** ISO-8601 calendar date of the last access review for this person. */
   readonly last_reviewed: string;
+  /**
+   * ISO-8601 date the person left or changed role.
+   *
+   * The SLA clock runs from here, not from when a scan happened to notice
+   * (`docs/orphaned-identity-research.md` §4.3). Deriving age from scan time
+   * makes every finding look one day old and makes MTTR meaningless.
+   */
+  readonly effective_from?: string;
+}
+
+/**
+ * A team that can hold ownership.
+ *
+ * Ownership is assigned to teams in preference to individuals (§4.2): people
+ * leave, teams persist, and a team-owned identity does not become a finding the
+ * day its creator resigns.
+ */
+export interface TeamRecord {
+  readonly id: string;
+  readonly name: string;
+  /** Human identity ids. A team with no active member cannot hold ownership. */
+  readonly members: readonly string[];
+  /** Group identity this team owns, linking group membership to accountability. */
+  readonly owns_group?: string;
+}
+
+/** An explicit, attested owner record — the highest-precedence ownership signal. */
+export interface OwnerAssignment {
+  readonly identity_id: string;
+  readonly app: string;
+  readonly owner_kind: OwnerKind;
+  readonly owner_id: string;
+  readonly backup_id?: string;
+  /** ISO-8601 date of the last attestation. Absent means never attested. */
+  readonly attested_at?: string;
 }
 
 export interface PermissionRecord {
@@ -74,9 +148,30 @@ export interface GrantRecord {
   readonly granted_at: string;
 }
 
+/**
+ * An app/system the engine has ingested identities from.
+ *
+ * `creation_data_from` is the audit-retention floor. Identities that predate it
+ * have no recoverable creator, and `docs/PRD-delegation-chain.md` §6.6 requires
+ * that be shown as a data gap rather than silently read as "no creator" — a
+ * large cluster of unowned identities that is really missing history is a
+ * fabricated finding.
+ */
+export interface AppRecord {
+  readonly id: string;
+  readonly name: string;
+  /** ISO-8601 calendar date, or null when retention is unlimited. */
+  readonly creation_data_from: string | null;
+}
+
 export interface IdentityDataset {
+  readonly apps: readonly AppRecord[];
   readonly identities: readonly Identity[];
   readonly employee_status: Readonly<Record<string, EmployeeRecord>>;
+  readonly teams: readonly TeamRecord[];
+  readonly owner_assignments: readonly OwnerAssignment[];
+  /** Optional so a dataset without registered exemptions stays valid. */
+  readonly suppressions?: readonly SuppressionEntry[];
   readonly permissions: readonly PermissionRecord[];
   readonly control_history: readonly ControlHistory[];
   readonly grant_half_lives: readonly GrantHalfLife[];

@@ -6,6 +6,7 @@ Hackathon project. Traces access backward from any identity (human / service acc
 
 - [`docs/ITAG.md`](./docs/ITAG.md) — the hackathon PRD driving this repo (Sachin, Harshavardhan, Narayana, Pritish, Jayakumar)
 - [`docs/PRD-delegation-chain.md`](./docs/PRD-delegation-chain.md) — related Unosecur IdentityGovern module PRD (Harsha), for reference
+- [`docs/orphaned-identity-research.md`](./docs/orphaned-identity-research.md) — research + implementation guidance for F5/F11 (orphaned identity), incl. Unosecur alignment
 
 ## Stack
 

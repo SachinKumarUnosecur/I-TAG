@@ -55,6 +55,12 @@ export type AccountabilityTrace =
       readonly limit: number;
     };
 
+/**
+ * @deprecated Superseded by `OwnershipState` + `OwnershipReason` in
+ * `domain/ownership.ts`. Retained because the F5 v1 assessment and
+ * `/api/accountability/:id` still speak it; map with
+ * `ORPHAN_REASON_TO_OWNERSHIP_REASON`.
+ */
 export type OrphanReason =
   | 'departed'
   | 'role_changed'

@@ -1,3 +1,4 @@
+import { creationEdgeKey } from '../graph/build.js';
 import type { IdentityDataset } from '../domain/types.js';
 
 export class DatasetValidationError extends Error {
@@ -33,8 +34,45 @@ export function validateDataset(dataset: IdentityDataset): IdentityDataset {
   }
 
   const permissionIds = new Set(dataset.permissions.map((permission) => permission.id));
+  const appIds = new Set(dataset.apps.map((app) => app.id));
+
+  for (const app of dataset.apps) {
+    if (app.creation_data_from !== null && Number.isNaN(Date.parse(app.creation_data_from))) {
+      issues.push(`app "${app.id}" has unparseable creation_data_from "${app.creation_data_from}"`);
+    }
+  }
+
+  // One creation edge per (app, child). Enforced over a derived edge list rather
+  // than trusted from identity uniqueness, because per-app ingestion
+  // (`docs/PRD-delegation-chain.md` §4.2) is what will eventually populate these
+  // and a second edge for one child would silently overwrite the first.
+  const creationEdgeOwners = new Map<string, string>();
 
   for (const identity of dataset.identities) {
+    if (!appIds.has(identity.app)) {
+      issues.push(`"${identity.id}" belongs to app "${identity.app}", which is not in the apps table`);
+    }
+
+    if (identity.provisioned_by !== null) {
+      const key = creationEdgeKey(identity.app, identity.id);
+      const existing = creationEdgeOwners.get(key);
+      if (existing !== undefined) {
+        issues.push(
+          `duplicate creation edge for (app "${identity.app}", identity "${identity.id}"): ` +
+            `already provisioned by "${existing}"`,
+        );
+      } else {
+        creationEdgeOwners.set(key, identity.provisioned_by);
+      }
+
+      // A provisioner in another app is *not* a dataset error. It is the
+      // cross-app correlation that `docs/orphaned-identity-research.md` §4.4
+      // exists to perform: per-app lineage is stored unmerged (see
+      // `graph.creationEdges`, which holds same-app edges only) while the
+      // analysis layer joins the fragments (`graph.crossAppEdges`). Rejecting it
+      // here would forbid the one question a per-app view cannot answer.
+    }
+
     for (const permission of identity.direct_grants) {
       if (!permissionIds.has(permission)) {
         issues.push(`"${identity.id}" grants "${permission}", which is not in the permissions table`);
@@ -82,6 +120,55 @@ export function validateDataset(dataset: IdentityDataset): IdentityDataset {
     }
     if (Number.isNaN(Date.parse(record.last_reviewed))) {
       issues.push(`employee_status for "${id}" has unparseable last_reviewed "${record.last_reviewed}"`);
+    }
+  }
+
+  const teamIds = new Set<string>();
+  for (const team of dataset.teams) {
+    if (teamIds.has(team.id)) {
+      issues.push(`duplicate team id "${team.id}"`);
+    }
+    teamIds.add(team.id);
+
+    for (const memberId of team.members) {
+      const member = byId.get(memberId);
+      if (member === undefined) {
+        issues.push(`team "${team.id}" lists member "${memberId}", which is not an identity`);
+      } else if (member.type !== 'human') {
+        issues.push(`team "${team.id}" lists member "${memberId}", which is a ${member.type}`);
+      }
+    }
+
+    if (team.owns_group !== undefined) {
+      const group = byId.get(team.owns_group);
+      if (group === undefined) {
+        issues.push(`team "${team.id}" owns "${team.owns_group}", which is not an identity`);
+      } else if (group.type !== 'group') {
+        issues.push(`team "${team.id}" owns "${team.owns_group}", which is a ${group.type}`);
+      }
+    }
+  }
+
+  for (const assignment of dataset.owner_assignments) {
+    const subject = byId.get(assignment.identity_id);
+    if (subject === undefined) {
+      issues.push(`owner_assignments names "${assignment.identity_id}", which is not an identity`);
+    } else if (subject.app !== assignment.app) {
+      issues.push(
+        `owner_assignments scopes "${assignment.identity_id}" to app "${assignment.app}", ` +
+          `but that identity lives in "${subject.app}"`,
+      );
+    }
+
+    const ownerExists =
+      assignment.owner_kind === 'team'
+        ? teamIds.has(assignment.owner_id)
+        : byId.get(assignment.owner_id)?.type === 'human';
+    if (!ownerExists) {
+      issues.push(
+        `owner_assignments for "${assignment.identity_id}" names ${assignment.owner_kind} ` +
+          `"${assignment.owner_id}", which does not exist`,
+      );
     }
   }
 

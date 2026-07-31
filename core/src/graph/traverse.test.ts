@@ -5,9 +5,12 @@ import type { Identity, IdentityDataset } from '../domain/types.js';
 import { buildIdentityGraph, type IdentityGraph } from './build.js';
 import { traverse } from './traverse.js';
 
+const FIXTURE_APP = 'aws-iam';
+
 function identity(partial: Pick<Identity, 'id' | 'type'> & Partial<Identity>): Identity {
   return {
     name: partial.id,
+    app: FIXTURE_APP,
     direct_grants: [],
     inherited_from: [],
     delegates_to: [],
@@ -19,8 +22,11 @@ function identity(partial: Pick<Identity, 'id' | 'type'> & Partial<Identity>): I
 /** Fixture graph. Bypasses validation so pathological shapes can be built directly. */
 function fixture(identities: readonly Identity[]): IdentityGraph {
   const dataset: IdentityDataset = {
+    apps: [{ id: FIXTURE_APP, name: 'AWS IAM', creation_data_from: null }],
     identities,
     employee_status: {},
+    teams: [],
+    owner_assignments: [],
     permissions: [],
     control_history: [],
     grant_half_lives: [],

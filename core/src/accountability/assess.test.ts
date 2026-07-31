@@ -5,7 +5,7 @@ import { fixedClock } from '../adapters/clock.js';
 import { DEFAULT_ACCOUNTABILITY_POLICY, type AccountabilityPolicy } from '../domain/policy.js';
 import type { AccountabilityAssessment } from '../domain/results.js';
 import type { EmployeeRecord, Identity, IdentityDataset } from '../domain/types.js';
-import { buildIdentityGraph } from '../graph/build.js';
+import { buildIdentityGraph, creationEdgeKey } from '../graph/build.js';
 import { SEED_DATASET } from '../data/seed.js';
 import { DatasetValidationError, validateDataset } from '../data/validate.js';
 import { createAccountabilityService } from './assess.js';
@@ -13,14 +13,34 @@ import { DEFAULT_ORPHAN_RULES } from './rules.js';
 
 const NOW = new Date('2026-07-31T00:00:00Z');
 
+const FIXTURE_APP = 'aws-iam';
+
 function identity(partial: Pick<Identity, 'id' | 'type'> & Partial<Identity>): Identity {
   return {
     name: partial.id,
+    app: FIXTURE_APP,
     direct_grants: [],
     inherited_from: [],
     delegates_to: [],
     provisioned_by: null,
     ...partial,
+  };
+}
+
+function dataset(
+  identities: readonly Identity[],
+  employeeStatus: Readonly<Record<string, EmployeeRecord>>,
+): IdentityDataset {
+  return {
+    apps: [{ id: FIXTURE_APP, name: 'AWS IAM', creation_data_from: null }],
+    identities,
+    employee_status: employeeStatus,
+    teams: [],
+    owner_assignments: [],
+    permissions: [],
+    control_history: [],
+    grant_half_lives: [],
+    grant_records: [],
   };
 }
 
@@ -36,15 +56,7 @@ function assess(
   identityId: string,
   policy: AccountabilityPolicy = DEFAULT_ACCOUNTABILITY_POLICY,
 ): AccountabilityAssessment {
-  const dataset: IdentityDataset = {
-    identities,
-    employee_status: employeeStatus,
-    permissions: [],
-    control_history: [],
-    grant_half_lives: [],
-    grant_records: [],
-  };
-  const graph = buildIdentityGraph(dataset);
+  const graph = buildIdentityGraph(dataset(identities, employeeStatus));
   const service = createAccountabilityService({
     graphSource: { graph: () => graph },
     clock: fixedClock(NOW),
@@ -225,14 +237,7 @@ test('never reports an unknown root status as healthy', () => {
 });
 
 test('returns a typed outcome for an unknown identity rather than throwing', () => {
-  const graph = buildIdentityGraph({
-    identities: threeHopChain(),
-    employee_status: {},
-    permissions: [],
-    control_history: [],
-    grant_half_lives: [],
-    grant_records: [],
-  });
+  const graph = buildIdentityGraph(dataset(threeHopChain(), {}));
   const service = createAccountabilityService({
     graphSource: { graph: () => graph },
     clock: fixedClock(NOW),
@@ -253,34 +258,83 @@ test('seed dataset passes referential validation', () => {
 test('validation rejects a delegates_to edge that disagrees with provisioned_by', () => {
   assert.throws(
     () =>
-      validateDataset({
-        identities: [
-          identity({ id: 'owner', type: 'human', delegates_to: ['svc'] }),
-          identity({ id: 'svc', type: 'service_account', provisioned_by: null }),
-        ],
-        employee_status: { owner: { status: 'active', last_reviewed: '2026-07-01' } },
-        permissions: [],
-        control_history: [],
-        grant_half_lives: [],
-        grant_records: [],
-      }),
+      validateDataset(
+        dataset(
+          [
+            identity({ id: 'owner', type: 'human', delegates_to: ['svc'] }),
+            identity({ id: 'svc', type: 'service_account', provisioned_by: null }),
+          ],
+          { owner: { status: 'active', last_reviewed: '2026-07-01' } },
+        ),
+      ),
     DatasetValidationError,
   );
 });
 
 test('validation rejects a human with no employment record', () => {
   assert.throws(
-    () =>
-      validateDataset({
-        identities: [identity({ id: 'owner', type: 'human' })],
-        employee_status: {},
-        permissions: [],
-        control_history: [],
-        grant_half_lives: [],
-        grant_records: [],
-      }),
+    () => validateDataset(dataset([identity({ id: 'owner', type: 'human' })], {})),
     DatasetValidationError,
   );
+});
+
+test('validation rejects an identity in an undeclared app', () => {
+  assert.throws(
+    () => validateDataset(dataset([identity({ id: 'svc', type: 'service_account', app: 'okta' })], {})),
+    DatasetValidationError,
+  );
+});
+
+test('keeps a cross-app creation edge out of the per-app forest', () => {
+  // PRD-delegation-chain.md §4.2 forbids *merging* apps at ingestion, not
+  // recording that a chain hops systems. The edge is kept, but segregated: a
+  // per-app view must not be able to present it as that app's own lineage.
+  const graph = buildIdentityGraph({
+    apps: [
+      { id: 'aws-iam', name: 'AWS IAM', creation_data_from: null },
+      { id: 'okta', name: 'Okta', creation_data_from: null },
+    ],
+    identities: [
+      identity({ id: 'owner', type: 'human', app: 'okta', delegates_to: ['svc'] }),
+      identity({ id: 'svc', type: 'service_account', app: 'aws-iam', provisioned_by: 'owner' }),
+    ],
+    employee_status: { owner: { status: 'active', last_reviewed: '2026-07-01' } },
+    teams: [],
+    owner_assignments: [],
+    permissions: [],
+    control_history: [],
+    grant_half_lives: [],
+    grant_records: [],
+  });
+
+  assert.equal(graph.creationEdges.get(creationEdgeKey('aws-iam', 'svc')), undefined);
+  assert.equal(graph.crossAppEdges.get(creationEdgeKey('aws-iam', 'svc'))?.parent_id, 'owner');
+});
+
+test('indexes identities per app without merging them', () => {
+  const graph = buildIdentityGraph({
+    apps: [
+      { id: 'aws-iam', name: 'AWS IAM', creation_data_from: null },
+      { id: 'okta', name: 'Okta', creation_data_from: null },
+    ],
+    identities: [
+      identity({ id: 'a', type: 'service_account', app: 'aws-iam' }),
+      identity({ id: 'b', type: 'service_account', app: 'okta', provisioned_by: 'c' }),
+      identity({ id: 'c', type: 'human', app: 'okta' }),
+    ],
+    employee_status: {},
+    teams: [],
+    owner_assignments: [],
+    permissions: [],
+    control_history: [],
+    grant_half_lives: [],
+    grant_records: [],
+  });
+
+  assert.deepEqual(graph.byApp.get('aws-iam')?.map((node) => node.id), ['a']);
+  assert.deepEqual(graph.byApp.get('okta')?.map((node) => node.id), ['b', 'c']);
+  assert.equal(graph.creationEdges.get(creationEdgeKey('okta', 'b'))?.parent_id, 'c');
+  assert.equal(graph.creationEdges.get(creationEdgeKey('aws-iam', 'b')), undefined);
 });
 
 test('every accountability outcome is demonstrable from the seed dataset', () => {
