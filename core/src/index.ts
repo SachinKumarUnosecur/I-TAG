@@ -102,17 +102,25 @@ export type {
 } from './domain/results.js';
 
 // Policy and ports
-export type { AccountabilityPolicy, FanOutBaseline, LineagePolicy, OwnershipPolicy } from './domain/policy.js';
+export type {
+  AccountabilityPolicy,
+  FanOutBaseline,
+  LineagePolicy,
+  OwnershipPolicy,
+  RiskPolicy,
+} from './domain/policy.js';
 export {
   DEFAULT_ACCOUNTABILITY_POLICY,
   DEFAULT_LINEAGE_POLICY,
   DEFAULT_OWNERSHIP_POLICY,
+  DEFAULT_RISK_POLICY,
 } from './domain/policy.js';
 export type {
   Clock,
   FindingStore,
   GraphSource,
   HrDirectory,
+  LifecycleDirectory,
   OwnerRegistry,
   SuppressionRegistry,
   TeamDirectory,
@@ -198,6 +206,146 @@ export {
 export type { AccessDeps, AccessOwnerSource, AccessQuery, AccessService } from './access/service.js';
 export { createAccessService } from './access/service.js';
 
+// Identity Exposure Map — the aggregate, and the engine's second ranking authority
+export type {
+  ClassificationCompleteness,
+  ExposureAssessment,
+  ExposureBand,
+  ExposureBandCount,
+  ExposureContribution,
+  ExposureEntry,
+  ExposureOutcome,
+  ExposureOwnershipContext,
+  ExposureProfile,
+  ExposureQuery,
+  ExposureRing,
+  ExposureRow,
+  ExposureSet,
+  ExposureStaleness,
+  ExposureSummary,
+  PermissionSensitivity,
+} from './domain/exposure.js';
+export { EXPOSURE_BAND_FLOORS, EXPOSURE_VERSUS_SEVERITY } from './domain/exposure.js';
+export type { SensitivityLookup } from './exposure/score.js';
+export {
+  bandFor,
+  collapseToExposureSet,
+  contributionsOf,
+  HOP_MULTIPLIER,
+  MECHANISM_PRECEDENCE,
+  NOT_SENSITIVE_WEIGHT,
+  ringsOf,
+  saturate,
+  SATURATION_CONSTANT,
+  SENSITIVE_WEIGHT,
+  weightedSum,
+} from './exposure/score.js';
+export type { ExposureDeps, ExposureOwnershipSource, ExposureService } from './exposure/service.js';
+export { createExposureService } from './exposure/service.js';
+
+// Blast Radius — the counterfactual, and the engine's only ranker of remediations
+export type {
+  AffectedIdentity,
+  ChokePoint,
+  ChokePointEffect,
+  ChokePointReport,
+  ChokePointSelection,
+  ImpactAssessment,
+  ImpactBaseline,
+  ImpactCounts,
+  ImpactDelta,
+  ImpactExposureReference,
+  ImpactOutcome,
+  ImpactPivot,
+  ImpactProfile,
+  ImpactStaleness,
+  SimulationOutcome,
+  SurvivingRoute,
+} from './domain/impact.js';
+export { IMPACT_VERSUS_EXPOSURE, MAX_EXHAUSTIVE_CANDIDATES } from './domain/impact.js';
+export { severingBindings } from './impact/counterfactual.js';
+export type {
+  AffectedReach,
+  CandidateEvaluation,
+  ChokePointStrategy,
+  ReachIndex,
+  SelectionContext,
+  SelectionResult,
+} from './impact/choke.js';
+export {
+  baselineOf,
+  DEFAULT_CHOKE_POINT_STRATEGIES,
+  evaluateCandidate,
+  EXHAUSTIVE_STRATEGY,
+  GREEDY_HITTING_SET_STRATEGY,
+  indexReach,
+  pivotBindingsOf,
+  selectChokePoints,
+} from './impact/choke.js';
+export type {
+  ImpactDeps,
+  ImpactExposureSource,
+  ImpactOwnershipSource,
+  ImpactService,
+} from './impact/service.js';
+export { createImpactService } from './impact/service.js';
+
+// Identity Risk Profile — the join, and the only module that ranks nothing on purpose
+export type {
+  RiskAssessment,
+  RiskFactorCoverage,
+  RiskFactorName,
+  RiskFinding,
+  RiskFindingLevel,
+  RiskFindingSource,
+  RiskLevelCount,
+  RiskOutcome,
+  RiskProfile,
+  RiskQuery,
+  RiskRow,
+  RiskStalestInput,
+  RiskStaleness,
+  RiskSummary,
+} from './domain/risk.js';
+export { RISK_VERSUS_RANKERS } from './domain/risk.js';
+export type {
+  RiskFactor,
+  RiskFactorContext,
+  RiskFactorVerdict,
+  RiskGrant,
+} from './risk/factors.js';
+export {
+  CONDITIONAL_ACCESS_CONTROL,
+  CONTROL_DRIFT_FACTOR,
+  DEFAULT_RISK_FACTORS,
+  EXCEPTION_GRANTED,
+  EXPOSURE_BAND_LEVELS,
+  EXPOSURE_FACTOR,
+  GRANT_STALENESS_FACTOR,
+  HOP_ACCESS_FACTOR,
+  MFA_CONTROL,
+  MFA_DISABLED,
+  OWNERSHIP_FACTOR,
+  REVIEW_STALENESS_FACTOR,
+} from './risk/factors.js';
+export type { FactorRun } from './risk/summarize.js';
+export {
+  compareAssessments,
+  factorsFiringIn,
+  isFindingLevel,
+  levelCounts,
+  riskLevelsHighToLow,
+  summarize,
+  worstLevelOf,
+} from './risk/summarize.js';
+export type {
+  RiskDeps,
+  RiskExposureSource,
+  RiskOwnershipSource,
+  RiskService,
+} from './risk/service.js';
+export { createRiskService } from './risk/service.js';
+
 // Ownership Assurance — owner resolution (gap 1)
 export type {
   OwnerResolution,
@@ -244,12 +392,15 @@ export { buildEvidencePack, findingsToCsv } from './ownership/evidence.js';
 // Adapters
 export {
   datasetHrDirectory,
+  datasetLifecycleDirectory,
   datasetOwnerRegistry,
   datasetSuppressionRegistry,
   datasetTeamDirectory,
 } from './adapters/dataset-directories.js';
 export { memoryFindingStore } from './adapters/memory-finding-store.js';
 export { memoizedAccessOwner } from './adapters/access-owner.js';
+export { memoizedExposureOwnership } from './adapters/exposure-ownership.js';
+export { memoizedImpactExposure } from './adapters/impact-exposure.js';
 export { memoizedOwnershipState } from './adapters/ownership-state.js';
 export { fixedClock, systemClock } from './adapters/clock.js';
 export { seedGraphSource } from './adapters/seed-source.js';

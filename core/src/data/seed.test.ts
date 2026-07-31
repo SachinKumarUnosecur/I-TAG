@@ -228,6 +228,45 @@ const EXPECTED: readonly ExpectedRow[] = [
   ['agent-support-triage', 'owned', null, 'none', false],
   ['role-runbook-executor', 'owned', null, 'none', false],
   ['role-warehouse-admin', 'owned', null, 'none', false],
+
+  /**
+   * beats 24-28 — Identity Exposure Map, green for the same reason as beats 19-21.
+   *
+   * `user-maya` reaches forty permissions, the widest footprint in the estate, and
+   * is `owned` with severity `none`. Exposure is not an ownership defect: every one
+   * of her grants was approved by somebody entitled to approve it, and the module's
+   * argument is that a correctly owned identity can still be a large blast radius.
+   * A row here that arrived pre-flagged would be Ownership Assurance making the
+   * case, not Exposure Map.
+   */
+  ['user-maya', 'owned', null, 'none', false],
+  ['svc-partner-sync', 'owned', null, 'none', false],
+  ['svc-invoice-poster', 'owned', null, 'none', false],
+  ['role-ledger-writer', 'owned', null, 'none', false],
+  ['svc-platform-watchdog', 'owned', null, 'none', false],
+
+  /**
+   * beats 29-31 — Blast Radius, green for the third time and by the same argument.
+   *
+   * The three rota members hold no direct grant at all and each reach two sensitive
+   * permissions through `group-oncall-agents`; the release chain reaches
+   * `deploy:prod` across two systems. Every one of them is `owned` with severity
+   * `none`, because every one of them is attested by a live team inside the 90-day
+   * floor — `ownership/reach.ts` does not follow permission bindings, so none of
+   * this is an ownership defect and none of it belongs in the queue.
+   *
+   * That is the module's whole case rather than a gap in this table. Three separate
+   * teams each did their job correctly and the composition is still a single grant
+   * away from four principals reaching production, which is a finding no
+   * per-identity view in the estate can produce.
+   */
+  ['user-tomas', 'owned', null, 'none', false],
+  ['agent-incident-responder', 'owned', null, 'none', false],
+  ['svc-runbook-scheduler', 'owned', null, 'none', false],
+  ['svc-release-orchestrator', 'owned', null, 'none', false],
+  ['svc-hotfix-deployer', 'owned', null, 'none', false],
+  ['role-release-runner', 'owned', null, 'none', false],
+  ['role-artifact-signer', 'owned', null, 'none', false],
 ];
 
 test('every curated identity produces its documented verdict', () => {

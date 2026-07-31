@@ -340,9 +340,17 @@ test('explanation coverage is an identity over the whole population, not a share
     overall.total,
     'every identity lands in exactly one of the three states',
   );
-  assert.equal(
-    overall.explanation_coverage,
-    1 - overall.unexplained / overall.total,
+  /**
+   * Within one ULP rather than exactly equal. `coverage.ts` evaluates
+   * `(with_recorded_creator + explained_absences) / total` and this line evaluates
+   * `1 − unexplained / total`; the two are the same real number and can land one
+   * bit apart in IEEE-754 for some populations — 103/120 does, 98/115 did not.
+   * The property being guarded is the denominator, and a row quietly leaving
+   * `total` moves this figure by ~1e-2, four orders above the tolerance.
+   */
+  assert.ok(
+    Math.abs(overall.explanation_coverage - (1 - overall.unexplained / overall.total)) <=
+      Number.EPSILON,
     'the metric is 1 - (unexplained / total) and nothing else',
   );
   assert.equal(overall.unexplained > 0, true, 'a demo with nothing unexplained is a lie');

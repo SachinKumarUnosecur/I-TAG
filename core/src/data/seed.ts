@@ -4,10 +4,12 @@ import { ACCESS } from './seed/access.js';
 import { CATALOG } from './seed/catalog.js';
 import { DATA_GAPS } from './seed/data-gaps.js';
 import { DIRECTORY } from './seed/directory.js';
+import { EXPOSURE } from './seed/exposure.js';
 import { FIXTURES } from './seed/fixtures.js';
 import { FOOTPRINT } from './seed/footprint.js';
 import { GROUPS } from './seed/groups.js';
 import { HEADLINE } from './seed/headline.js';
+import { IMPACT } from './seed/impact.js';
 import { LINEAGE } from './seed/lineage.js';
 import { REASON_MATRIX } from './seed/reason-matrix.js';
 import { SUPPRESSED } from './seed/suppressed.js';
@@ -42,6 +44,8 @@ import { TRUE_NEGATIVES } from './seed/true-negatives.js';
  *   reason-matrix   beats 9b, 10, 12 — one clean example per reason code, SLA pair
  *   lineage         beats 16, 17, 18 — Midnight Blizzard, fan-out 34, generation 5
  *   access          beats 19, 20, 21 — the resource-mediated hop, and the two it is not
+ *   exposure        beats 24-28 — breadth, unclassified access, two routes, nesting
+ *   impact          beats 29-31 — a rota behind one grant, a second chain, a shared binding
  *   fixtures        beat 14 — depth cap and corrupt lineage, filtered from every view
  *
  * Lineage is stored per app and left unmerged (§4.2). Three chains deliberately
@@ -63,5 +67,7 @@ export const SEED_DATASET: IdentityDataset = assembleDataset(CATALOG, [
   REASON_MATRIX,
   LINEAGE,
   ACCESS,
+  EXPOSURE,
+  IMPACT,
   FIXTURES,
 ]);

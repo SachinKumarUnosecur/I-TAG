@@ -1,7 +1,10 @@
 import type { IdentityGraph } from '../graph/build.js';
 import type { FindingDisposition } from './ownership.js';
 import type {
+  ControlEvent,
   EmployeeRecord,
+  GrantHalfLife,
+  GrantRecord,
   OwnerAssignment,
   SuppressionEntry,
   TeamRecord,
@@ -38,6 +41,40 @@ export interface GraphSource {
  */
 export interface HrDirectory {
   person(personId: string): EmployeeRecord | null;
+}
+
+/**
+ * Protective-control changes and entitlement issue dates — the two lifecycle tables
+ * `ITAG.md` §F9 and §F10 specified and nothing has read until now.
+ *
+ * A port beside `HrDirectory` rather than a read of `graph.dataset`, because these are
+ * facts from other systems on other clocks: control changes come from an IdP audit
+ * stream, grant records from an entitlement register, and the half-life table is a
+ * historical study of neither. Modelling them as one directory is what lets
+ * `docs/identity-risk-profile-research.md` §4.5's `stalest_input` ever mean something —
+ * a deployment where the IdP stream lags the graph by three days has somewhere to say so.
+ *
+ * **Null means no record, and never an empty result.** `controlEvents` returning `null`
+ * is "this identity has no control history ingested", which architecture rule 9 requires
+ * be reported as unevaluated rather than as a clean bill of health; returning `[]` for
+ * the same case would make the two indistinguishable. Research §3.2 is the empirical
+ * argument: every provider's dormancy and hygiene surface excludes populations
+ * *silently* — AWS Access Analyzer "service-linked roles are not analyzed", Access
+ * Advisor tracks no data-plane event — so an absent row is the common case, not an edge one.
+ *
+ * Implementation: `datasetLifecycleDirectory` (in `src/adapters/dataset-directories.ts`).
+ */
+export interface LifecycleDirectory {
+  /** `ITAG.md` §F9's log. Null when nothing has been ingested for this identity. */
+  controlEvents(identityId: string): readonly ControlEvent[] | null;
+  /** `ITAG.md` §F10's live grants. Null when this identity has no tracked grant. */
+  grants(identityId: string): readonly GrantRecord[] | null;
+  /**
+   * The historical pattern for a grant class. Null when the class is unknown, which
+   * `validateDataset` makes unreachable for a loaded dataset — every `grant_records`
+   * row is checked against `grant_half_lives` at boot.
+   */
+  halfLife(grantType: string): GrantHalfLife | null;
 }
 
 export interface TeamDirectory {

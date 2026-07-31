@@ -1,11 +1,12 @@
 import type {
   HrDirectory,
+  LifecycleDirectory,
   OwnerRegistry,
   SuppressionRegistry,
   TeamDirectory,
 } from '../domain/ports.js';
 import { creationEdgeKey } from '../graph/build.js';
-import type { IdentityDataset } from '../domain/types.js';
+import type { GrantRecord, IdentityDataset } from '../domain/types.js';
 
 /**
  * Port implementations backed by the static dataset.
@@ -19,6 +20,38 @@ export function datasetHrDirectory(dataset: IdentityDataset): HrDirectory {
   const byPerson = new Map(Object.entries(dataset.employee_status));
   return Object.freeze({
     person: (personId: string) => byPerson.get(personId) ?? null,
+  });
+}
+
+/**
+ * Indexes `ITAG.md` §F9's and §F10's tables, and keeps their absences absent.
+ *
+ * The three lookups return `null` rather than an empty array for a missing row,
+ * because `LifecycleDirectory` makes that distinction the whole point: on this estate
+ * `control_history` covers 4 identities of 127 and `grant_records` 7, so "no row" is
+ * the answer for almost every identity and collapsing it into "no events" would turn
+ * 120 unevaluated identities into 120 clean ones
+ * (`docs/identity-risk-profile-research.md` §4.1, architecture rule 9).
+ */
+export function datasetLifecycleDirectory(dataset: IdentityDataset): LifecycleDirectory {
+  const controls = new Map(
+    dataset.control_history.map((history) => [history.identity_id, history.events]),
+  );
+  const grants = new Map<string, GrantRecord[]>();
+  for (const grant of dataset.grant_records) {
+    const existing = grants.get(grant.identity_id);
+    if (existing === undefined) {
+      grants.set(grant.identity_id, [grant]);
+    } else {
+      existing.push(grant);
+    }
+  }
+  const halfLives = new Map(dataset.grant_half_lives.map((pattern) => [pattern.grant_type, pattern]));
+
+  return Object.freeze({
+    controlEvents: (identityId: string) => controls.get(identityId) ?? null,
+    grants: (identityId: string) => grants.get(identityId) ?? null,
+    halfLife: (grantType: string) => halfLives.get(grantType) ?? null,
   });
 }
 

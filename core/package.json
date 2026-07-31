@@ -13,7 +13,7 @@
   },
   "scripts": {
     "build": "tsc -b tsconfig.json",
-    "test": "node --import tsx --test src/graph/traverse.test.ts src/accountability/assess.test.ts src/ownership/resolve.test.ts src/ownership/classify.test.ts src/lineage/actors.test.ts src/lineage/resolve.test.ts src/lineage/signals.test.ts src/lineage/coverage.test.ts src/access/classify.test.ts src/data/seed.test.ts src/data/seed-lineage.test.ts"
+    "test": "node --import tsx --test src/graph/traverse.test.ts src/accountability/assess.test.ts src/ownership/resolve.test.ts src/ownership/classify.test.ts src/lineage/actors.test.ts src/lineage/resolve.test.ts src/lineage/signals.test.ts src/lineage/coverage.test.ts src/access/classify.test.ts src/exposure/score.test.ts src/exposure/service.test.ts src/impact/choke.test.ts src/impact/service.test.ts src/risk/factors.test.ts src/risk/summarize.test.ts src/risk/service.test.ts src/data/seed.test.ts src/data/seed-lineage.test.ts src/data/seed-exposure.test.ts src/data/seed-impact.test.ts src/data/seed-risk.test.ts"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

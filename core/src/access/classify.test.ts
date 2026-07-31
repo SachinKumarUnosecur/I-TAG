@@ -245,18 +245,37 @@ test('beat 23: a hop chains across two resources and two systems', () => {
 test('the hop population spans several counts, apps and identity types', () => {
   const hops = ACCESS.list({ pathType: 'hop' }).map((row) => row.path);
 
-  assert.deepEqual([...new Set(hops.map((path) => path.hop_count))].sort(), [3, 4, 6]);
-  assert.deepEqual([...new Set(hops.map((path) => path.app))].sort(), ['aws-iam', 'mcp-gateway']);
+  assert.deepEqual(
+    [...new Set(hops.map((path) => path.hop_count))].sort(),
+    [3, 4, 5, 6],
+    'the release chain fills the gap at 5, so the range slider has no dead interval',
+  );
+  assert.deepEqual(
+    [...new Set(hops.map((path) => path.app))].sort(),
+    ['aws-iam', 'github', 'mcp-gateway'],
+  );
   assert.deepEqual(
     [...new Set(hops.map((path) => path.identity_type))].sort(),
     ['ai_agent', 'human', 'service_account'],
     'the estate is 103 non-human accounts; a hop demo that only reaches people proves little',
   );
 
+  /**
+   * Deduplicated, because `list()` returns one row per path and both two-stage
+   * chains close more than one permission each. The set is what the filter selects;
+   * the row count is a property of the chains, not of the filter.
+   */
   assert.deepEqual(
-    ACCESS.list({ pathType: 'hop', minHopCount: 5 }).map((row) => row.path.identity_id),
-    ['agent-support-triage'],
-    'the range filter selects the transitive chain and nothing else',
+    [...new Set(ACCESS.list({ pathType: 'hop', minHopCount: 5 }).map((row) => row.path.identity_id))].sort(),
+    [
+      'agent-incident-responder',
+      'agent-support-triage',
+      'svc-hotfix-deployer',
+      'svc-release-orchestrator',
+      'svc-runbook-scheduler',
+      'user-tomas',
+    ],
+    'the range filter selects both transitive chains and nothing shallower',
   );
 });
 

@@ -70,6 +70,42 @@ export const DEFAULT_OWNERSHIP_POLICY: OwnershipPolicy = Object.freeze({
 });
 
 /**
+ * The one threshold the Identity Risk Profile factors need that the engine did not
+ * already have — `docs/identity-risk-profile-research.md` §5.
+ *
+ * Deliberately small. Research §5 requires the factors to read existing policy
+ * values rather than introduce constants, and five of the six do:
+ * `review_staleness` reads `AccountabilityPolicy.staleReviewDays`, and the other
+ * four derive their level from a sibling module's verdict or from a median the
+ * dataset publishes with its own sample size.
+ *
+ * `exceptionStaleDays` is the exception, and reusing a neighbour for it would have
+ * been worse than declaring it. `ITAG.md` §F9 specifies the rule in its own words —
+ * a "'temporary' exception that's still active 90+ days later loses additional
+ * points, since it signals the exception was never actually revisited" — which is a
+ * statement about a control exception, not about an ownership attestation
+ * (`OwnershipPolicy.staleAttestationDays`) or account inactivity
+ * (`OwnershipPolicy.inactivityDays`, which is PCI DSS v4.0.1 Req 8.2.6 verbatim).
+ * The three happen to be 90 today; borrowing one would mean a change to the PCI
+ * window silently retuned control drift.
+ */
+export interface RiskPolicy {
+  /**
+   * Days a "temporary" control exception may stand before it reads as permanent.
+   *
+   * 90 is `ITAG.md` §F9's own number. It is the threshold that separates the two
+   * seeded exceptions — `svc-vpn-legacy` at 167 days and `svc-backup` at 90 — from
+   * an exception granted this quarter, and it is what makes `control_drift`
+   * `critical` rather than `high` for those two.
+   */
+  readonly exceptionStaleDays: number;
+}
+
+export const DEFAULT_RISK_POLICY: RiskPolicy = Object.freeze({
+  exceptionStaleDays: 90,
+});
+
+/**
  * What counts as an abnormal creation rate for one class of actor.
  *
  * `docs/PRD-delegation-chain.md` L63 names the right problem — automation may have
