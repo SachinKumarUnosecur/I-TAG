@@ -12,8 +12,10 @@ import {
   datasetSuppressionRegistry,
   datasetTeamDirectory,
   createAccessService,
+  createExposureService,
   fixedClock,
   memoizedAccessOwner,
+  memoizedExposureOwnership,
   memoizedOwnershipState,
   memoryFindingStore,
   seedGraphSource,
@@ -28,6 +30,7 @@ import {
 import { explainRouter } from './routes/explain.js';
 import { createAccessRouter } from './routes/access.js';
 import { createAccountabilityRouter } from './routes/accountability.js';
+import { createExposureRouter } from './routes/exposure.js';
 import { createFindingsRouter } from './routes/findings.js';
 import { createOffboardingRouter } from './routes/offboarding.js';
 import { createLineageRouter } from './routes/lineage.js';
@@ -112,6 +115,20 @@ const accessService = createAccessService({
   policy: accountabilityPolicy,
 });
 
+// Identity Exposure Map. Aggregates Access Discovery's inventory and nothing else
+// — it never touches the graph to find a path, only to read the catalogue. It also
+// reads ownership through its own narrow port, and that dependency is not for a
+// column: `docs/identity-exposure-map-research.md` §7.2 makes this the engine's
+// second ranking authority, and the condition of the exception is that ownership's
+// verdict ships inside every exposure payload so the two numbers are never shown
+// apart.
+const exposureService = createExposureService({
+  graphSource,
+  clock,
+  access: accessService,
+  ownership: memoizedExposureOwnership(ownershipService),
+});
+
 const sweepService = createSweepService({
   graphSource,
   hr,
@@ -142,6 +159,7 @@ app.use('/api/accountability', createAccountabilityRouter(accountabilityService)
 app.use('/api/ownership', createOwnershipRouter(ownershipService));
 app.use('/api/lineage', createLineageRouter(lineageService));
 app.use('/api/access', createAccessRouter(accessService));
+app.use('/api/exposure', createExposureRouter(exposureService));
 app.use('/api/offboarding-sweep', createOffboardingRouter(sweepService));
 app.use('/api/findings', createFindingsRouter(dispositionService));
 

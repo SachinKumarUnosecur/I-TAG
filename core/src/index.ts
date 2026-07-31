@@ -198,6 +198,43 @@ export {
 export type { AccessDeps, AccessOwnerSource, AccessQuery, AccessService } from './access/service.js';
 export { createAccessService } from './access/service.js';
 
+// Identity Exposure Map — the aggregate, and the engine's second ranking authority
+export type {
+  ClassificationCompleteness,
+  ExposureAssessment,
+  ExposureBand,
+  ExposureBandCount,
+  ExposureContribution,
+  ExposureEntry,
+  ExposureOutcome,
+  ExposureOwnershipContext,
+  ExposureProfile,
+  ExposureQuery,
+  ExposureRing,
+  ExposureRow,
+  ExposureSet,
+  ExposureStaleness,
+  ExposureSummary,
+  PermissionSensitivity,
+} from './domain/exposure.js';
+export { EXPOSURE_BAND_FLOORS, EXPOSURE_VERSUS_SEVERITY } from './domain/exposure.js';
+export type { SensitivityLookup } from './exposure/score.js';
+export {
+  bandFor,
+  collapseToExposureSet,
+  contributionsOf,
+  HOP_MULTIPLIER,
+  MECHANISM_PRECEDENCE,
+  NOT_SENSITIVE_WEIGHT,
+  ringsOf,
+  saturate,
+  SATURATION_CONSTANT,
+  SENSITIVE_WEIGHT,
+  weightedSum,
+} from './exposure/score.js';
+export type { ExposureDeps, ExposureOwnershipSource, ExposureService } from './exposure/service.js';
+export { createExposureService } from './exposure/service.js';
+
 // Ownership Assurance — owner resolution (gap 1)
 export type {
   OwnerResolution,
@@ -250,6 +287,7 @@ export {
 } from './adapters/dataset-directories.js';
 export { memoryFindingStore } from './adapters/memory-finding-store.js';
 export { memoizedAccessOwner } from './adapters/access-owner.js';
+export { memoizedExposureOwnership } from './adapters/exposure-ownership.js';
 export { memoizedOwnershipState } from './adapters/ownership-state.js';
 export { fixedClock, systemClock } from './adapters/clock.js';
 export { seedGraphSource } from './adapters/seed-source.js';

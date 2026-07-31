@@ -35,42 +35,59 @@ export const CATALOG: SeedCatalog = {
 
   /**
    * `sensitive` is what turns a list of orphans into a queue: severity ranks by
-   * reachable sensitive access first (§4.3), so these eight permissions decide
-   * which handful of rows a reviewer sees at the top. Each one is unmistakably
-   * production-facing, so "this agent can reach that" needs no explanation.
+   * reachable sensitive access first (§4.3), so the nine permissions flagged below
+   * decide which handful of rows a reviewer sees at the top. Each one is
+   * unmistakably production-facing, so "this agent can reach that" needs no
+   * explanation.
+   *
+   * **The flag is tri-state, and the third state is load bearing.**
+   * `docs/identity-exposure-map-research.md` §4.2 reads `true` as sensitive,
+   * `false` as *confirmed* not sensitive, and an omitted key as **unclassified** —
+   * "nobody has assessed this", which is a different claim from "this is safe".
+   * `graph/build.ts` only ever tests `sensitive === true`, so ownership severity
+   * and Access Discovery cannot tell `false` from absent and are unaffected; only
+   * Exposure Map reads the distinction, and it excludes `unclassified` from the
+   * weighted score rather than guessing a tier for it.
+   *
+   * The precedent is the providers' own. Amazon Macie reserves sensitivity score
+   * 50 for "not yet analyzed", between 1-49 "not sensitive" and 51-99 "sensitive";
+   * Microsoft Defender for Cloud carries "Not evaluated" alongside its four risk
+   * levels. Neither collapses absence of assessment into a tier, and neither does
+   * this table — which is why every permission that has genuinely been reviewed
+   * carries an explicit `false` rather than relying on omission to mean it.
    */
   permissions: [
-    { id: 'read:finance-db' },
+    { id: 'read:finance-db', sensitive: false },
     { id: 'export:finance-report', sensitive: true },
     { id: 'export:payroll-file', sensitive: true },
-    { id: 'read:payments-ledger' },
-    { id: 'write:invoice-queue' },
-    { id: 'write:s3-backup' },
-    { id: 'mcp:gmail-read' },
-    { id: 'mcp:notion-write' },
+    { id: 'read:payments-ledger', sensitive: false },
+    { id: 'write:invoice-queue', sensitive: false },
+    { id: 'write:s3-backup', sensitive: false },
+    { id: 'mcp:gmail-read', sensitive: false },
+    { id: 'mcp:notion-write', sensitive: false },
     { id: 'mcp:prod-db-query', sensitive: true },
-    { id: 'mcp:crm-write' },
-    { id: 'mcp:sheets-read' },
-    { id: 'mcp:drive-read' },
-    { id: 'read:warehouse' },
-    { id: 'write:warehouse' },
+    { id: 'mcp:crm-write', sensitive: false },
+    { id: 'mcp:sheets-read', sensitive: false },
+    { id: 'mcp:drive-read', sensitive: false },
+    { id: 'read:warehouse', sensitive: false },
+    { id: 'write:warehouse', sensitive: false },
     { id: 'admin:warehouse', sensitive: true },
-    { id: 'write:search-index' },
-    { id: 'deploy:staging' },
+    { id: 'write:search-index', sensitive: false },
+    { id: 'deploy:staging', sensitive: false },
     { id: 'deploy:prod', sensitive: true },
-    { id: 'read:metrics' },
-    { id: 'read:billing' },
-    { id: 'read:dashboards' },
-    { id: 'read:repo-metadata' },
+    { id: 'read:metrics', sensitive: false },
+    { id: 'read:billing', sensitive: false },
+    { id: 'read:dashboards', sensitive: false },
+    { id: 'read:repo-metadata', sensitive: false },
     { id: 'admin:platform', sensitive: true },
     { id: 'admin:prod-database', sensitive: true },
     { id: 'vpn:corp-network', sensitive: true },
-    { id: 'read:ldap-directory' },
-    { id: 'read:fileshare' },
-    { id: 'read:mailroom' },
-    { id: 'sso:corp-login' },
-    { id: 'read:hris-feed' },
-    { id: 'read:directory-metadata' },
+    { id: 'read:ldap-directory', sensitive: false },
+    { id: 'read:fileshare', sensitive: false },
+    { id: 'read:mailroom', sensitive: false },
+    { id: 'sso:corp-login', sensitive: false },
+    { id: 'read:hris-feed', sensitive: false },
+    { id: 'read:directory-metadata', sensitive: false },
     /**
      * The consent the Midnight Blizzard chain ends in.
      *
@@ -88,8 +105,8 @@ export const CATALOG: SeedCatalog = {
      * of it. A ranking that reads only the grant sees an SSM session and a CI
      * assume-role, which is why §1 says native tooling misses this entirely.
      */
-    { id: 'ssm:session-deploy-box', grants_identity: 'role-deploy-box' },
-    { id: 'ci:assume-build-agent', grants_identity: 'role-build-agent' },
+    { id: 'ssm:session-deploy-box', sensitive: false, grants_identity: 'role-deploy-box' },
+    { id: 'ci:assume-build-agent', sensitive: false, grants_identity: 'role-build-agent' },
 
     /**
      * The two rungs of the transitive chain — `PRD` §8's first open question.
@@ -101,8 +118,102 @@ export const CATALOG: SeedCatalog = {
      * the second one is held by a role rather than by a person, which is why no
      * review of human entitlements has ever seen it.
      */
-    { id: 'mcp:connect-prod-runbook', grants_identity: 'role-runbook-executor' },
-    { id: 'mcp:connect-warehouse-box', grants_identity: 'role-warehouse-admin' },
+    { id: 'mcp:connect-prod-runbook', sensitive: false, grants_identity: 'role-runbook-executor' },
+    { id: 'mcp:connect-warehouse-box', sensitive: false, grants_identity: 'role-warehouse-admin' },
+
+    /**
+     * Beat 24 — the analyst's breadth, held directly.
+     *
+     * Twenty-eight read grants that are individually unarguable. Every one of them
+     * was approved by somebody who was right to approve it, which is the property
+     * that makes the beat work: there is no negligence to point at, and the finding
+     * is the *shape* of the total rather than any row in it.
+     *
+     * Named individually rather than generated, because a reviewer has to be able
+     * to read the list and agree that nothing in it is alarming — a loop emitting
+     * `read:dataset-${n}` would prove the count and prove nothing about the claim.
+     */
+    { id: 'read:dashboard-revenue', sensitive: false },
+    { id: 'read:dashboard-churn', sensitive: false },
+    { id: 'read:dashboard-pipeline', sensitive: false },
+    { id: 'read:dashboard-support-sla', sensitive: false },
+    { id: 'read:dashboard-marketing-spend', sensitive: false },
+    { id: 'read:dashboard-headcount', sensitive: false },
+    { id: 'read:report-quarterly-close', sensitive: false },
+    { id: 'read:report-cohort-retention', sensitive: false },
+    { id: 'read:report-nps', sensitive: false },
+    { id: 'read:report-campaign-attribution', sensitive: false },
+    { id: 'read:dataset-web-events', sensitive: false },
+    { id: 'read:dataset-mobile-events', sensitive: false },
+    { id: 'read:dataset-billing-summary', sensitive: false },
+    { id: 'read:dataset-subscription-history', sensitive: false },
+    { id: 'read:dataset-support-tickets', sensitive: false },
+    { id: 'read:dataset-product-usage', sensitive: false },
+    { id: 'read:dataset-experiment-results', sensitive: false },
+    { id: 'read:dataset-inventory-snapshot', sensitive: false },
+    { id: 'read:dataset-shipping-times', sensitive: false },
+    { id: 'read:dataset-vendor-catalog', sensitive: false },
+    { id: 'read:lookup-currency-rates', sensitive: false },
+    { id: 'read:lookup-tax-jurisdictions', sensitive: false },
+    { id: 'read:lookup-country-codes', sensitive: false },
+    { id: 'read:lookup-product-taxonomy', sensitive: false },
+    { id: 'read:notebook-templates', sensitive: false },
+    { id: 'read:query-history', sensitive: false },
+    { id: 'read:schema-catalog', sensitive: false },
+    { id: 'read:job-run-status', sensitive: false },
+
+    /**
+     * Beat 24 — the same breadth, arriving through a group.
+     *
+     * Split from the block above so the identity's footprint is not uniformly
+     * `direct`: twelve of its forty paths are `indirect`, which is what a real
+     * analyst's entitlements look like and what keeps the ring map from rendering
+     * a single undifferentiated circle.
+     */
+    { id: 'read:warehouse-staging-tables', sensitive: false },
+    { id: 'read:warehouse-marts', sensitive: false },
+    { id: 'read:warehouse-dbt-docs', sensitive: false },
+    { id: 'read:bi-workspace-shared', sensitive: false },
+    { id: 'read:bi-workspace-archive', sensitive: false },
+    { id: 'read:bi-scheduled-exports', sensitive: false },
+    { id: 'read:metrics-definitions', sensitive: false },
+    { id: 'read:metrics-lineage', sensitive: false },
+    { id: 'read:data-quality-checks', sensitive: false },
+    { id: 'read:data-freshness-status', sensitive: false },
+    { id: 'read:glossary-business-terms', sensitive: false },
+    { id: 'read:access-request-history', sensitive: false },
+
+    /**
+     * Beat 26 — the six permissions nobody has classified.
+     *
+     * `sensitive` is **omitted, not false**, and that is the entire beat. A partner
+     * integration's scopes arrived with the integration; no data-classification
+     * process has ever looked at them, and `docs/identity-exposure-map-research.md`
+     * §3.2 establishes why that is the normal case rather than an oversight — every
+     * provider mechanism classifies a storage container, and none of them has a key
+     * that joins to a capability like these.
+     *
+     * Exposure Map excludes them from the weighted score and reports them as a
+     * completeness figure. It does not default them to Medium: a score that rises
+     * because the *registry* degraded is one no reviewer can act on.
+     */
+    { id: 'partner:webhook-replay' },
+    { id: 'partner:sandbox-export' },
+    { id: 'partner:catalog-sync' },
+    { id: 'partner:invoice-callback' },
+    { id: 'partner:audit-feed' },
+    { id: 'partner:credential-rotate' },
+
+    /**
+     * Beat 27 — the third hop edge, and the one that shares its destination.
+     *
+     * `write:invoice-queue` is already reachable through `group-finance-ops` as an
+     * ordinary two-edge membership. This binding gives the same permission a second
+     * route through a role, so one identity reaches one permission by both an
+     * `indirect` and a `hop` path — the case `PRD` §8's second open question asks
+     * about and the only one the estate could not previously demonstrate.
+     */
+    { id: 'connect:ledger-writer', sensitive: false, grants_identity: 'role-ledger-writer' },
   ],
 
   // F10 — historical revocation patterns per class of grant.

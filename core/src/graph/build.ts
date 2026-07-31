@@ -32,6 +32,22 @@ export interface IdentityGraph {
   readonly employeeStatus: ReadonlyMap<string, EmployeeRecord>;
   readonly sensitivePermissions: ReadonlySet<string>;
   /**
+   * Permissions nobody has classified — `PermissionRecord.sensitive` omitted.
+   *
+   * The third state of a flag that reads as a boolean. `sensitive === true` is
+   * sensitive, `=== false` is *confirmed* not sensitive, and absent is **not
+   * assessed**, which is a different claim from safe. Every existing consumer
+   * tests only `sensitivePermissions` and cannot tell the last two apart, which is
+   * correct for them — ownership severity ranks what it knows is dangerous.
+   *
+   * Derived here rather than in `exposure/` so this file stays the engine's only
+   * reader of `PermissionRecord.sensitive`. Two readers of one field is how two
+   * modules end up disagreeing about which permissions are sensitive, and that is
+   * a disagreement no reviewer could adjudicate from the UI.
+   * See `docs/identity-exposure-map-research.md` §4.2 and PRD Amendment 3.
+   */
+  readonly unclassifiedPermissions: ReadonlySet<string>;
+  /**
    * Permission id -> the principal holding it confers, for `PRD` §4.2's hop check.
    *
    * Precomputed here for the same reason `generation` is: the classifier asks this
@@ -199,10 +215,14 @@ export function buildIdentityGraph(dataset: IdentityDataset): IdentityGraph {
   }
 
   const sensitivePermissions = new Set<string>();
+  const unclassifiedPermissions = new Set<string>();
   const permissionBindings = new Map<string, string>();
   for (const permission of dataset.permissions) {
     if (permission.sensitive === true) {
       sensitivePermissions.add(permission.id);
+    }
+    if (permission.sensitive === undefined) {
+      unclassifiedPermissions.add(permission.id);
     }
     if (permission.grants_identity !== undefined) {
       permissionBindings.set(permission.id, permission.grants_identity);
@@ -271,6 +291,7 @@ export function buildIdentityGraph(dataset: IdentityDataset): IdentityGraph {
     provisionedChildren,
     employeeStatus,
     sensitivePermissions,
+    unclassifiedPermissions,
     permissionBindings,
     apps,
     byApp,
