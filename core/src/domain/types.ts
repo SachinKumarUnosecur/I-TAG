@@ -6,6 +6,7 @@
  * them (§3). Nothing in this file may branch on `type`.
  */
 
+import type { PersistedCreationEdge, PrivilegeGrantEvent } from './lineage.js';
 import type { OwnerKind, SuppressionReason } from './ownership.js';
 
 export type IdentityType = 'human' | 'service_account' | 'ai_agent' | 'group';
@@ -53,6 +54,38 @@ export interface Identity {
    * lineage as "unowned" would fabricate a finding (§4.6).
    */
   readonly provisioning_source?: 'app_native' | 'sso_federated' | 'bulk_import' | 'self_registered';
+  /**
+   * Which environment this account belongs to, where the estate classifies them.
+   *
+   * Read by the creation-authority signal (`docs/delegation-chain-research.md`
+   * §4.4): the property that made the Midnight Blizzard chain a finding was not the
+   * shape of the chain but a property of the creator — "a legacy, non-production
+   * test tenant account" exercising a production-tenant creation privilege (§3.4).
+   *
+   * Optional and tri-state by absence: an unclassified identity is **not** treated
+   * as non-production. Inferring the environment from a naming convention is how a
+   * detector starts fabricating its own headline finding.
+   */
+  readonly environment?: 'production' | 'non_production';
+  /**
+   * The person this account belongs to, for cross-app correlation only.
+   *
+   * `docs/PRD-delegation-chain.md` L54 keys creation edges on `(app, child_id)`,
+   * which presumes an identity spans apps, while `app` above is a required scalar —
+   * so that key is currently redundant. `docs/delegation-chain-research.md` §4.7
+   * resolves the conflict in favour of this model: an `Identity` is an *account* in
+   * exactly one app, and correlation is an analysis act. Making `app` an array
+   * instead would give one node two creators, two revocation states and two
+   * activity clocks, which makes `buildTimeline` ambiguous, `graph.byApp`
+   * non-partitioning and the PCI inactivity clock undefined.
+   *
+   * Never a storage key, never required, and never inferred: a wrong join
+   * attributes one person's residual footprint to another, and downstream in the
+   * off-boarding sweep that means either revoking a live credential belonging to a
+   * current employee or filing a real departed-employee footprint under the wrong
+   * name and closing it (§4.9).
+   */
+  readonly person_id?: string;
 }
 
 /**
@@ -176,4 +209,24 @@ export interface IdentityDataset {
   readonly control_history: readonly ControlHistory[];
   readonly grant_half_lives: readonly GrantHalfLife[];
   readonly grant_records: readonly GrantRecord[];
+  /**
+   * Observed creation events, append-only — `docs/delegation-chain-research.md` §4.6.
+   *
+   * `Identity.provisioned_by` stays the authoritative graph edge; this is the
+   * evidence behind it. The two are separate because for six of seven providers
+   * `created_by` is not a field on the identity object at all, only an audit event
+   * with a retention window of 7 to 400 days (§3.2) — so this table is what lets
+   * the engine still know on day 400 what it knew on day 1, and it is where the
+   * actor detail a bare parent id cannot carry actually lives.
+   *
+   * Optional so a dataset that has not ingested an event stream stays valid: an
+   * identity with a `provisioned_by` and no edge record here is a creator we
+   * inherited from an object field rather than one we watched happen.
+   */
+  readonly creation_edges?: readonly PersistedCreationEdge[];
+  /**
+   * Privilege grants with the acting principal — the second half of the AC-2(e)
+   * join (§4.4). Optional for the same reason `creation_edges` is.
+   */
+  readonly privilege_grant_events?: readonly PrivilegeGrantEvent[];
 }

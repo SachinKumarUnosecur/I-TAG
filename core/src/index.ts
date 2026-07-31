@@ -23,6 +23,34 @@ export type {
   PermissionRecord,
 } from './domain/types.js';
 
+// Provisioning Lineage vocabulary (renamed from Delegation Chain, research §3.1)
+export type {
+  ActorKind,
+  AuthorizingHuman,
+  CreationActor,
+  CreationAuthoritySignal,
+  FanOutSignal,
+  HumanResolutionBasis,
+  HumanResolutionConfidence,
+  LineageCoverage,
+  LineageGap,
+  LineageGapBucket,
+  LineageGapReason,
+  LineageNode,
+  LineageRootKind,
+  LineageWalk,
+  PersistedCreationEdge,
+  PrivilegeGrantEvent,
+  Provenance,
+  ProvenanceOutcome,
+  ProvenanceRecord,
+  LineageCoverageReport,
+  LineageRow,
+  LineageTree,
+  LineageTreeOutcome,
+  CreatorStatus,
+} from './domain/lineage.js';
+
 // Ownership vocabulary
 export type {
   DispositionAction,
@@ -60,8 +88,12 @@ export type {
 } from './domain/results.js';
 
 // Policy and ports
-export type { AccountabilityPolicy, OwnershipPolicy } from './domain/policy.js';
-export { DEFAULT_ACCOUNTABILITY_POLICY, DEFAULT_OWNERSHIP_POLICY } from './domain/policy.js';
+export type { AccountabilityPolicy, FanOutBaseline, LineagePolicy, OwnershipPolicy } from './domain/policy.js';
+export {
+  DEFAULT_ACCOUNTABILITY_POLICY,
+  DEFAULT_LINEAGE_POLICY,
+  DEFAULT_OWNERSHIP_POLICY,
+} from './domain/policy.js';
 export type {
   Clock,
   FindingStore,
@@ -90,6 +122,52 @@ export type { OrphanFinding, OrphanRule, OrphanRuleContext } from './accountabil
 export { DEFAULT_ORPHAN_RULES, daysSince, rootHumanRecord } from './accountability/rules.js';
 export type { AccountabilityDeps, AccountabilityService } from './accountability/assess.js';
 export { createAccountabilityService } from './accountability/assess.js';
+
+// Provisioning Lineage — actor normalization and human resolution (research gap 1)
+export type {
+  ActorNormalizationContext,
+  ActorNormalizer,
+  HumanResolutionContext,
+  HumanResolver,
+} from './lineage/actors.js';
+export {
+  DEFAULT_ACTOR_NORMALIZERS,
+  DEFAULT_HUMAN_RESOLVERS,
+  normalizeActor,
+  resolveAuthorizingHuman,
+} from './lineage/actors.js';
+
+// Provisioning Lineage — ancestor/descendant resolution (research gaps 3, 4, 7)
+export {
+  ancestorsToRoot,
+  descendants,
+  fanOut,
+  fanOutInApp,
+  inAppRoot,
+  rootKindOf,
+} from './lineage/resolve.js';
+
+// Provisioning Lineage — gap buckets and signals (research gaps 5, 6, 9)
+export type {
+  CreationAuthorityContext,
+  FanOutContext,
+  LineageGapContext,
+  LineageGapRule,
+  OwnershipStateSource,
+} from './lineage/signals.js';
+export {
+  classifyLineageGap,
+  DEFAULT_LINEAGE_GAP_RULES,
+  evaluateCreationAuthority,
+  evaluateFanOut,
+} from './lineage/signals.js';
+
+// Provisioning Lineage — explanation coverage (research 4.5, the landing view)
+export { buildCoverage } from './lineage/coverage.js';
+
+// Provisioning Lineage — the service and its query surface (research 6)
+export type { LineageDeps, LineageQuery, LineageService } from './lineage/service.js';
+export { createLineageService } from './lineage/service.js';
 
 // Ownership Assurance — owner resolution (gap 1)
 export type {
@@ -142,6 +220,7 @@ export {
   datasetTeamDirectory,
 } from './adapters/dataset-directories.js';
 export { memoryFindingStore } from './adapters/memory-finding-store.js';
+export { memoizedOwnershipState } from './adapters/ownership-state.js';
 export { fixedClock, systemClock } from './adapters/clock.js';
 export { seedGraphSource } from './adapters/seed-source.js';
 

@@ -52,8 +52,111 @@ export interface IdentityGraph {
    * person leave behind *across every system*" answerable.
    */
   readonly crossAppEdges: ReadonlyMap<string, CreationEdge>;
+  /**
+   * Inverse of the same-app creation edges — the per-app forest, walkable downward.
+   *
+   * Distinct from `provisionedChildren`, which spans apps because the off-boarding
+   * sweep has to follow a departed person's estate wherever it went. This one keeps
+   * `graph.byApp` a partition, so a per-app fan-out or generation figure cannot be
+   * inflated by a chain that hopped systems.
+   */
+  readonly sameAppChildren: ReadonlyMap<string, readonly string[]>;
+  /**
+   * Same-app creation hops from the in-app root, computed once at build.
+   *
+   * `docs/PRD-delegation-chain.md` §3 defines this (root = generation 0) and §6.3
+   * makes it a sortable column. Memoized here rather than derived per row because
+   * `docs/delegation-chain-research.md` §5 identifies recomputing it at render time
+   * as the one thing that actually breaks the table view at 100k identities: one
+   * bottom-up pass is `O(V)`, per-row ancestor walks are `O(V·d)`.
+   *
+   * An id is **absent** rather than null when no generation exists, which happens
+   * only when the walk above it loops (§4.8) and so it has no root. Absence is used
+   * instead of a sentinel so a caller cannot accidentally do arithmetic on it.
+   *
+   * Deliberately not a risk signal. Research §4.2 deletes the `deep_chain` flag
+   * `PRD` L62 specifies: measured on this repo's own seed the maximum real
+   * generation is 3 against a proposed threshold of >4, so it fires on nothing here
+   * and on a customer's cleanest IaC pipeline there.
+   */
+  readonly generation: ReadonlyMap<string, number>;
   /** Retained so F9 (control history) and F10 (half-lives) need no new plumbing. */
   readonly dataset: IdentityDataset;
+}
+
+/**
+ * Assigns every identity its distance from the root of its own app's forest.
+ *
+ * Iterative rather than recursive: the walk depth is data-controlled, and a
+ * pathological chain must produce a terminal answer rather than a stack overflow —
+ * the same rule the traversal primitive follows.
+ *
+ * `O(V)` overall. Each identity is pushed onto a pending path at most once, because
+ * the moment it leaves that path it is recorded in `generation` or in `rootless` and
+ * every later walk short-circuits on it.
+ */
+function buildGenerations(
+  identities: readonly Identity[],
+  parentOf: ReadonlyMap<string, string>,
+): ReadonlyMap<string, number> {
+  const generation = new Map<string, number>();
+  /** Proven to have no root, because the chain above it loops back on itself. */
+  const rootless = new Set<string>();
+
+  for (const identity of identities) {
+    if (generation.has(identity.id) || rootless.has(identity.id)) {
+      continue;
+    }
+
+    // Ids whose generation is still unknown, deepest first.
+    const pending: string[] = [];
+    const onPath = new Set<string>();
+    let cursor = identity.id;
+    /** Generation of the *last* element of `pending`, or null if there is no root. */
+    let deepest: number | null = null;
+
+    for (;;) {
+      const settled = generation.get(cursor);
+      if (settled !== undefined) {
+        // Not pushed, so the last pending id is this node's child.
+        deepest = settled + 1;
+        break;
+      }
+      if (rootless.has(cursor) || onPath.has(cursor)) {
+        deepest = null;
+        break;
+      }
+
+      onPath.add(cursor);
+      pending.push(cursor);
+
+      const parent = parentOf.get(cursor);
+      if (parent === undefined) {
+        // No resolvable same-app creator: this node is the root of its own tree.
+        deepest = 0;
+        break;
+      }
+      cursor = parent;
+    }
+
+    if (deepest === null) {
+      for (const id of pending) {
+        rootless.add(id);
+      }
+      continue;
+    }
+
+    let value = deepest;
+    for (let index = pending.length - 1; index >= 0; index -= 1) {
+      const id = pending[index];
+      if (id !== undefined) {
+        generation.set(id, value);
+        value += 1;
+      }
+    }
+  }
+
+  return generation;
 }
 
 export function buildIdentityGraph(dataset: IdentityDataset): IdentityGraph {
@@ -126,6 +229,29 @@ export function buildIdentityGraph(dataset: IdentityDataset): IdentityGraph {
     byApp.set(appId, Object.freeze([...identities]));
   }
 
+  // A dangling edge stays in `creationEdges` by design (it is the per-app forest's
+  // own data-integrity finding), so the parent is re-checked here: an unresolvable
+  // creator cannot supply a generation, which makes its child an in-app root.
+  const sameAppParent = new Map<string, string>();
+  const sameAppKids = new Map<string, string[]>();
+  for (const edge of creationEdges.values()) {
+    if (!byId.has(edge.parent_id)) {
+      continue;
+    }
+    sameAppParent.set(edge.child_id, edge.parent_id);
+    const bucket = sameAppKids.get(edge.parent_id);
+    if (bucket === undefined) {
+      sameAppKids.set(edge.parent_id, [edge.child_id]);
+    } else {
+      bucket.push(edge.child_id);
+    }
+  }
+
+  const sameAppChildren = new Map<string, readonly string[]>();
+  for (const [parentId, ids] of sameAppKids) {
+    sameAppChildren.set(parentId, Object.freeze([...ids].sort()));
+  }
+
   return Object.freeze({
     all: Object.freeze([...dataset.identities]),
     byId,
@@ -136,6 +262,8 @@ export function buildIdentityGraph(dataset: IdentityDataset): IdentityGraph {
     byApp,
     creationEdges,
     crossAppEdges,
+    sameAppChildren,
+    generation: buildGenerations(dataset.identities, sameAppParent),
     dataset,
   });
 }

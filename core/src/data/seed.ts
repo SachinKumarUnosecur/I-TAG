@@ -7,6 +7,7 @@ import { FIXTURES } from './seed/fixtures.js';
 import { FOOTPRINT } from './seed/footprint.js';
 import { GROUPS } from './seed/groups.js';
 import { HEADLINE } from './seed/headline.js';
+import { LINEAGE } from './seed/lineage.js';
 import { REASON_MATRIX } from './seed/reason-matrix.js';
 import { SUPPRESSED } from './seed/suppressed.js';
 import { TRUE_NEGATIVES } from './seed/true-negatives.js';
@@ -38,6 +39,7 @@ import { TRUE_NEGATIVES } from './seed/true-negatives.js';
  *   data-gaps       beats 6, 8 — unknown is not unowned
  *   suppressed      beat 7  — unowned by design, plus one expired exemption
  *   reason-matrix   beats 9b, 10, 12 — one clean example per reason code, SLA pair
+ *   lineage         beats 16, 17, 18 — Midnight Blizzard, fan-out 34, generation 5
  *   fixtures        beat 14 — depth cap and corrupt lineage, filtered from every view
  *
  * Lineage is stored per app and left unmerged (§4.2). Three chains deliberately
@@ -57,5 +59,6 @@ export const SEED_DATASET: IdentityDataset = assembleDataset(CATALOG, [
   DATA_GAPS,
   SUPPRESSED,
   REASON_MATRIX,
+  LINEAGE,
   FIXTURES,
 ]);

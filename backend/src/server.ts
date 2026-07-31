@@ -4,6 +4,7 @@ import cors from 'cors';
 import {
   createAccountabilityService,
   createDispositionService,
+  createLineageService,
   createOwnershipService,
   createSweepService,
   datasetHrDirectory,
@@ -11,10 +12,12 @@ import {
   datasetSuppressionRegistry,
   datasetTeamDirectory,
   fixedClock,
+  memoizedOwnershipState,
   memoryFindingStore,
   seedGraphSource,
   systemClock,
   DEFAULT_ACCOUNTABILITY_POLICY,
+  DEFAULT_LINEAGE_POLICY,
   DEFAULT_ORPHAN_RULES,
   DEFAULT_OWNERSHIP_POLICY,
   type AccountabilityPolicy,
@@ -24,6 +27,7 @@ import { explainRouter } from './routes/explain.js';
 import { createAccountabilityRouter } from './routes/accountability.js';
 import { createFindingsRouter } from './routes/findings.js';
 import { createOffboardingRouter } from './routes/offboarding.js';
+import { createLineageRouter } from './routes/lineage.js';
 import { createOwnershipRouter } from './routes/ownership.js';
 
 /** Pin `ITAG_NOW` to keep a rehearsed demo's day counts identical on any date. */
@@ -81,6 +85,19 @@ const ownershipService = createOwnershipService({
   policy: DEFAULT_OWNERSHIP_POLICY,
 });
 
+// Provisioning Lineage. Reads Ownership Assurance through a narrow port rather than
+// importing it, so the dependency runs one way only: research 7.2 has ownership
+// consuming lineage, and only this composition root knows both sides.
+const lineageService = createLineageService({
+  graphSource,
+  clock,
+  hr,
+  suppressions: datasetSuppressionRegistry(dataset),
+  ownership: memoizedOwnershipState(ownershipService),
+  accountabilityPolicy,
+  policy: DEFAULT_LINEAGE_POLICY,
+});
+
 const sweepService = createSweepService({
   graphSource,
   hr,
@@ -109,6 +126,7 @@ app.use('/api/explain', explainRouter);
 // alongside it rather than replacing it.
 app.use('/api/accountability', createAccountabilityRouter(accountabilityService));
 app.use('/api/ownership', createOwnershipRouter(ownershipService));
+app.use('/api/lineage', createLineageRouter(lineageService));
 app.use('/api/offboarding-sweep', createOffboardingRouter(sweepService));
 app.use('/api/findings', createFindingsRouter(dispositionService));
 

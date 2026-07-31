@@ -27,6 +27,15 @@ Delegation Chain exists to reconstruct that provisioning lineage — **per app/s
 
 **Key distinction from Access Discovery:** creation lineage is strictly hierarchical — each identity has at most one direct creator (a tree edge), not multiple weighted path types. This means the underlying structure is a **forest of trees**, not a general directed graph with cycles/multiple path types. That distinction should drive the visualization choice (§6).
 
+> **Amendment 1 — the forest claim is true of creation acts and false of the id graph.** See `delegation-chain-research.md` §4.8 (gap #12).
+>
+> The paragraph above is correct that each identity has at most one direct creator *within an app*, and the visualization conclusion stands. It is wrong that the resulting structure cannot contain cycles or unresolvable edges, and the implementation must not assume it, in two specific ways:
+>
+> 1. **Cycles are real.** Identifier reuse produces them: a deleted principal's id is re-issued to a new principal that the first one's descendant later creates, and the edge list now loops. The graph is a forest of *creation events*; it is not a forest of *identity ids*, and it is ids that are stored.
+> 2. **Out-of-population parents are produced by providers working correctly.** AWS `CreateServiceLinkedRole` records the AWS service principal that performed the create, and that principal is not an identity in the customer's estate at all. The parent is therefore unresolvable by construction rather than by corruption.
+>
+> Both are terminal states of the traversal rather than exceptions (`cycle_detected`, `dangling_reference`), and both are pinned in the seed as `svc-fixture-cycle-*` and `svc-fixture-service-linked-role`. The practical consequence for §4.3 and §6.5: every walk returns an outcome union, and "generation" is `null` for an identity whose chain loops rather than 0 or an error.
+
 ### Non-Goals
 
 - Classifying access **type** (Direct/Indirect/Hop) — that's Access Discovery's job; this module is strictly about the creation/provisioning relationship, not the permission-path relationship.
@@ -98,6 +107,17 @@ Rebuild per-app forests on the same cadence as Access Discovery's graph rebuild,
 | Salesforce        | Setup Audit Trail "User Created" events with the creating admin                                                                                                |
 | Kubernetes        | ServiceAccount creation events from the API audit log (actor field)                                                                                            |
 | Generic/custom    | Whatever creation-audit event or `created_by` field the app exposes — this module is only as good as each app's audit trail, so gaps should be surfaced explicitly (see §6.6) rather than silently treated as "no creator". |
+
+> **Amendment 2 — the table omits the object type the canonical incident runs through.** See `delegation-chain-research.md` §4.4 and §8 (gap #8).
+>
+> The "Okta / Azure AD" row covers **user** creation only. Entra also creates **service principals** and **app registrations**, and those are missing from the table, which matters more than a coverage gap normally would for two reasons:
+>
+> 1. **The differentiated finding lives there.** Midnight Blizzard's actor used a legacy test OAuth application to create a new account and grant it consent (Microsoft Security Blog, 25 Jan 2024). The creator in that chain is a service principal, so a data-requirements table that stops at user creation cannot express the module's own headline example. The `entra-tenant` app in the seed exists to carry it.
+> 2. **`initiatedBy` is a union, and one arm has no human in it.** Entra's `directoryAudit.initiatedBy` is `user` **or** `app`. §4.1's assumption that the creator is an identity drawn from the same population as the child holds for the first arm and fails for the second: an app-initiated create names no person at all, and that is a fact to display rather than a gap to fill in.
+>
+> Add to the table: Entra `directoryAudit` service-principal and app-registration creation events, with `initiatedBy` read as a union rather than as a user reference. **Unverified:** whether Entra exposes an actor for service-principal creation at the same fidelity as for user creation is an open question (research §10) and needs a tenant test rather than a documentation read — so this amendment states the requirement, not that the data is known to be obtainable.
+>
+> A retention note that applies to this whole table: `directoryAudit` retention is 7 days on the free tier and 30 days on P1/P2 (research §3.2), against identities that live for years. The provider is therefore not a source that can be re-read on demand, which is why creation events are persisted on ingest rather than recomputed.
 
 ## 6. UI/UX Spec
 
