@@ -83,8 +83,12 @@ export type {
 } from './domain/results.js';
 
 // Policy and ports
-export type { AccountabilityPolicy, OwnershipPolicy } from './domain/policy.js';
-export { DEFAULT_ACCOUNTABILITY_POLICY, DEFAULT_OWNERSHIP_POLICY } from './domain/policy.js';
+export type { AccountabilityPolicy, FanOutBaseline, LineagePolicy, OwnershipPolicy } from './domain/policy.js';
+export {
+  DEFAULT_ACCOUNTABILITY_POLICY,
+  DEFAULT_LINEAGE_POLICY,
+  DEFAULT_OWNERSHIP_POLICY,
+} from './domain/policy.js';
 export type {
   Clock,
   FindingStore,
@@ -137,6 +141,21 @@ export {
   inAppRoot,
   rootKindOf,
 } from './lineage/resolve.js';
+
+// Provisioning Lineage — gap buckets and signals (research gaps 5, 6, 9)
+export type {
+  CreationAuthorityContext,
+  FanOutContext,
+  LineageGapContext,
+  LineageGapRule,
+  OwnershipStateSource,
+} from './lineage/signals.js';
+export {
+  classifyLineageGap,
+  DEFAULT_LINEAGE_GAP_RULES,
+  evaluateCreationAuthority,
+  evaluateFanOut,
+} from './lineage/signals.js';
 
 // Ownership Assurance — owner resolution (gap 1)
 export type {

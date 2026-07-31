@@ -55,6 +55,19 @@ export interface Identity {
    */
   readonly provisioning_source?: 'app_native' | 'sso_federated' | 'bulk_import' | 'self_registered';
   /**
+   * Which environment this account belongs to, where the estate classifies them.
+   *
+   * Read by the creation-authority signal (`docs/delegation-chain-research.md`
+   * §4.4): the property that made the Midnight Blizzard chain a finding was not the
+   * shape of the chain but a property of the creator — "a legacy, non-production
+   * test tenant account" exercising a production-tenant creation privilege (§3.4).
+   *
+   * Optional and tri-state by absence: an unclassified identity is **not** treated
+   * as non-production. Inferring the environment from a naming convention is how a
+   * detector starts fabricating its own headline finding.
+   */
+  readonly environment?: 'production' | 'non_production';
+  /**
    * The person this account belongs to, for cross-app correlation only.
    *
    * `docs/PRD-delegation-chain.md` L54 keys creation edges on `(app, child_id)`,
