@@ -102,17 +102,25 @@ export type {
 } from './domain/results.js';
 
 // Policy and ports
-export type { AccountabilityPolicy, FanOutBaseline, LineagePolicy, OwnershipPolicy } from './domain/policy.js';
+export type {
+  AccountabilityPolicy,
+  FanOutBaseline,
+  LineagePolicy,
+  OwnershipPolicy,
+  RiskPolicy,
+} from './domain/policy.js';
 export {
   DEFAULT_ACCOUNTABILITY_POLICY,
   DEFAULT_LINEAGE_POLICY,
   DEFAULT_OWNERSHIP_POLICY,
+  DEFAULT_RISK_POLICY,
 } from './domain/policy.js';
 export type {
   Clock,
   FindingStore,
   GraphSource,
   HrDirectory,
+  LifecycleDirectory,
   OwnerRegistry,
   SuppressionRegistry,
   TeamDirectory,
@@ -282,6 +290,62 @@ export type {
 } from './impact/service.js';
 export { createImpactService } from './impact/service.js';
 
+// Identity Risk Profile — the join, and the only module that ranks nothing on purpose
+export type {
+  RiskAssessment,
+  RiskFactorCoverage,
+  RiskFactorName,
+  RiskFinding,
+  RiskFindingLevel,
+  RiskFindingSource,
+  RiskLevelCount,
+  RiskOutcome,
+  RiskProfile,
+  RiskQuery,
+  RiskRow,
+  RiskStalestInput,
+  RiskStaleness,
+  RiskSummary,
+} from './domain/risk.js';
+export { RISK_VERSUS_RANKERS } from './domain/risk.js';
+export type {
+  RiskFactor,
+  RiskFactorContext,
+  RiskFactorVerdict,
+  RiskGrant,
+} from './risk/factors.js';
+export {
+  CONDITIONAL_ACCESS_CONTROL,
+  CONTROL_DRIFT_FACTOR,
+  DEFAULT_RISK_FACTORS,
+  EXCEPTION_GRANTED,
+  EXPOSURE_BAND_LEVELS,
+  EXPOSURE_FACTOR,
+  GRANT_STALENESS_FACTOR,
+  HOP_ACCESS_FACTOR,
+  MFA_CONTROL,
+  MFA_DISABLED,
+  OWNERSHIP_FACTOR,
+  REVIEW_STALENESS_FACTOR,
+} from './risk/factors.js';
+export type { FactorRun } from './risk/summarize.js';
+export {
+  compareAssessments,
+  factorsFiringIn,
+  isFindingLevel,
+  levelCounts,
+  riskLevelsHighToLow,
+  summarize,
+  worstLevelOf,
+} from './risk/summarize.js';
+export type {
+  RiskDeps,
+  RiskExposureSource,
+  RiskOwnershipSource,
+  RiskService,
+} from './risk/service.js';
+export { createRiskService } from './risk/service.js';
+
 // Ownership Assurance — owner resolution (gap 1)
 export type {
   OwnerResolution,
@@ -328,6 +392,7 @@ export { buildEvidencePack, findingsToCsv } from './ownership/evidence.js';
 // Adapters
 export {
   datasetHrDirectory,
+  datasetLifecycleDirectory,
   datasetOwnerRegistry,
   datasetSuppressionRegistry,
   datasetTeamDirectory,
