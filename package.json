@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "description": "Identity Blast Radius — Delegation Chain, Escalation & Accountability Tracer (hackathon)",
   "workspaces": [
+    "core",
     "frontend",
     "backend"
   ],
@@ -11,7 +12,8 @@
     "dev": "npm-run-all --parallel dev:backend dev:frontend",
     "dev:frontend": "npm --workspace frontend run dev",
     "dev:backend": "npm --workspace backend run dev",
-    "build": "npm --workspace backend run build && npm --workspace frontend run build",
+    "build": "npm --workspace core run build && npm --workspace backend run build && npm --workspace frontend run build",
+    "test": "npm --workspace core run test",
     "lint": "npm --workspace frontend run lint"
   },
   "devDependencies": {
