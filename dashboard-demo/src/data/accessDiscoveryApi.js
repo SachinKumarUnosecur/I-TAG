@@ -1,7 +1,8 @@
 /**
- * Access Discovery API layer
- * Aggregates live-style payloads from connected dataSources (AWS, GCP, Azure, Okta, GWS, Workday).
- * UI consumes this instead of reading static arrays directly.
+ * Access Discovery API layer (offline / VITE_USE_MOCK=1).
+ * Aggregates connector-style payloads from mock dataSources, then the view-model
+ * adapter (`accessViewModel.js`) maps them into the same shape as live
+ * `/api/access` + `/api/risk-profile` + `/api/lineage`.
  */
 
 import {
@@ -9,7 +10,6 @@ import {
   identities as catalogIdentities,
   accessPaths as catalogAccessPaths,
   shadowAdmins as catalogShadowAdmins,
-  riskTrend as catalogRiskTrend,
 } from './mockData.js';
 
 const SOURCE_KEY_BY_PROVIDER = {
@@ -54,7 +54,6 @@ function pathMatchesSource(path, source) {
 function identityMatchesSource(identity, source) {
   const key = providerKey(source.provider);
   if (!identity?.sources) {
-    // fall back: identity appears on a path from this source
     return false;
   }
   if (source.category === 'hr') return Boolean(identity.sources.hr);
@@ -134,67 +133,62 @@ function mergeById(items, key = 'id') {
   return [...map.values()];
 }
 
-function computeSummary({ identities, accessPaths, shadowAdmins, riskTrend, dataSources }) {
-  const humanCount = identities.filter(i => i.type === 'human').length;
-  const nhiCount = identities.filter(i => i.type === 'service').length;
-  const ownerGapIdentities = identities.filter(i => !i.owner || i.status === 'orphaned' || i.status === 'departed');
-  const shadowAdminIds = new Set([
-    ...accessPaths.filter(p => p.shadowAdmin).map(p => p.identityId),
-    ...shadowAdmins.map(s => s.identityId),
-  ]);
-  const attentionIds = new Set([
-    ...ownerGapIdentities.map(i => i.id),
-    ...shadowAdminIds,
-  ]);
-
-  const attentionPaths = accessPaths.filter(p => {
-    const identity = identities.find(i => i.id === p.identityId);
-    return p.shadowAdmin || !identity?.owner || identity?.status === 'orphaned' || identity?.status === 'departed';
-  });
-
-  const shadowOnlyPaths = accessPaths.filter(p => p.accessType === 'Shadow');
-  const hopPaths = accessPaths.filter(p => p.accessType === 'Shadow' || (p.hopCount || 0) > 0);
-  const shadowAdminCount = shadowAdminIds.size;
-
-  // High-privilege identities: elevated risk or critical/high sensitivity access
-  const highPrivilegeIds = new Set([
-    ...identities.filter(i => (i.riskScore || 0) >= 60).map(i => i.id),
-    ...accessPaths
-      .filter(p => p.resourceSensitivity === 'critical' || p.resourceSensitivity === 'high'
-        || (p.effectivePermissions || []).some(perm => perm === '*' || /admin|owner|\*/i.test(perm)))
-      .map(p => p.identityId),
-  ]);
-  const highPrivilegeCount = highPrivilegeIds.size;
-
-  const avgRisk = identities.length
-    ? identities.reduce((sum, i) => sum + (i.riskScore || 0), 0) / identities.length
-    : 0;
-
-  const priorAvgRisk = Number.isFinite(riskTrend?.priorAvgRisk)
-    ? riskTrend.priorAvgRisk
-    : avgRisk;
-  // Negative = risk reduced vs last week; positive = increased
-  const riskDeltaPctWeek = Number((avgRisk - priorAvgRisk).toFixed(1));
-
+/**
+ * Honest summary strip aligned with live Access Discovery KPIs.
+ * No fused risk %, no week-over-week trend, no vanity "high privileges" copy.
+ */
+function computeSummary({ identities, accessPaths, dataSources }) {
   const identityById = Object.fromEntries(identities.map(i => [i.id, i]));
   const identitiesWithPaths = new Set(accessPaths.map(p => p.identityId));
 
+  const estateHuman = identities.filter(i => i.type === 'human').length;
+  const estateNhi = identities.filter(i => i.type === 'service').length;
+
+  const hopPaths = accessPaths.filter(p => p.accessType === 'Shadow' || (p.hopCount || 0) > 0);
+  const hopIdentityIds = new Set(hopPaths.map(p => p.identityId));
+
+  const ownershipFindingIds = new Set(
+    identities
+      .filter(i => {
+        if (i.suppressionEffect === 'suppressed' || i.suppressionEffect === 'excluded') return false;
+        if (i.ownershipState === 'unknown' || i.suppressionEffect === 'unknown') return false;
+        if (i.ownershipState === 'unowned' || i.ownershipState === 'owner_invalid' || i.ownershipState === 'ambiguous') {
+          return true;
+        }
+        return !i.owner || i.status === 'orphaned' || i.status === 'departed';
+      })
+      .map(i => i.id),
+  );
+
+  const attentionIds = new Set([
+    ...[...hopIdentityIds].filter(id => ownershipFindingIds.has(id)),
+    ...hopIdentityIds,
+    ...[...ownershipFindingIds].filter(id => identitiesWithPaths.has(id)),
+  ]);
+
+  const levelCounts = { critical: 0, high: 0, medium: 0, low: 0 };
+  for (const id of identitiesWithPaths) {
+    const score = identityById[id]?.riskScore;
+    if (!Number.isFinite(score) || identityById[id]?.riskAssessment === 'unevaluated') continue;
+    if (score >= 80) levelCounts.critical += 1;
+    else if (score >= 60) levelCounts.high += 1;
+    else if (score >= 40) levelCounts.medium += 1;
+    else levelCounts.low += 1;
+  }
+
   return {
     totalIdentities: identities.length,
-    humanCount,
-    nhiCount,
+    humanCount: estateHuman,
+    nhiCount: estateNhi,
     needAttention: attentionIds.size,
-    attentionPathCount: attentionPaths.length,
-    attentionFooter: `High privileges (${highPrivilegeCount}) and Shadow admin (${shadowAdminCount})`,
-    avgRisk: avgRisk.toFixed(1),
-    priorAvgRisk: priorAvgRisk.toFixed(1),
-    riskDeltaPctWeek,
+    attentionFooter: `Shadow hops (${hopIdentityIds.size}) · Ownership findings (${[...ownershipFindingIds].filter(id => identitiesWithPaths.has(id)).length})`,
+    riskFindings: levelCounts.critical + levelCounts.high + levelCounts.medium + levelCounts.low,
+    riskFooter: `Critical (${levelCounts.critical}) · High (${levelCounts.high}) · Medium (${levelCounts.medium})`,
     hopPathCount: hopPaths.length,
-    shadowPaths: shadowOnlyPaths.length,
-    shadowAdminCount,
-    highPrivilegeCount,
+    shadowPaths: hopPaths.length,
     directPaths: accessPaths.filter(p => p.accessType === 'Direct').length,
     indirectPaths: accessPaths.filter(p => p.accessType === 'Indirect').length,
+    identitiesWithHop: hopIdentityIds.size,
     kindCounts: {
       All: identitiesWithPaths.size,
       human: [...identitiesWithPaths].filter(id => identityById[id]?.type === 'human').length,
@@ -207,11 +201,8 @@ function computeSummary({ identities, accessPaths, shadowAdmins, riskTrend, data
       ]),
     ),
     connectedSources: dataSources.filter(s => s.status === 'connected').length,
-    lastSync: dataSources
-      .map(s => s.lastSync)
-      .filter(Boolean)
-      .sort()
-      .at(-1) || null,
+    graphSnapshotAt: '2026-07-31T00:00:00.000Z',
+    lastSync: '2026-07-31',
   };
 }
 
@@ -239,6 +230,9 @@ export async function fetchAccessDiscoveryFromSources({
     ...catalogIdentities.filter(i => pathIdentityIds.has(i.id)),
   ]);
 
+  // Full roster for estate Total card (matches live identities_scanned semantics)
+  const estateIdentities = mergeById(catalogIdentities);
+
   const shadowAdmins = mergeById(
     connectedInventories.flatMap(inv => inv.shadowAdmins),
     'identityId',
@@ -254,21 +248,17 @@ export async function fetchAccessDiscoveryFromSources({
     };
   });
 
-  const riskTrend = { ...catalogRiskTrend };
   const summary = computeSummary({
-    identities,
+    identities: estateIdentities,
     accessPaths,
-    shadowAdmins,
-    riskTrend,
     dataSources: dataSources.filter(s => s.status === 'connected'),
   });
 
   return {
     dataSources,
-    identities,
+    identities: estateIdentities,
     accessPaths,
     shadowAdmins,
-    riskTrend,
     summary,
     sourceInventories: inventories,
     fetchedAt: new Date().toISOString(),

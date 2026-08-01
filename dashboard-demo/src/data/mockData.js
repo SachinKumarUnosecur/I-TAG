@@ -397,7 +397,8 @@ export const identities = [
   {
     id: "id-101", name: "svc-payments-api", type: "service", email: null, department: "Payments",
     status: "active", createdBy: "id-001", createdAt: "2023-02-01", lastActive: "2026-07-31",
-    mfaEnabled: false, credentialAge: 320, owner: "id-001", ownerName: "Jane Doe", riskScore: 67, apps: ["payments"],
+    mfaEnabled: false, credentialAge: 320, owner: "id-001", ownerName: "jane.doe", ownerKind: "user",
+    ownershipState: "owned", riskScore: 67, riskFactorsFiring: 1, apps: ["payments"],
     sources: {
       aws: {
         roleArn: "arn:aws:iam::481516234210:role/svc-payments-api",
@@ -426,7 +427,8 @@ export const identities = [
   {
     id: "id-103", name: "svc-ci-runner", type: "service", email: null, department: "DevOps",
     status: "active", createdBy: "id-002", createdAt: "2022-09-01", lastActive: "2026-07-31",
-    mfaEnabled: false, credentialAge: 45, owner: "id-002", ownerName: "Mark Chen", riskScore: 41, apps: ["devops"],
+    mfaEnabled: false, credentialAge: 45, owner: "team-platform", ownerName: "team-platform", ownerKind: "team",
+    ownershipState: "owned", ownerAttestedAt: "2026-07-22", riskScore: 41, riskFactorsFiring: 1, apps: ["devops"],
     sources: {
       gcp: {
         email: "svc-ci-runner@acme-prod-4821.iam.gserviceaccount.com",
@@ -444,7 +446,8 @@ export const identities = [
   {
     id: "id-104", name: "svc-orphaned-etl", type: "service", email: null, department: "Data",
     status: "orphaned", createdBy: "id-006", createdAt: "2021-10-01", lastActive: "2026-07-10",
-    mfaEnabled: false, credentialAge: 380, owner: null, ownerName: null, riskScore: 91, apps: ["data-pipeline"],
+    mfaEnabled: false, credentialAge: 380, owner: null, ownerName: null, ownershipState: "unowned",
+    riskScore: 91, riskFactorsFiring: 2, apps: ["data-pipeline"],
     sources: {
       gcp: {
         email: "svc-orphaned-etl@acme-prod-4821.iam.gserviceaccount.com",
@@ -457,7 +460,8 @@ export const identities = [
   {
     id: "id-105", name: "svc-old-payments-worker", type: "service", email: null, department: "Payments",
     status: "orphaned", createdBy: "id-005", createdAt: "2020-04-15", lastActive: "2026-06-20",
-    mfaEnabled: false, credentialAge: 460, owner: null, ownerName: null, riskScore: 97, apps: ["payments"],
+    mfaEnabled: false, credentialAge: 460, owner: null, ownerName: null, ownershipState: "unowned",
+    riskScore: 97, riskFactorsFiring: 3, apps: ["payments"],
     sources: {
       aws: {
         roleArn: "arn:aws:iam::481516234210:role/svc-old-payments-worker",
@@ -470,7 +474,8 @@ export const identities = [
   {
     id: "id-106", name: "svc-monitoring", type: "service", email: null, department: "DevOps",
     status: "active", createdBy: "id-002", createdAt: "2023-01-01", lastActive: "2026-07-31",
-    mfaEnabled: false, credentialAge: 90, owner: "id-002", ownerName: "Mark Chen", riskScore: 29, apps: ["devops"],
+    mfaEnabled: false, credentialAge: 90, owner: "team-platform", ownerName: "team-platform", ownerKind: "team",
+    ownershipState: "owned", riskScore: 29, riskFactorsFiring: 1, apps: ["devops"],
     sources: {
       aws: { roleArn: "arn:aws:iam::481516234210:role/svc-monitoring", path: "/service-roles/" },
       gcp: { email: "svc-monitoring@acme-prod-4821.iam.gserviceaccount.com", uniqueId: "555666777888999000111" },
@@ -536,7 +541,11 @@ export const identities = [
   {
     id: "id-111", name: "svc-backup-agent", type: "service", email: null, department: "DevOps",
     status: "orphaned", createdBy: "id-011", createdAt: "2021-06-01", lastActive: "2026-03-12",
-    mfaEnabled: false, credentialAge: 620, owner: null, ownerName: null, riskScore: 96, apps: ["devops"],
+    mfaEnabled: false, credentialAge: 620, owner: null, ownerName: null, ownershipState: "unowned",
+    suppressionEffect: "suppressed", suppressionReason: "break_glass",
+    suppressionDetail: "emergency restore path; use is alerted rather than owned",
+    suppressionExpiresAt: "2026-12-31",
+    riskScore: 96, riskFactorsFiring: 2, apps: ["devops"],
     sources: {
       aws: {
         roleArn: "arn:aws:iam::481516234210:role/svc-backup-agent",
@@ -549,7 +558,8 @@ export const identities = [
   {
     id: "id-112", name: "svc-github-actions", type: "service", email: null, department: "Platform",
     status: "active", createdBy: "id-008", createdAt: "2023-07-20", lastActive: "2026-07-31",
-    mfaEnabled: false, credentialAge: 35, owner: "id-008", ownerName: "Lena Okonkwo", riskScore: 78, apps: ["devops"],
+    mfaEnabled: false, credentialAge: 35, owner: "team-platform", ownerName: "team-platform", ownerKind: "team",
+    ownershipState: "owned", riskScore: 78, riskFactorsFiring: 2, apps: ["devops"],
     sources: {
       aws: {
         roleArn: "arn:aws:iam::481516234210:role/svc-github-actions",
@@ -566,7 +576,10 @@ export const identities = [
   {
     id: "id-113", name: "svc-hr-sync", type: "service", email: null, department: "People Ops",
     status: "active", createdBy: "id-004", createdAt: "2022-11-01", lastActive: "2026-07-31",
-    mfaEnabled: false, credentialAge: 110, owner: "id-004", ownerName: "Tom Walker", riskScore: 38, apps: ["devops"],
+    mfaEnabled: false, credentialAge: 110, owner: null, ownerName: null, ownershipState: "unknown",
+    suppressionEffect: "unknown", suppressionReason: "sso_federated",
+    suppressionDetail: "provisioned via SSO federation; this app records no durable owner attestation",
+    riskScore: 38, riskAssessment: "unevaluated", apps: ["devops"],
     sources: {
       okta: { id: "0oa_hr_sync_app", status: "ACTIVE", label: "Workday HR Sync" },
       hr: { integrationSystemId: "WD-INT-HR-SYNC", status: "Active" },
@@ -576,7 +589,8 @@ export const identities = [
   {
     id: "id-114", name: "svc-finance-reporter", type: "service", email: null, department: "Finance",
     status: "orphaned", createdBy: "id-005", createdAt: "2021-08-01", lastActive: "2026-05-28",
-    mfaEnabled: false, credentialAge: 400, owner: null, ownerName: null, riskScore: 88, apps: ["payments"],
+    mfaEnabled: false, credentialAge: 400, owner: null, ownerName: null, ownershipState: "unowned",
+    riskScore: 88, riskFactorsFiring: 2, apps: ["payments"],
     sources: {
       aws: {
         roleArn: "arn:aws:iam::481516234210:role/svc-finance-reporter",
@@ -816,6 +830,40 @@ export const identities = [
         displayName: "svc-nora-ap-export",
         accountEnabled: false,
         servicePrincipalType: "Application",
+      },
+    },
+  },
+  /**
+   * Offline QA twin of engine beat 23b (`svc-temp-ssm-bridge`):
+   * hop-producing grant + no owner — compound Needs attention.
+   * Display name matches live Access Discovery (`Temporary SSM Bridge`).
+   */
+  {
+    id: "id-mock-ssm-bridge",
+    name: "Temporary SSM Bridge",
+    type: "service",
+    email: null,
+    department: "Platform",
+    status: "orphaned",
+    createdBy: null,
+    createdAt: "2026-05-01",
+    lastActive: "2026-07-28",
+    mfaEnabled: false,
+    credentialAge: 91,
+    owner: null,
+    ownerName: null,
+    ownerKind: null,
+    ownershipState: "unowned",
+    riskScore: 96,
+    riskFactorsFiring: 3,
+    mockAttention: "hop_unowned",
+    apps: ["aws-iam"],
+    sources: {
+      aws: {
+        roleArn: "arn:aws:iam::481516234210:role/svc-temp-ssm-bridge",
+        path: "/temp/",
+        createDate: "2026-05-01T00:00:00Z",
+        attachedPolicies: ["arn:aws:iam::481516234210:policy/SsmSessionDeployBox"],
       },
     },
   },
@@ -1745,6 +1793,24 @@ export const accessPaths = [
       note: "Revoked during offboarding",
     },
   },
+  // Offline beat 23b — hop + unowned (compound Needs attention)
+  {
+    id: "ap-068", identityId: "id-mock-ssm-bridge", identityName: "Temporary SSM Bridge",
+    resource: "admin:platform", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 2,
+    effectivePermissions: ["admin:platform"], mechanism: "ssm:session-deploy-box → role-deploy-box",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: true,
+    originator: "No originator",
+    hopChain: [
+      { step: 1, from: "Temporary SSM Bridge", to: "ssm:session-deploy-box", mechanism: "granted ssm:session-deploy-box" },
+      { step: 2, from: "ssm:session-deploy-box", to: "role-deploy-box", mechanism: "resource carries role-deploy-box" },
+      { step: 3, from: "role-deploy-box", to: "admin:platform", mechanism: "holds admin:platform" },
+    ],
+    api: {
+      source: "aws.iam + ssm",
+      principalArn: "arn:aws:iam::481516234210:role/svc-temp-ssm-bridge",
+      evaluatedVia: "itag.access.classify",
+    },
+  },
 ];
 
 // ─── Shadow Access derived views ─────────────────────────────────────────────
@@ -2008,10 +2074,15 @@ export const accessSummary = {
   total: accessPaths.length,
 };
 
-// Week-over-week risk: prior scan average; delta is computed live as currentAvg − priorAvg
+/**
+ * Legacy week-over-week average — Access Discovery no longer surfaces this.
+ * Kept for any older demo screens that still reference a prior scan instant.
+ * Risk Profile on the Discovery page uses level counts, not fused %.
+ */
 export const riskTrend = {
-  priorAvgRisk: 64.8,
-  scannedAt: "2026-07-24T14:00:00Z",
+  priorAvgRisk: null,
+  scannedAt: "2026-07-31T00:00:00Z",
+  note: "No honest WoW trend without a prior graph snapshot",
 };
 
 // ─── Delegation Chains (built from per-app creationEdges — official forest) ───

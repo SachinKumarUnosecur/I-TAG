@@ -170,15 +170,16 @@ test('beat 34 — the four findings and their evidence are exactly these', () =>
 // --- Beat 35: the six -------------------------------------------------------
 
 /**
- * `minFactors: 3` returns exactly six identities out of 127.
+ * `minFactors: 3` returns exactly seven identities out of 128.
  *
- * Research §9 beat 35: "this is the week's list" is a defensible sentence about a six-row
- * table and an indefensible one about a 127-row score. Asserted as an exhaustive equality
- * rather than a count, because which six it is matters as much as how many — the source PRD's
+ * Research §9 beat 35: "this is the week's list" is a defensible sentence about a short
+ * table and an indefensible one about a 128-row score. Asserted as an exhaustive equality
+ * rather than a count, because which rows it is matters as much as how many — the source PRD's
  * composite put `user-bob` at 45 and `user-carol` at 60 while promoting two identities whose
- * only distinction was a hop path Exposure Map scores low.
+ * only distinction was a hop path Exposure Map scores low. Beat 23b adds the compound
+ * hop+unowned row (`svc-temp-ssm-bridge`) into this queue.
  */
-test('beat 35 — the factors_firing >= 3 population is exactly these six', () => {
+test('beat 35 — the factors_firing >= 3 population is exactly these seven', () => {
   assert.deepEqual(
     RISK.list({ minFactors: 3 }).map((entry) => entry.identity_id),
     [
@@ -186,6 +187,7 @@ test('beat 35 — the factors_firing >= 3 population is exactly these six', () =
       'svc-backup',
       'svc-batch-recon',
       'svc-legacy-export',
+      'svc-temp-ssm-bridge',
       'svc-quarter-close',
       'svc-etl',
     ],
@@ -199,7 +201,7 @@ test('beat 35 — the factors_firing >= 3 population is exactly these six', () =
  * 127 rows, **42 identities sharing the single value 8**, and an empty Critical band. Five
  * buckets, one of which is a six-row queue, is the shape a reviewer can act on.
  */
-test('the factor-count distribution over the estate is {0:77, 1:27, 2:17, 3:5, 4:1}', () => {
+test('the factor-count distribution over the estate is {0:77, 1:27, 2:17, 3:6, 4:1}', () => {
   const distribution = new Map<number, number>();
   for (const entry of ROWS) {
     const count = entry.assessment.kind === 'findings' ? entry.assessment.factors_firing : 0;
@@ -210,19 +212,19 @@ test('the factor-count distribution over the estate is {0:77, 1:27, 2:17, 3:5, 4
     [0, 77],
     [1, 27],
     [2, 17],
-    [3, 5],
+    [3, 6],
     [4, 1],
   ]);
 });
 
-test('the level distribution is critical 19, high 8, medium 19, low 4 over 50 rows', () => {
+test('the level distribution is critical 20, high 8, medium 19, low 4 over 51 rows', () => {
   assert.deepEqual(SUMMARY.by_worst_level, [
-    { level: 'critical', count: 19 },
+    { level: 'critical', count: 20 },
     { level: 'high', count: 8 },
     { level: 'medium', count: 19 },
     { level: 'low', count: 4 },
   ]);
-  assert.equal(SUMMARY.with_findings, 50);
+  assert.equal(SUMMARY.with_findings, 51);
 });
 
 /**
@@ -262,15 +264,15 @@ test('svc-backup is the 90-day boundary case ITAG.md L342 seeded, and reads as c
  * none will. That is a scope statement, not a backlog item, and no product surveyed in §3.5
  * publishes the difference.
  */
-test('beat 36 — the factor coverage over 127 identities is exactly this', () => {
-  assert.equal(SUMMARY.scanned, 127);
+test('beat 36 — the factor coverage over 128 identities is exactly this', () => {
+  assert.equal(SUMMARY.scanned, 128);
   assert.deepEqual(SUMMARY.factor_coverage, [
-    { factor: 'hop_access', evaluated: 127, unavailable: 0, not_applicable: 0, findings: 11 },
-    { factor: 'exposure', evaluated: 126, unavailable: 1, not_applicable: 0, findings: 31 },
-    { factor: 'ownership', evaluated: 122, unavailable: 5, not_applicable: 0, findings: 24 },
-    { factor: 'control_drift', evaluated: 4, unavailable: 123, not_applicable: 0, findings: 4 },
-    { factor: 'grant_staleness', evaluated: 7, unavailable: 120, not_applicable: 0, findings: 7 },
-    { factor: 'review_staleness', evaluated: 14, unavailable: 0, not_applicable: 113, findings: 3 },
+    { factor: 'hop_access', evaluated: 128, unavailable: 0, not_applicable: 0, findings: 12 },
+    { factor: 'exposure', evaluated: 127, unavailable: 1, not_applicable: 0, findings: 32 },
+    { factor: 'ownership', evaluated: 123, unavailable: 5, not_applicable: 0, findings: 25 },
+    { factor: 'control_drift', evaluated: 4, unavailable: 124, not_applicable: 0, findings: 4 },
+    { factor: 'grant_staleness', evaluated: 7, unavailable: 121, not_applicable: 0, findings: 7 },
+    { factor: 'review_staleness', evaluated: 14, unavailable: 0, not_applicable: 114, findings: 3 },
   ]);
 });
 

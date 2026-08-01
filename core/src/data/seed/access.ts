@@ -199,6 +199,35 @@ export const ACCESS = cluster({
       last_activity_at: '2026-07-29',
       provisioning_source: 'bulk_import',
     },
+
+    /**
+     * Beat 23b — hop AND unowned: the compound "Needs attention" case.
+     *
+     * Beats 19-23 keep every hop subject green on purpose so Access Discovery can
+     * prove the mechanism without Ownership Assurance already screaming. That
+     * leaves a gap the UI sort assumes exists and the seed never supplied: an
+     * identity that both holds a hop-producing grant *and* has no owner on
+     * record. Without this row, `needsAttention = hop || !owner` is an OR of two
+     * conditions that never co-occur in real data, so its priority ordering is
+     * unverified.
+     *
+     * Reuses `ssm:session-deploy-box` (catalog, beat 19) — no new permission
+     * fragment. Deliberately absent from `owner_assignments` below. Created
+     * 2026-05-01 → 91 days before `ITAG_NOW`, past the 14-day service_account SLA.
+     */
+    {
+      id: 'svc-temp-ssm-bridge',
+      type: 'service_account',
+      name: 'Temporary SSM Bridge',
+      app: 'aws-iam',
+      direct_grants: ['ssm:session-deploy-box'],
+      inherited_from: [],
+      delegates_to: [],
+      provisioned_by: null,
+      created_at: '2026-05-01', // 91 days → past 14-day SA SLA
+      last_activity_at: '2026-07-28', // 3 days
+      provisioning_source: 'app_native',
+    },
   ],
 
   /**
