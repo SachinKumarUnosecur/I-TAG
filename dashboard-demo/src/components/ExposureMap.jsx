@@ -35,7 +35,7 @@ export default function ExposureMap() {
   return (
     <div className="page-content">
       <div className="page-header">
-        <div className="page-title">Identity exposure map</div>
+        <div className="page-title">Identity Exposure Map</div>
         <div className="page-subtitle">Aggregated blast radius per identity — weighted by resource sensitivity across all access paths</div>
       </div>
 

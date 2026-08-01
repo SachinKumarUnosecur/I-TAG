@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Icon, SlidePanel } from './ui';
 
-const VIEW_STATES = ['Populated', 'Loading', 'Empty', 'Error'];
-
 const IDENTITY_ROWS = [
   {
     id: 'jane.doe',
@@ -95,9 +93,9 @@ function riskMeta(score) {
 
 function SummaryCard({ icon, tone, value, label, footer }) {
   return (
-    <div className="ir-summary-card">
+    <div className={`ir-summary-card ir-summary-card--${tone}`}>
       <div className={`ir-summary-icon ir-summary-icon--${tone}`}>
-        <Icon name={icon} size={16} />
+        <Icon name={icon} size={19} />
       </div>
       <div className="ir-summary-value">{value}</div>
       <div className="ir-summary-label">{label}</div>
@@ -124,7 +122,6 @@ function RiskCell({ score }) {
 export default function AccessDiscovery() {
   const [tab, setTab] = useState('all');
   const [search, setSearch] = useState('');
-  const [viewState, setViewState] = useState('Populated');
   const [selected, setSelected] = useState(null);
 
   const counts = useMemo(() => ({
@@ -166,7 +163,7 @@ export default function AccessDiscovery() {
     <div className="page-content">
       <div className="page-header">
         <div>
-          <div className="page-title">Identity risk</div>
+          <div className="page-title">Access Discovery</div>
           <div className="page-subtitle">
             Composite risk scores across every identity, weighted by exposure, hop-access presence, credential hygiene, and ownership status.
           </div>
@@ -243,53 +240,7 @@ export default function AccessDiscovery() {
         </div>
       </div>
 
-      <div className="ir-state-bar">
-        {VIEW_STATES.map(state => (
-          <button
-            key={state}
-            type="button"
-            className={`ir-state-chip ${viewState === state ? 'active' : ''}`}
-            onClick={() => setViewState(state)}
-          >
-            {state}
-          </button>
-        ))}
-      </div>
-
-      {viewState === 'Loading' && (
-        <div className="ir-state-panel">
-          <div className="ir-spinner" />
-          <div className="ir-state-title">Loading identity risk…</div>
-          <div className="ir-state-copy">Correlating exposure, hop paths, and ownership signals.</div>
-        </div>
-      )}
-
-      {viewState === 'Empty' && (
-        <div className="ir-state-panel">
-          <div className="ir-state-icon">
-            <Icon name="search" size={22} color="var(--text-tertiary)" />
-          </div>
-          <div className="ir-state-title">No identities match</div>
-          <div className="ir-state-copy">Try clearing filters or expanding the selected identity type.</div>
-        </div>
-      )}
-
-      {viewState === 'Error' && (
-        <div className="ir-state-panel ir-state-panel--error">
-          <div className="ir-state-icon ir-state-icon--error">
-            <Icon name="alertTriangle" size={22} color="var(--color-hop)" />
-          </div>
-          <div className="ir-state-title">Couldn’t load identity risk</div>
-          <div className="ir-state-copy">The risk scoring service returned an error. Retry when the scan finishes.</div>
-          <button type="button" className="btn btn-ghost" onClick={() => setViewState('Populated')}>
-            <Icon name="refresh" size={13} />
-            Retry
-          </button>
-        </div>
-      )}
-
-      {viewState === 'Populated' && (
-        <div className="table-wrapper">
+      <div className="table-wrapper">
           <table className="data-table">
             <thead>
               <tr>
@@ -314,7 +265,7 @@ export default function AccessDiscovery() {
                 <tr key={row.id} onClick={() => setSelected(row)}>
                   <td>
                     <div className="ir-identity">
-                      <div className="ir-avatar" style={{ background: row.avatar }}>{row.initials}</div>
+                      <div className="ir-avatar">{row.initials}</div>
                       <div>
                         <div className="ir-identity-name">{row.name}</div>
                         {row.needsAttention ? (
@@ -364,8 +315,7 @@ export default function AccessDiscovery() {
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+      </div>
 
       {selected && (
         <SlidePanel
