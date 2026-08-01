@@ -390,6 +390,71 @@ export { createDispositionService } from './ownership/dispositions.js';
 export type { EvidencePack } from './ownership/evidence.js';
 export { buildEvidencePack, findingsToCsv } from './ownership/evidence.js';
 
+// Identity Threat Profile — translation-only, the engine's second module that ranks nothing
+export type {
+  MitreTactic,
+  PtraceStage,
+  PtraceStageReference,
+  ThreatAssessment,
+  ThreatCell,
+  ThreatFinding,
+  ThreatFindingRow,
+  ThreatFindingSource,
+  ThreatImpactLevel,
+  ThreatLikelihoodLevel,
+  ThreatMatrixCell,
+  ThreatOutcome,
+  ThreatProfile,
+  ThreatQuery,
+  ThreatRow,
+  ThreatSeverityBand,
+  ThreatStageCoverage,
+  ThreatStaleness,
+  ThreatSummary,
+} from './domain/threat.js';
+export { THREAT_VERSUS_RANKERS } from './domain/threat.js';
+export type {
+  ThreatFindingSeed,
+  ThreatMappingContext,
+  ThreatMappingRule,
+} from './threat/mapping.js';
+export {
+  allCells,
+  CHOKE_POINT_RULE,
+  CONTROL_DRIFT_RULE,
+  CREATOR_LINEAGE_RULE,
+  DEFAULT_THREAT_MAPPING_RULES,
+  EXPOSURE_REALIZED_RULE,
+  HOP_ACCESS_RULE,
+  impactFor,
+  likelihoodFor,
+  PIVOT_RULE,
+  PROBING_COVERAGE_GAP,
+  PTRACE_REFERENCE,
+  severityFor,
+  SEVERITY_BAND_MATRIX,
+} from './threat/mapping.js';
+export {
+  criticalFindings,
+  identitiesWithFindings,
+  matrixCounts,
+  stageCoverage,
+  summarizeThreatFindings,
+  totalFindings,
+  unavailableSourcesFor,
+  unplacedFindingsCount,
+} from './threat/summarize.js';
+export type {
+  ThreatDeps,
+  ThreatExposureSource,
+  ThreatImpactSource,
+  ThreatLineageSource,
+  ThreatOwnershipSource,
+  ThreatRiskSource,
+  ThreatService,
+} from './threat/service.js';
+export { createThreatProfileService } from './threat/service.js';
+
 // Adapters
 export {
   datasetHrDirectory,
@@ -402,7 +467,10 @@ export { memoryFindingStore } from './adapters/memory-finding-store.js';
 export { memoizedAccessOwner } from './adapters/access-owner.js';
 export { memoizedExposureOwnership } from './adapters/exposure-ownership.js';
 export { memoizedImpactExposure } from './adapters/impact-exposure.js';
+export { memoizedImpactChokePoints } from './adapters/impact-chokepoints.js';
+export { memoizedLineageRows } from './adapters/lineage-rows.js';
 export { memoizedOwnershipState } from './adapters/ownership-state.js';
+export { memoizedRiskAssessment } from './adapters/risk-assessment.js';
 export { fixedClock, systemClock } from './adapters/clock.js';
 export { seedGraphSource } from './adapters/seed-source.js';
 

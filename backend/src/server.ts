@@ -7,6 +7,7 @@ import {
   createLineageService,
   createOwnershipService,
   createSweepService,
+  createThreatProfileService,
   datasetHrDirectory,
   datasetOwnerRegistry,
   datasetSuppressionRegistry,
@@ -19,8 +20,11 @@ import {
   fixedClock,
   memoizedAccessOwner,
   memoizedExposureOwnership,
+  memoizedImpactChokePoints,
   memoizedImpactExposure,
+  memoizedLineageRows,
   memoizedOwnershipState,
+  memoizedRiskAssessment,
   memoryFindingStore,
   seedGraphSource,
   systemClock,
@@ -42,6 +46,7 @@ import { createOffboardingRouter } from './routes/offboarding.js';
 import { createLineageRouter } from './routes/lineage.js';
 import { createOwnershipRouter } from './routes/ownership.js';
 import { createRiskProfileRouter } from './routes/risk-profile.js';
+import { createThreatProfileRouter } from './routes/threat-profile.js';
 
 /** Pin `ITAG_NOW` to keep a rehearsed demo's day counts identical on any date. */
 function resolveClock(): Clock {
@@ -184,6 +189,26 @@ const riskService = createRiskService({
   accountabilityPolicy,
 });
 
+// Identity Threat Profile. The engine's second module whose main contribution is refusing
+// to rank (`docs/identity-threat-profile-research.md` §5, §7.2): it translates whichever of
+// the three ranking authorities above already fired into a PTRACE stage, a MITRE ATT&CK tag
+// and a NIST SP 800-30-shaped impact/likelihood cell, and reads Provisioning Lineage's row
+// (not the `flags` array `domain/lineage.ts` L421-424 already removed) for Concealment &
+// Persistence. Constructed after `riskService` because it depends on it, through the same
+// `exposureOwnershipPort` / `impactExposurePort` two other modules already share — a fourth
+// cache or a fourth instance here would make the byte-identity guard in
+// `threat/service.test.ts` weaker than it reads.
+const threatProfileService = createThreatProfileService({
+  graphSource,
+  clock,
+  access: accessService,
+  ownership: exposureOwnershipPort,
+  exposure: impactExposurePort,
+  impact: memoizedImpactChokePoints(impactService),
+  risk: memoizedRiskAssessment(riskService),
+  lineage: memoizedLineageRows(lineageService),
+});
+
 const sweepService = createSweepService({
   graphSource,
   hr,
@@ -217,6 +242,7 @@ app.use('/api/access', createAccessRouter(accessService));
 app.use('/api/exposure', createExposureRouter(exposureService));
 app.use('/api/impact', createImpactRouter(impactService));
 app.use('/api/risk-profile', createRiskProfileRouter(riskService));
+app.use('/api/threat-profile', createThreatProfileRouter(threatProfileService));
 app.use('/api/offboarding-sweep', createOffboardingRouter(sweepService));
 app.use('/api/findings', createFindingsRouter(dispositionService));
 
