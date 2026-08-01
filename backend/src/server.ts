@@ -3,6 +3,7 @@ import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import {
   createAccountabilityService,
+  createAccessReviewsService,
   createDispositionService,
   createLineageService,
   createOwnershipService,
@@ -26,6 +27,7 @@ import {
   memoizedOwnershipState,
   memoizedRiskAssessment,
   memoryFindingStore,
+  memoryReviewDecisionStore,
   seedGraphSource,
   systemClock,
   DEFAULT_ACCOUNTABILITY_POLICY,
@@ -38,6 +40,7 @@ import {
 } from '@itag/core';
 import { explainRouter } from './routes/explain.js';
 import { createAccessRouter } from './routes/access.js';
+import { createAccessReviewsRouter } from './routes/access-reviews.js';
 import { createAccountabilityRouter } from './routes/accountability.js';
 import { createExposureRouter } from './routes/exposure.js';
 import { createFindingsRouter } from './routes/findings.js';
@@ -209,6 +212,15 @@ const threatProfileService = createThreatProfileService({
   lineage: memoizedLineageRows(lineageService),
 });
 
+// Access Reviews. Quotes access + risk (ownership embedded); owns campaigns + decisions.
+const accessReviewsService = createAccessReviewsService({
+  graphSource,
+  clock,
+  access: accessService,
+  risk: riskService,
+  decisions: memoryReviewDecisionStore(),
+});
+
 const sweepService = createSweepService({
   graphSource,
   hr,
@@ -243,6 +255,7 @@ app.use('/api/exposure', createExposureRouter(exposureService));
 app.use('/api/impact', createImpactRouter(impactService));
 app.use('/api/risk-profile', createRiskProfileRouter(riskService));
 app.use('/api/threat-profile', createThreatProfileRouter(threatProfileService));
+app.use('/api/access-reviews', createAccessReviewsRouter(accessReviewsService));
 app.use('/api/offboarding-sweep', createOffboardingRouter(sweepService));
 app.use('/api/findings', createFindingsRouter(dispositionService));
 

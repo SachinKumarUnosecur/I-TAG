@@ -9,8 +9,10 @@ import {
   paginateRows,
 } from './ui';
 import {
+  downloadReviewExport,
   fetchIdentityAssignments,
   fetchReviewInventory,
+  postReviewDecision,
 } from '../data/accessReviewApi';
 
 const TABLE_PAGE_SIZE = 10;
@@ -25,20 +27,51 @@ const DECISIONS = [
 
 function ReviewAssignmentPanel({ item, onClose, decisionBadge, onApprove, onRevoke, onEscalate }) {
   const [connectorFilter, setConnectorFilter] = useState('all');
+  const [fullDetail, setFullDetail] = useState({
+    assignments: [],
+    connectors: [],
+    grantCount: 0,
+    permissionCount: 0,
+  });
+  const [detail, setDetail] = useState(fullDetail);
 
   useEffect(() => {
     setConnectorFilter('all');
   }, [item.identityId]);
 
-  const fullDetail = useMemo(
-    () => fetchIdentityAssignments(item.identityId),
-    [item.identityId],
-  );
+  useEffect(() => {
+    let cancelled = false;
+    fetchIdentityAssignments(item.identityId).then((next) => {
+      if (!cancelled) setFullDetail(next);
+    }).catch(() => {
+      if (!cancelled) {
+        setFullDetail({
+          assignments: [],
+          connectors: [],
+          grantCount: 0,
+          permissionCount: 0,
+        });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [item.identityId]);
 
-  const detail = useMemo(
-    () => fetchIdentityAssignments(item.identityId, { connector: connectorFilter }),
-    [item.identityId, connectorFilter],
-  );
+  useEffect(() => {
+    let cancelled = false;
+    fetchIdentityAssignments(item.identityId, { connector: connectorFilter }).then((next) => {
+      if (!cancelled) setDetail(next);
+    }).catch(() => {
+      if (!cancelled) {
+        setDetail({
+          assignments: [],
+          connectors: [],
+          grantCount: 0,
+          permissionCount: 0,
+        });
+      }
+    });
+    return () => { cancelled = true; };
+  }, [item.identityId, connectorFilter]);
 
   const grantCountByConnector = useMemo(() => {
     const map = {};
@@ -175,29 +208,61 @@ function ReviewAssignmentPanel({ item, onClose, decisionBadge, onApprove, onRevo
 }
 
 export default function AccessReviews() {
-  const [decisions, setDecisions] = useState({});
+  const [revision, setRevision] = useState(0);
   const [search, setSearch] = useState('');
   const [decisionFilter, setDecisionFilter] = useState('All');
   const [page, setPage] = useState(1);
   const [selectedId, setSelectedId] = useState(null);
+  const [items, setItems] = useState([]);
+  const [summary, setSummary] = useState({
+    pending: 0,
+    approved: 0,
+    revoked: 0,
+    escalated: 0,
+    identityCount: 0,
+    grantCount: 0,
+  });
 
-  const { items, summary } = useMemo(
-    () => fetchReviewInventory({
+  useEffect(() => {
+    let cancelled = false;
+    fetchReviewInventory({
       campaignId: 'all',
       search,
       decision: decisionFilter,
-      decisions,
-    }),
-    [search, decisionFilter, decisions],
-  );
+    }).then((next) => {
+      if (cancelled) return;
+      setItems(next.items);
+      setSummary(next.summary);
+    }).catch(() => {
+      if (cancelled) return;
+      setItems([]);
+      setSummary({
+        pending: 0,
+        approved: 0,
+        revoked: 0,
+        escalated: 0,
+        identityCount: 0,
+        grantCount: 0,
+      });
+    });
+    return () => { cancelled = true; };
+  }, [search, decisionFilter, revision]);
 
   const selectedItem = selectedId
-    ? items.find(i => i.id === selectedId)
-      || fetchReviewInventory({ decisions }).items.find(i => i.id === selectedId)
+    ? items.find(i => i.id === selectedId) || null
     : null;
 
-  const setDecision = (identityId, decision) => {
-    setDecisions(prev => ({ ...prev, [identityId]: decision }));
+  const setDecision = async (identityId, decision) => {
+    const action =
+      decision === 'approved' ? 'approve'
+        : decision === 'revoked' ? 'revoke'
+          : 'escalate';
+    try {
+      await postReviewDecision(identityId, action);
+      setRevision(n => n + 1);
+    } catch {
+      /* keep prior rows on failure */
+    }
   };
 
   useEffect(() => {
@@ -362,10 +427,18 @@ export default function AccessReviews() {
           noun="identities"
         />
         <div className="ar-exports">
-          <button type="button" className="btn btn-ghost">
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => downloadReviewExport('soc2').catch(() => {})}
+          >
             <Icon name="download" size={13} /> SOC 2
           </button>
-          <button type="button" className="btn btn-ghost">
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={() => downloadReviewExport('iso27001').catch(() => {})}
+          >
             <Icon name="download" size={13} /> ISO 27001
           </button>
         </div>

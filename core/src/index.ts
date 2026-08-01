@@ -455,6 +455,29 @@ export type {
 } from './threat/service.js';
 export { createThreatProfileService } from './threat/service.js';
 
+// Access Reviews — campaign attestation; quotes access / ownership / risk only
+export type {
+  ReviewAssignment,
+  ReviewAssignmentDetail,
+  ReviewCampaign,
+  ReviewCampaignRow,
+  ReviewDecision,
+  ReviewDecisionOutcome,
+  ReviewDecisionRecord,
+  ReviewDecisionRequest,
+  ReviewExportFramework,
+  ReviewItem,
+  ReviewItemProfile,
+  ReviewProfileOutcome,
+  ReviewQuery,
+  ReviewRiskBand,
+  ReviewSummary,
+} from './domain/access-reviews.js';
+export type { AccessReviewsDeps, AccessReviewsService } from './reviews/service.js';
+export { createAccessReviewsService } from './reviews/service.js';
+export type { ReviewDecisionStore } from './adapters/memory-review-decision-store.js';
+export { memoryReviewDecisionStore } from './adapters/memory-review-decision-store.js';
+
 // Adapters
 export {
   datasetHrDirectory,
