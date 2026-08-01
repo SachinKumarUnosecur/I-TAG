@@ -83,6 +83,22 @@ export const creationEdges = [
   edge('payments', 'id-117', humanActor('payments', 'henry.cole', 'id-016', 'acting_principal_is_human'), '2019-06-01', 'outside_window_backfill'),
   edge('payments', 'id-118', humanActor('payments', 'maya.singh', 'id-017', 'acting_principal_is_human'), '2020-02-01', 'outside_window_backfill'),
   edge('payments', 'id-119', humanActor('payments', 'maya.singh', 'id-017', 'acting_principal_is_human'), '2021-03-15', 'outside_window_backfill'),
+  // alice.brooks fan-out (≥6) — departed creator, live/orphaned descendants
+  edge('payments', 'id-133', humanActor('payments', 'alice.brooks', 'id-005', 'acting_principal_is_human'), '2022-06-15', 'audit_event'),
+  edge('payments', 'id-134', humanActor('payments', 'alice.brooks', 'id-005', 'acting_principal_is_human'), '2023-01-20', 'audit_event'),
+  // Depth ≥3: jane → svc-payments-api → svc-billing-sync → svc-billing-recon
+  edge('payments', 'id-148', humanActor('payments', 'svc-billing-sync', 'id-107', 'acting_principal_is_human'), '2024-03-01', 'audit_event'),
+  // Depth ≥3 under departed tree: alice → svc-old-payments-worker → svc-legacy-settlement
+  edge('payments', 'id-149', roleSessionActor('payments', 'arn:aws:iam::481516234210:role/svc-old-payments-worker', 'svc-old-payments-worker', 'alice.brooks', 'sts_source_identity'), '2022-08-01', 'audit_event', 'id-105'),
+  // sofia.reyes — out-of-population creator → hub tree: Connector → sofia → NHIs
+  edge('payments', 'id-140', humanActor('payments', 'sofia.reyes', 'id-023', 'acting_principal_is_human'), '2023-09-01', 'audit_event'),
+  edge('payments', 'id-141', humanActor('payments', 'sofia.reyes', 'id-023', 'acting_principal_is_human'), '2023-09-08', 'audit_event'),
+  edge('payments', 'id-142', humanActor('payments', 'sofia.reyes', 'id-023', 'acting_principal_is_human'), '2023-10-02', 'audit_event'),
+  edge('payments', 'id-143', humanActor('payments', 'sofia.reyes', 'id-023', 'acting_principal_is_human'), '2023-11-14', 'audit_event'),
+  edge('payments', 'id-144', humanActor('payments', 'sofia.reyes', 'id-023', 'acting_principal_is_human'), '2024-01-09', 'audit_event'),
+  edge('payments', 'id-145', humanActor('payments', 'sofia.reyes', 'id-023', 'acting_principal_is_human'), '2024-02-22', 'audit_event'),
+  // Pre-audit NHI with no retained creator → hangs under connector hub
+  edge('payments', 'id-150', humanActor('payments', 'okta.admin', 'id-sys-001'), '2019-03-01', 'outside_window_backfill'),
 
   // ── Data Pipeline (audit from 2022-06-01) ───────────────────────────────
   edge('data-pipeline', 'id-003', humanActor('data-pipeline', 'okta.admin', 'id-sys-001'), '2023-04-20', 'audit_event'),
@@ -111,7 +127,11 @@ export const creationEdges = [
   edge('devops', 'id-021', humanActor('devops', 'okta.admin', 'id-sys-001'), '2021-02-10', 'outside_window_backfill'),
   edge('devops', 'id-103', humanActor('devops', 'mark.chen', 'id-002', 'acting_principal_is_human'), '2022-09-01', 'audit_event'),
   edge('devops', 'id-106', humanActor('devops', 'mark.chen', 'id-002', 'acting_principal_is_human'), '2023-01-01', 'audit_event'),
-  edge('devops', 'id-109', humanActor('devops', 'lena.okonkwo', 'id-008', 'acting_principal_is_human'), '2023-03-01', 'audit_event'),
+  // Self-authorized-shaped: lena creates terraform role, then receives privilege via it shortly after
+  edge('devops', 'id-109', humanActor('devops', 'lena.okonkwo', 'id-008', 'acting_principal_is_human'), '2023-03-01', 'audit_event', null, {
+    self_authorized: true,
+    privilege_grant_at: '2023-03-02',
+  }),
   edge('devops', 'id-112', humanActor('devops', 'lena.okonkwo', 'id-008', 'acting_principal_is_human'), '2023-07-20', 'audit_event'),
   edge('devops', 'id-113', humanActor('devops', 'tom.walker', 'id-004', 'acting_principal_is_human'), '2022-11-01', 'audit_event'),
   edge('devops', 'id-111', humanActor('devops', 'owen.blake', 'id-011', 'acting_principal_is_human'), '2021-06-01', 'object_field'),
@@ -119,6 +139,16 @@ export const creationEdges = [
   edge('devops', 'id-128', humanActor('devops', 'derek.frost', 'id-021', 'acting_principal_is_human'), '2021-08-01', 'object_field'),
   edge('devops', 'id-129', humanActor('devops', 'derek.frost', 'id-021', 'acting_principal_is_human'), '2022-03-18', 'audit_event'),
   edge('devops', 'id-121', humanActor('devops', 'quinn.adebayo', 'id-019', 'acting_principal_is_human'), '2020-08-01', 'outside_window_backfill'),
+  // mark.chen fan-out of AWS NHIs (mark has no aws source → AWS scope promotes children to peer roots)
+  edge('devops', 'id-151', humanActor('devops', 'mark.chen', 'id-002', 'acting_principal_is_human'), '2023-04-12', 'audit_event'),
+  edge('devops', 'id-152', humanActor('devops', 'mark.chen', 'id-002', 'acting_principal_is_human'), '2023-05-03', 'audit_event'),
+  edge('devops', 'id-153', humanActor('devops', 'mark.chen', 'id-002', 'acting_principal_is_human'), '2023-06-18', 'audit_event'),
+  // marcus.vale — out-of-population creator → hub tree: Connector → marcus → NHIs
+  edge('devops', 'id-146', humanActor('devops', 'marcus.vale', 'id-024', 'acting_principal_is_human'), '2024-04-01', 'audit_event'),
+  edge('devops', 'id-147', humanActor('devops', 'marcus.vale', 'id-024', 'acting_principal_is_human'), '2024-05-10', 'audit_event'),
+  // Pre-audit / gap NHIs
+  edge('devops', 'id-154', humanActor('devops', 'okta.admin', 'id-sys-001'), '2020-02-01', 'outside_window_backfill'),
+  edge('devops', 'id-155', humanActor('devops', 'derek.frost', 'id-021', 'acting_principal_is_human'), '2021-11-01', 'outside_window_backfill'),
 ];
 
 function humanActor(app, principal, identityId, basis = 'acting_principal_is_human') {
@@ -150,7 +180,7 @@ function roleSessionActor(app, rawPrincipal, issuer, attestedHuman, basis) {
   };
 }
 
-function edge(app, childId, actor, occurredAt, source, parentOverride = null) {
+function edge(app, childId, actor, occurredAt, source, parentOverride = null, extras = {}) {
   return {
     id: `ce-${app}-${childId}`,
     app,
@@ -161,6 +191,8 @@ function edge(app, childId, actor, occurredAt, source, parentOverride = null) {
     occurred_at: occurredAt,
     source: source === 'outside_window_backfill' ? 'backfill_import' : source,
     superseded_by: null,
+    // Optional forward-compat lineage flags (engine: self_authorized, etc.)
+    ...extras,
   };
 }
 
@@ -179,6 +211,10 @@ export const appActivityLogs = {
     log('payments', 'CreateRole', 'id-005', 'id-105', '2020-04-15T09:00:00Z', 'aws.cloudtrail', 'info'),
     log('payments', 'CreateRole', 'id-005', 'id-114', '2021-08-01T11:00:00Z', 'aws.cloudtrail', 'info'),
     log('payments', 'CreateRole', 'id-005', 'id-125', '2022-02-01T10:00:00Z', 'aws.cloudtrail', 'info'),
+    log('payments', 'CreateRole', 'id-005', 'id-133', '2022-06-15T10:00:00Z', 'aws.cloudtrail', 'info'),
+    log('payments', 'CreateRole', 'id-005', 'id-134', '2023-01-20T09:00:00Z', 'aws.cloudtrail', 'info'),
+    log('payments', 'CreateRole', 'id-023', 'id-140', '2023-09-01T12:00:00Z', 'aws.cloudtrail', 'info'),
+    log('payments', 'CreateRole', 'id-107', 'id-148', '2024-03-01T11:00:00Z', 'aws.cloudtrail', 'info'),
     log('payments', 'Add service principal', 'id-012', 'id-110', '2024-09-01T14:00:00Z', 'azure.activity_log', 'info'),
     log('payments', 'Add service principal', 'id-020', 'id-126', '2023-04-12T13:00:00Z', 'azure.activity_log', 'info'),
     log('payments', 'Add service principal', 'id-020', 'id-127', '2023-08-20T15:00:00Z', 'azure.activity_log', 'info'),
@@ -205,7 +241,10 @@ export const appActivityLogs = {
     log('devops', 'user.lifecycle.create', 'id-sys-001', 'id-002', '2022-08-01T10:00:00Z', 'okta.system_log', 'info'),
     log('devops', 'google.iam.service_account.create', 'id-002', 'id-103', '2022-09-01T12:00:00Z', 'gcp.admin_activity', 'info'),
     log('devops', 'CreateRole', 'id-002', 'id-106', '2023-01-01T09:00:00Z', 'aws.cloudtrail', 'info'),
+    log('devops', 'CreateRole', 'id-002', 'id-151', '2023-04-12T10:00:00Z', 'aws.cloudtrail', 'info'),
     log('devops', 'CreateRole', 'id-008', 'id-109', '2023-03-01T11:00:00Z', 'aws.cloudtrail', 'info'),
+    log('devops', 'PutRolePolicy', 'id-008', 'id-109', '2023-03-02T09:00:00Z', 'aws.cloudtrail', 'high'),
+    log('devops', 'CreateRole', 'id-024', 'id-146', '2024-04-01T10:00:00Z', 'aws.cloudtrail', 'info'),
     log('devops', 'CreateRole', 'id-008', 'id-112', '2023-07-20T13:00:00Z', 'aws.cloudtrail', 'info'),
     log('devops', 'CreateRole', 'id-004', 'id-113', '2022-11-01T10:00:00Z', 'aws.cloudtrail', 'info'),
     log('devops', 'CreateRole', 'id-011', 'id-111', '2021-06-01T08:00:00Z', 'aws.cloudtrail', 'info'),
@@ -427,6 +466,23 @@ export function buildDelegationChains(identities) {
         firstKnownRoot,
         compromiseSource: postCompromise ? nextCompromise : null,
         departureSource: nextDeparture,
+        // Forward-compat lineage fields (engine-shaped; UI may ignore today)
+        provenanceState: identity?.provenanceState
+          || (firstKnownRoot || isOutsideAuditWindow(parentEdge)
+            ? 'explained_absence'
+            : (parentEdge ? 'recorded' : null)),
+        gapReason: identity?.gapReason
+          || (firstKnownRoot
+            ? (identity?.createdBy == null ? 'unexplained' : 'outside_window_backfill')
+            : (isOutsideAuditWindow(parentEdge) ? 'outside_window_backfill' : null)),
+        creatorStatus: identity?.creatorStatus
+          || (originatorId && byId[originatorId]
+            ? (byId[originatorId].status === 'departed' || byId[originatorId].departedAt
+              ? 'departed'
+              : (byId[originatorId].status || 'active'))
+            : null),
+        selfAuthorized: Boolean(identity?.selfAuthorized || parentEdge?.self_authorized),
+        fanOut: childEdges.length,
         originatorId: firstKnownRoot
           ? null
           : (parentEdge?.actor?.attested_human
@@ -502,31 +558,25 @@ export function buildDelegationChains(identities) {
     knownRoots.forEach(mark);
     noOriginatorRoots.forEach(mark);
 
-    for (const e of edges) {
-      if (
-        !placed.has(e.child_id)
-        && e.parent_id !== IDP_USER.id
-        && !childIds.has(e.parent_id)
-      ) {
-        const unknown = isOutsideAuditWindow(e);
-        const node = buildNode(e.child_id, e, null, null, { firstKnownRoot: unknown });
-        (unknown ? noOriginatorRoots : knownRoots).push(node);
-        mark(node);
-      }
-    }
-
+    // Out-of-population creators (in roster, never a child edge): hang under the
+    // gap hub WITH their creation trees — AWS → human → NHIs. Do not promote
+    // those NHIs as floating peer roots (Exposure-Map-style disconnected list).
+    const orphanParentIds = new Set();
     for (const e of edges) {
       if (
         e.parent_id
         && e.parent_id !== IDP_USER.id
-        && !placed.has(e.parent_id)
         && !childIds.has(e.parent_id)
         && byId[e.parent_id]
       ) {
-        const node = buildNode(e.parent_id, null, null, null, { firstKnownRoot: true });
-        noOriginatorRoots.push(node);
-        mark(node);
+        orphanParentIds.add(e.parent_id);
       }
+    }
+    for (const parentId of orphanParentIds) {
+      if (placed.has(parentId)) continue;
+      const node = buildNode(parentId, null, null, null, { firstKnownRoot: true });
+      noOriginatorRoots.push(node);
+      mark(node);
     }
 
     function lacksHumanOriginator(n) {
@@ -540,6 +590,23 @@ export function buildDelegationChains(identities) {
         || o === 'unknown (pre-integration)'
         || o === 'okta directory'
         || o === 'okta.admin';
+    }
+
+    // Remaining unplaced children (parent missing from roster, or unresolved):
+    // hang under the hub as first-known / No originator — never a lone peer list.
+    for (const e of edges) {
+      if (placed.has(e.child_id) || e.parent_id === IDP_USER.id) continue;
+      const parentMissing = !e.parent_id || !byId[e.parent_id];
+      const unknown = parentMissing || isOutsideAuditWindow(e);
+      const node = buildNode(
+        e.child_id,
+        unknown ? null : e,
+        null,
+        null,
+        { firstKnownRoot: unknown },
+      );
+      (unknown || lacksHumanOriginator(node) ? noOriginatorRoots : knownRoots).push(node);
+      mark(node);
     }
 
     // In-window IdP creates still have no human originator — hang under the hub

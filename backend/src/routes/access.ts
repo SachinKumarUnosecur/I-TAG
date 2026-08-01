@@ -164,13 +164,15 @@ function toCsv(rows: readonly AccessRow[]): string {
     'assumed_identity',
     'owner_kind',
     'owner_id',
+    'ownership_state',
+    'suppression_effect',
     'path',
   ].join(',');
 
   const escape = (value: string): string =>
     /[",\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value;
 
-  const lines = rows.map(({ path, owner }) =>
+  const lines = rows.map(({ path, ownership }) =>
     [
       path.identity_id,
       path.identity_type,
@@ -185,8 +187,10 @@ function toCsv(rows: readonly AccessRow[]): string {
           ? path.via_group
           : '',
       path.path_type === 'hop' ? path.assumed_identity : '',
-      owner?.kind ?? '',
-      owner?.id ?? '',
+      ownership.owner?.kind ?? '',
+      ownership.owner?.id ?? '',
+      ownership.state,
+      ownership.suppression?.effect ?? '',
       path.chain.map((step) => `${step.from} -[${step.edge}]-> ${step.to}`).join(' | '),
     ]
       .map(escape)

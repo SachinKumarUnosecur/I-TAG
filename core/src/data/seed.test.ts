@@ -216,6 +216,8 @@ const EXPECTED: readonly ExpectedRow[] = [
   ['user-grace', 'owned', null, 'none', false],
   ['role-build-agent', 'owned', null, 'none', false],
   ['svc-ci-runner', 'owned', null, 'none', false],
+  /** Beat 23b — hop subject that is also a counted ownership finding. */
+  ['svc-temp-ssm-bridge', 'unowned', 'no_owner_on_record', 'medium', true],
 
   /**
    * beats 22-23 — the agent chain, owned at every rung by two live teams.
@@ -601,11 +603,12 @@ test('beat 15: the queue is ranked by reachable sensitive access, not by count o
   const queue = OWNERSHIP.list();
   const reaching = queue.filter((value) => value.reachable_sensitive_count > 0);
 
-  // 12 of 24 rather than 11 of 22: beat 16 adds one finding that reaches production
+  // 12 of 25: beat 16 adds one finding that reaches production
   // (`svc-mail-archive-relay`) and one that reaches nothing (`svc-legacy-test-oauth`).
-  // The 46 identities beats 17 and 18 add are all `owned`, so none of them lands here.
+  // Beat 23b (`svc-temp-ssm-bridge`) is a counted finding whose hop is invisible to
+  // ownership/reach, so it does not raise `reachable_sensitive_count`.
   assert.equal(reaching.length, 12);
-  assert.equal(queue.length, 24);
+  assert.equal(queue.length, 25);
 
   const lastReaching = queue.findLastIndex((value) => value.reachable_sensitive_count > 0);
   const firstHarmless = queue.findIndex((value) => value.reachable_sensitive_count === 0);

@@ -1,5 +1,5 @@
 import type { AccessOwnerSource } from '../access/service.js';
-import type { OwnerRef } from '../domain/ownership.js';
+import type { AccessOwnerResolution } from '../domain/access.js';
 import type { OwnershipService } from '../ownership/classify.js';
 
 /**
@@ -16,20 +16,36 @@ import type { OwnershipService } from '../ownership/classify.js';
  * §6.3's table emits one row per (identity, permission) — so an un-memoized source
  * would re-resolve the same identity once per permission it can reach, which is
  * quadratic in exactly the view that has the most rows.
+ *
+ * Returns the full resolution (state + suppression + owner). Collapsing to
+ * `OwnerRef | null` was how unknown / suppressed rows were painted as Unowned.
  */
 export function memoizedAccessOwner(service: OwnershipService): AccessOwnerSource {
-  const cache = new Map<string, OwnerRef | null>();
+  const cache = new Map<string, AccessOwnerResolution>();
 
   return Object.freeze({
-    owner(identityId: string): OwnerRef | null {
+    owner(identityId: string): AccessOwnerResolution {
       const cached = cache.get(identityId);
-      // `has` rather than an `undefined` check: null is a real answer meaning
-      // nothing resolved an owner, and caching it is the point.
-      if (cached !== undefined || cache.has(identityId)) {
-        return cached ?? null;
+      if (cached !== undefined) {
+        return cached;
       }
       const outcome = service.classify(identityId);
-      const resolved = outcome.ok ? outcome.finding.owner : null;
+      /**
+       * An identity ownership cannot classify is reported as `unknown` with no
+       * owner — ownership's own vocabulary for "we have no basis to say", never
+       * fabricated as `unowned`.
+       */
+      const resolved: AccessOwnerResolution = outcome.ok
+        ? {
+            owner: outcome.finding.owner,
+            state: outcome.finding.state,
+            suppression: outcome.finding.suppression,
+          }
+        : {
+            owner: null,
+            state: 'unknown',
+            suppression: null,
+          };
       cache.set(identityId, resolved);
       return resolved;
     },

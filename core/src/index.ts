@@ -57,6 +57,7 @@ export type {
   AccessCounts,
   AccessEdge,
   AccessOutcome,
+  AccessOwnerResolution,
   AccessPath,
   AccessPathType,
   AccessRow,

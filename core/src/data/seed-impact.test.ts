@@ -272,11 +272,11 @@ test('beat 30: the two multi-stage chains are disjoint', () => {
  * rule agrees on a dataset where each binding has exactly one holder, so the
  * objection was untestable until this row.
  *
- * `gh:connect-release-runner` is the counterexample — two subjects that share no
- * group, no owner and no other permission — and `ssm:session-deploy-box` is the
- * control, held by `user-jane` alone.
+ * `gh:connect-release-runner` is the release-chain counterexample — two subjects that
+ * share no group, no owner and no other permission. Beat 23b also makes
+ * `ssm:session-deploy-box` multi-held (`user-jane` + `svc-temp-ssm-bridge`).
  */
-test('beat 31: exactly one pivot binding is held by more than one subject', () => {
+test('beat 31: exactly two pivot bindings are held by more than one subject', () => {
   const shared = PIVOT_BINDINGS.filter((permissionId) => {
     const holders = SUBJECTS.filter((subject) =>
       subject.direct_grants.includes(permissionId),
@@ -284,7 +284,7 @@ test('beat 31: exactly one pivot binding is held by more than one subject', () =
     return holders.length > 1;
   });
 
-  assert.deepEqual(shared, ['gh:connect-release-runner']);
+  assert.deepEqual(shared, ['gh:connect-release-runner', 'ssm:session-deploy-box']);
 
   assert.deepEqual(
     SUBJECTS.filter((subject) => subject.direct_grants.includes('gh:connect-release-runner'))
@@ -334,11 +334,11 @@ test('front-crossing counts understate removal impact mid-chain', () => {
   assert.deepEqual(spread, [
     ['mcp:connect-prod-runbook', 4],
     ['gh:connect-release-runner', 2],
+    ['ssm:session-deploy-box', 2],
     ['ci:assume-build-agent', 1],
     ['connect:ledger-writer', 1],
     ['gh:connect-artifact-signer', 1],
     ['mcp:connect-warehouse-box', 1],
-    ['ssm:session-deploy-box', 1],
   ]);
 
   // The three subjects whose access the mid-chain binding actually carries, against

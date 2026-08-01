@@ -171,7 +171,8 @@ test('beat 21: a legitimate hop is reported and is not a finding', () => {
     (row) => row.path.identity_id === 'svc-ci-runner',
   );
   assert.equal(owned.length, 1);
-  assert.equal(owned[0]?.owner?.id, 'team-platform');
+  assert.equal(owned[0]?.ownership.owner?.id, 'team-platform');
+  assert.equal(owned[0]?.ownership.state, 'owned');
 
   // Absence of data is never a finding, and neither is presence of a mechanism:
   // Ownership Assurance still sees a correctly owned account.

@@ -195,9 +195,9 @@ test('beat 30: the top choke point is measured, and it sits on a group', () => {
   assert.equal(top.closes, 'access');
 
   assert.equal(top.access_removed.removed, 12);
-  assert.equal(top.access_removed.baseline, 206);
+  assert.equal(top.access_removed.baseline, 208);
   assert.equal(top.mechanisms_closed.removed, 8);
-  assert.equal(top.mechanisms_closed.baseline, 17);
+  assert.equal(top.mechanisms_closed.baseline, 18);
 
   assert.deepEqual(
     top.affected.map((loss) => loss.identity_id),
@@ -305,8 +305,8 @@ test('candidates rank by access removed, then mechanisms closed, then id', () =>
       ['mcp:connect-warehouse-box', 5],
       ['gh:connect-release-runner', 4],
       ['gh:connect-artifact-signer', 3],
+      ['ssm:session-deploy-box', 2],
       ['ci:assume-build-agent', 1],
-      ['ssm:session-deploy-box', 1],
       ['connect:ledger-writer', 0],
     ],
   );
@@ -328,9 +328,9 @@ test('the selection method is published, and exhaustive means exhaustive', () =>
  */
 test('the baseline is stated in the units the deltas are measured in', () => {
   assert.deepEqual(baselineOf(BASELINE), {
-    reachable_pairs: 206,
-    pivot_edges: 17,
-    identities_scanned: 127,
+    reachable_pairs: 208,
+    pivot_edges: 18,
+    identities_scanned: 128,
   });
 });
 

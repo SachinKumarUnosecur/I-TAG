@@ -1,25 +1,75 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Icon, TypeChip, SeverityBadge, riskColor, TablePager, paginateRows } from './ui';
-import {
-  CLOUD_PROVIDERS,
-  fetchCloudExposureInventory,
-  listCloudAccounts,
-} from '../data/exposureApi';
+import { Icon, TablePager, paginateRows } from './ui';
+import { useExposureMap } from '../hooks/useExposureMap';
 
 const TABLE_PAGE_SIZE = 10;
 
-function cloudQuery(cloud, accountKey) {
+const BAND_TONE = {
+  extensive: 'extensive',
+  substantial: 'substantial',
+  limited: 'limited',
+  minimal: 'minimal',
+};
+
+function appQuery(app) {
   const params = new URLSearchParams();
-  if (cloud) params.set('cloud', cloud);
-  if (accountKey && accountKey !== 'all') params.set('account', accountKey);
+  if (app) params.set('app', app);
   const qs = params.toString();
   return qs ? `?${qs}` : '';
 }
 
+/** Engine band chip — deliberately not `SeverityBadge` (Risk owns Catastrophic…Desirable). */
+function ExposureBandBadge({ assessmentKind, band, label }) {
+  if (assessmentKind === 'no_paths') {
+    return <span className="em-band em-band--muted">No paths</span>;
+  }
+  if (assessmentKind === 'no_classified_permissions') {
+    return <span className="em-band em-band--warn" title="Reaches permissions, none classified">Unclassified</span>;
+  }
+  const tone = BAND_TONE[band] || 'muted';
+  return <span className={`em-band em-band--${tone}`}>{label}</span>;
+}
+
 /**
- * Identity Exposure Map — inventory list.
- * Scoped cloud-by-cloud (never "all clouds"); optional account within that cloud.
+ * Custom chip (not `ui.jsx`'s `TypeChip`, which hardcodes Human/Service labels only) —
+ * `identity_type` has four members and `ai_agent` must render as "AI agent", not "Service".
+ */
+function IdentityTypeChip({ identityType, label }) {
+  return <span className={`type-chip type-chip-${identityType}`}>{label}</span>;
+}
+
+function OwnerCell({ ownerDisplay }) {
+  const tone = ownerDisplay?.tone || 'muted';
+  const text = ownerDisplay?.text || 'Unevaluated';
+  return (
+    <span className={`ad-owner ad-owner--${tone}`} title={text}>
+      {text}
+    </span>
+  );
+}
+
+function SummaryCard({ icon, tone, value, label, footer }) {
+  return (
+    <div className={`ad-summary-card ad-summary-card--${tone}`}>
+      <div className={`ad-summary-icon ad-summary-icon--${tone}`}>
+        <Icon name={icon} size={15} />
+      </div>
+      <div className="ad-summary-body">
+        <div className="ad-summary-value">{value}</div>
+        <div className="ad-summary-label">{label}</div>
+        {footer ? <div className="ad-summary-footer">{footer}</div> : null}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Identity Exposure Map — landing table.
+ *
+ * Engine owns score / band / completeness (`core/src/exposure/service.ts`); this page owns
+ * presentation only. Rows render in the order the engine returned them — sorting by
+ * `weighted_sum` within `scored` already happened server-side.
  */
 export default function ExposureMap() {
   const navigate = useNavigate();
@@ -27,68 +77,38 @@ export default function ExposureMap() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
-  const accounts = useMemo(() => listCloudAccounts(), []);
-  const connectedClouds = useMemo(
-    () => CLOUD_PROVIDERS.filter(c => accounts.some(a => a.provider === c)),
-    [accounts],
-  );
+  const app = searchParams.get('app') || '';
+  const { bundle, loading, error, reload, preferMock } = useExposureMap({ app: app || undefined });
 
-  const accountFromUrl = searchParams.get('account') || 'all';
-  const cloudFromUrl = searchParams.get('cloud');
-  const accountMeta = accounts.find(a => a.id === accountFromUrl);
+  const rows = bundle?.rows || [];
+  const apps = bundle?.apps || [];
+  const summary = bundle?.summary || null;
 
-  const cloud = useMemo(() => {
-    if (cloudFromUrl && connectedClouds.includes(cloudFromUrl)) return cloudFromUrl;
-    if (accountMeta) return accountMeta.provider;
-    return connectedClouds[0] || 'AWS';
-  }, [cloudFromUrl, accountMeta, connectedClouds]);
-
-  const accountKey = useMemo(() => {
-    if (accountFromUrl === 'all') return 'all';
-    if (accountMeta && accountMeta.provider === cloud) return accountFromUrl;
-    return 'all';
-  }, [accountFromUrl, accountMeta, cloud]);
-
-  const cloudAccounts = useMemo(
-    () => accounts.filter(a => a.provider === cloud),
-    [accounts, cloud],
-  );
-
+  // Guard against a stale ?app= that no longer exists in the fetched population.
   useEffect(() => {
-    if (!connectedClouds.length) return;
-    const params = new URLSearchParams(searchParams);
-    let dirty = false;
-    if (params.get('cloud') !== cloud) {
-      params.set('cloud', cloud);
-      dirty = true;
+    if (!bundle || !app) return;
+    if (apps.length && !apps.includes(app)) {
+      const params = new URLSearchParams(searchParams);
+      params.delete('app');
+      setSearchParams(params, { replace: true });
     }
-    if (accountFromUrl !== 'all' && accountKey === 'all') {
-      params.delete('account');
-      dirty = true;
-    }
-    if (dirty) setSearchParams(params, { replace: true });
-  }, [cloud, accountKey, accountFromUrl, connectedClouds, searchParams, setSearchParams]);
-
-  const inventory = useMemo(
-    () => fetchCloudExposureInventory({ cloud, accountKey }),
-    [cloud, accountKey],
-  );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bundle]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return inventory;
-    return inventory.filter(i => (
-      i.name.toLowerCase().includes(q)
-      || (i.department || '').toLowerCase().includes(q)
-      || i.clouds.some(c => c.toLowerCase().includes(q))
-      || (i.type === 'service' ? 'nhi' : 'user').includes(q)
-      || String(i.highestResource || '').toLowerCase().includes(q)
+    if (!q) return rows;
+    return rows.filter((r) => (
+      r.name.toLowerCase().includes(q)
+      || (r.app || '').toLowerCase().includes(q)
+      || r.typeLabel.toLowerCase().includes(q)
+      || (r.highestSensitivity || '').toLowerCase().includes(q)
     ));
-  }, [inventory, search]);
+  }, [rows, search]);
 
   useEffect(() => {
     setPage(1);
-  }, [search, cloud, accountKey]);
+  }, [search, app]);
 
   const { rows: pageRows, page: safePage, pageCount } = paginateRows(
     filtered,
@@ -96,34 +116,21 @@ export default function ExposureMap() {
     TABLE_PAGE_SIZE,
   );
 
-  const stats = useMemo(() => ({
-    top: inventory[0] || null,
-    critical: inventory.filter(i => i.reachesCritical).length,
-    paths: inventory.reduce((sum, i) => sum + i.pathCount, 0),
-    identities: inventory.length,
-  }), [inventory]);
-
-  const activeAccount = cloudAccounts.find(a => a.id === accountKey);
-
-  function setCloud(next) {
+  function setApp(next) {
     const params = new URLSearchParams(searchParams);
-    params.set('cloud', next);
-    const keep = accounts.find(a => a.id === accountKey && a.provider === next);
-    if (!keep) params.delete('account');
-    setSearchParams(params, { replace: true });
-  }
-
-  function setAccount(next) {
-    const params = new URLSearchParams(searchParams);
-    params.set('cloud', cloud);
-    if (!next || next === 'all') params.delete('account');
-    else params.set('account', next);
+    if (!next) params.delete('app');
+    else params.set('app', next);
     setSearchParams(params, { replace: true });
   }
 
   function openIdentity(id) {
-    navigate(`/exposure-map/${id}${cloudQuery(cloud, accountKey)}`);
+    navigate(`/exposure-map/${id}${appQuery(app)}`);
   }
+
+  const completenessPct = summary
+    ? Math.round((summary.completeness.ratio || 0) * 100)
+    : null;
+  const topScored = summary?.topScored || null;
 
   return (
     <div className="page-content em-page">
@@ -131,39 +138,65 @@ export default function ExposureMap() {
         <div className="page-header-copy">
           <h1 className="page-title">Identity exposure map</h1>
           <p className="page-subtitle">
-            Blast radius on one cloud at a time. Open an identity —
-            humans show what they can access; NHIs show attachments and reachability.
+            Blast radius, ranked by the engine — how much each identity could reach if it were
+            misused, not whether it is owned or correctly configured.
+            {preferMock && <> Offline mock mode (`VITE_USE_MOCK=1`).</>}
+            {!preferMock && summary?.snapshotAt && <> Graph snapshot {String(summary.snapshotAt).slice(0, 10)}.</>}
           </p>
+          {error && (
+            <div className="ad-load-error" role="alert">
+              <span>{error}</span>
+              <button type="button" className="btn btn-ghost" onClick={reload}>Retry</button>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="em-stats">
-        <div className="em-stat">
-          <div className="em-stat-value em-stat-value--hot">{stats.top?.exposureScore ?? '—'}</div>
-          <div className="em-stat-label">Highest exposure</div>
-          <div className="em-stat-meta">{stats.top?.name || '—'}</div>
-        </div>
-        <div className="em-stat">
-          <div className="em-stat-value em-stat-value--warn">{stats.critical}</div>
-          <div className="em-stat-label">Reaching critical resources</div>
-          <div className="em-stat-meta">{stats.identities} identities on {cloud}</div>
-        </div>
-        <div className="em-stat">
-          <div className="em-stat-value">{stats.paths}</div>
-          <div className="em-stat-label">Live access paths</div>
-          <div className="em-stat-meta">
-            {activeAccount ? activeAccount.label : cloud}
-          </div>
-        </div>
+      <div className="ad-summary-grid em-kpi-grid">
+        <SummaryCard
+          icon="check"
+          tone="blue"
+          value={loading ? '—' : `${completenessPct}%`}
+          label="Classification completeness"
+          footer={
+            <span className="ad-pill ad-pill--info">
+              {loading
+                ? 'Loading…'
+                : `${summary.completeness.classified} classified · ${summary.completeness.unclassified} unclassified of ${summary.completeness.total} permissions`}
+            </span>
+          }
+        />
+        <SummaryCard
+          icon="alertTriangle"
+          tone="red"
+          value={loading ? '—' : (topScored?.exposureScore ?? '—')}
+          label="Highest exposure score"
+          footer={
+            <span className="ad-pill ad-pill--danger">
+              {loading ? 'Loading…' : (topScored ? `${topScored.name} · ${topScored.bandLabel}` : 'No scored identities')}
+            </span>
+          }
+        />
+        <SummaryCard
+          icon="layers"
+          tone="violet"
+          value={loading ? '—' : summary.scored}
+          label="Identities scored"
+          footer={
+            <span className="ad-pill ad-pill--violet">
+              No paths ({loading ? '—' : summary.noPaths}) · Unclassified ({loading ? '—' : summary.noClassifiedPermissions})
+            </span>
+          }
+        />
       </div>
 
       <div className="em-toolbar" role="search">
         <label className={`em-search${search.trim() ? ' is-filled' : ''}`}>
           <Icon name="search" size={15} color="var(--text-tertiary)" />
           <input
-            placeholder="Search identity, department, or resource…"
+            placeholder="Search identity, app, or type…"
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             aria-label="Search identity"
           />
           {search.trim() && (
@@ -173,37 +206,24 @@ export default function ExposureMap() {
           )}
         </label>
 
-        <div className="em-cloud-seg" role="group" aria-label="Cloud">
-          {connectedClouds.map(c => (
-            <button
-              key={c}
-              type="button"
-              className={`em-cloud-btn${cloud === c ? ' is-active' : ''}`}
-              onClick={() => setCloud(c)}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-
-        {cloudAccounts.length > 1 && (
+        {apps.length > 1 && (
           <label className="em-account-filter">
-            <span className="em-account-filter-k">Account</span>
+            <span className="em-account-filter-k">App</span>
             <select
-              value={accountKey}
-              onChange={e => setAccount(e.target.value)}
-              aria-label={`Filter ${cloud} account`}
+              value={app}
+              onChange={(e) => setApp(e.target.value)}
+              aria-label="Filter by app"
             >
-              <option value="all">All {cloud} accounts</option>
-              {cloudAccounts.map(a => (
-                <option key={a.id} value={a.id}>{a.shortLabel || a.label}</option>
+              <option value="">All apps</option>
+              {apps.map((a) => (
+                <option key={a} value={a}>{a}</option>
               ))}
             </select>
           </label>
         )}
 
         <div className="em-list-count">
-          {filtered.length} identit{filtered.length === 1 ? 'y' : 'ies'}
+          {loading ? 'Loading…' : `${filtered.length} identit${filtered.length === 1 ? 'y' : 'ies'}`}
         </div>
       </div>
 
@@ -214,18 +234,18 @@ export default function ExposureMap() {
             <span className="em-col-type">Type</span>
             <span className="em-col-bar">Exposure</span>
             <span className="em-col-score">Score</span>
-            <span className="em-col-paths">Paths</span>
+            <span className="em-col-reach">Reachable</span>
             <span className="em-col-band">Band</span>
+            <span className="em-col-owner">Owner</span>
           </div>
-          {filtered.length === 0 && (
+          {!loading && filtered.length === 0 && (
             <div className="em-table-empty">
-              No exposure on {cloud}
-              {activeAccount ? ` / ${activeAccount.label}` : ''}.
+              {error ? 'Unable to load exposure map' : `No identities match${app ? ` for app "${app}"` : ''}.`}
             </div>
           )}
-          {pageRows.map(row => {
-            const pct = Math.max(0, Math.min(100, row.exposureScore));
-            const color = riskColor(pct);
+          {pageRows.map((row) => {
+            const pct = row.exposureScore == null ? 0 : Math.max(0, Math.min(100, row.exposureScore));
+            const tone = BAND_TONE[row.band] || 'muted';
             return (
               <button
                 key={row.id}
@@ -235,20 +255,34 @@ export default function ExposureMap() {
               >
                 <span className="em-col-id">
                   <span className="em-id-name">{row.name}</span>
-                  {row.department && <span className="em-id-dept">{row.department}</span>}
+                  <span className="em-id-dept">{row.app}</span>
                 </span>
                 <span className="em-col-type">
-                  <TypeChip type={row.type} />
+                  <IdentityTypeChip identityType={row.identityType} label={row.typeLabel} />
                 </span>
                 <span className="em-col-bar">
                   <span className="em-bar-track">
-                    <span className="em-bar-fill" style={{ width: `${pct}%`, background: color }} />
+                    <span className={`em-bar-fill em-bar-fill--${tone}`} style={{ width: `${pct}%` }} />
                   </span>
                 </span>
-                <span className="em-col-score" style={{ color }}>{row.exposureScore}</span>
-                <span className="em-col-paths">{row.pathCount}</span>
+                <span className={`em-col-score em-col-score--${tone}`}>
+                  {row.exposureScore ?? '—'}
+                </span>
+                <span className="em-col-reach">
+                  {row.reachablePermissions}
+                  {row.unclassifiedPermissions > 0 && (
+                    <span className="em-reach-unclassified"> ({row.unclassifiedPermissions} unclassified)</span>
+                  )}
+                </span>
                 <span className="em-col-band">
-                  {row.riskBand ? <SeverityBadge band={row.riskBand} /> : '—'}
+                  <ExposureBandBadge
+                    assessmentKind={row.assessmentKind}
+                    band={row.band}
+                    label={row.bandLabel}
+                  />
+                </span>
+                <span className="em-col-owner">
+                  <OwnerCell ownerDisplay={row.ownerDisplay} />
                 </span>
               </button>
             );

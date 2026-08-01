@@ -8,7 +8,7 @@
  * severity, a rank, a score or a priority.
  */
 
-import type { OwnerRef } from './ownership.js';
+import type { OwnerRef, OwnershipState, Suppression } from './ownership.js';
 import type { IdentityType } from './types.js';
 
 /**
@@ -83,17 +83,29 @@ export type AccessPath =
     });
 
 /**
+ * Ownership Assurance's answer for `PRD` §6.3's Owner column.
+ *
+ * Carries state and suppression alongside the OwnerRef so a consumer cannot
+ * collapse `unowned` / `unknown` / suppressed into one null — those three mean
+ * different things (finding vs audit gap vs accepted exception) and painting them
+ * the same is how the Owner column loses analyst trust.
+ */
+export interface AccessOwnerResolution {
+  readonly owner: OwnerRef | null;
+  readonly state: OwnershipState;
+  readonly suppression: Suppression | null;
+}
+
+/**
  * One row of `PRD` §6.3's table: the path, plus who answers for the identity.
  *
  * Nested rather than spread so `AccessPath` stays a discriminated union a consumer
- * can switch on. `owner` is additive metadata per `PRD` §2.1 — it never filters or
- * alters classification, so an unowned hop is reported exactly as an owned one is,
- * and it is null rather than a placeholder string because "nobody owns this" is a
- * finding Ownership Assurance already reports and this module must not restate.
+ * can switch on. `ownership` is additive metadata per `PRD` §2.1 — it never filters
+ * or alters classification, so an unowned hop is reported exactly as an owned one is.
  */
 export interface AccessRow {
   readonly path: AccessPath;
-  readonly owner: OwnerRef | null;
+  readonly ownership: AccessOwnerResolution;
 }
 
 /**

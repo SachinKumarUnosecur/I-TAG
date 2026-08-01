@@ -1,13 +1,13 @@
 import type {
   AccessCounts,
   AccessOutcome,
+  AccessOwnerResolution,
   AccessPath,
   AccessPathType,
   AccessRow,
   AccessSummary,
   IdentityAccessProfile,
 } from '../domain/access.js';
-import type { OwnerRef } from '../domain/ownership.js';
 import type { AccountabilityPolicy } from '../domain/policy.js';
 import type { Clock, GraphSource } from '../domain/ports.js';
 import type { Identity, IdentityType } from '../domain/types.js';
@@ -25,10 +25,12 @@ import { comparePaths, discoverAccess, type AccessPathRule } from './classify.js
  *
  * Implementations must memoize — resolution runs a traversal per identity, so an
  * un-memoized source turns a linear table scan quadratic.
+ *
+ * Returns the full resolution (state + suppression + owner). Collapsing to
+ * `OwnerRef | null` was how unknown / suppressed rows were painted as Unowned.
  */
 export interface AccessOwnerSource {
-  /** Null when nothing resolves an owner, which `PRD` §6.3 renders as "Unowned". */
-  owner(identityId: string): OwnerRef | null;
+  owner(identityId: string): AccessOwnerResolution;
 }
 
 export interface AccessDeps {
@@ -156,7 +158,7 @@ export function createAccessService(deps: AccessDeps): AccessService {
       for (const identity of population(graph, query.app)) {
         for (const path of pathsFor(graph, identity)) {
           if (matches(path, query)) {
-            rows.push({ path, owner: deps.owners.owner(identity.id) });
+            rows.push({ path, ownership: deps.owners.owner(identity.id) });
           }
         }
       }

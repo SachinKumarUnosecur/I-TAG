@@ -402,10 +402,10 @@ test('the snapshot comes from Access Discovery, not from this module clock', () 
 test('the summary publishes the gate before it publishes the ranking', () => {
   const summary = EXPOSURE.summary();
 
-  assert.equal(summary.scored, 105);
+  assert.equal(summary.scored, 106);
   assert.equal(summary.no_classified_permissions, 1);
   assert.equal(summary.no_paths, 21);
-  assert.equal(summary.identities_scanned, 127);
+  assert.equal(summary.identities_scanned, 128);
   assert.equal(
     summary.scored + summary.no_classified_permissions + summary.no_paths,
     summary.identities_scanned,
@@ -431,7 +431,7 @@ test('the summary publishes the gate before it publishes the ranking', () => {
     summary.band_counts.map((entry) => [entry.band, entry.floor, entry.count]),
     [
       ['extensive', 75, 12],
-      ['substantial', 50, 19],
+      ['substantial', 50, 20],
       ['limited', 25, 1],
       ['minimal', 0, 73],
     ],
@@ -474,8 +474,8 @@ test('rows with no paths are hidden by default; rows with nothing assessed never
   const listed = EXPOSURE.list();
   const everything = EXPOSURE.list({ includeNoPaths: true });
 
-  assert.equal(listed.length, 106);
-  assert.equal(everything.length, 127);
+  assert.equal(listed.length, 107);
+  assert.equal(everything.length, 128);
   assert.deepEqual(listed.filter((row) => row.assessment.kind === 'no_paths'), []);
   assert.equal(
     listed.some((row) => row.identity_id === 'svc-partner-sync'),
@@ -526,7 +526,7 @@ test('a filter on a score does not match a row that has not got one', () => {
     [],
     'min_score=0 is still a filter on a score, so the unscored are not swept in as zero',
   );
-  assert.equal(minimal.length, 105);
+  assert.equal(minimal.length, 106);
 
   /**
    * The three rota members tie at `S = 3.25`, so their relative order is decided by

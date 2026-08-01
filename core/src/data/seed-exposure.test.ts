@@ -292,13 +292,13 @@ test('beat 28: hop distance is no longer collinear with path type', () => {
 test('the exposure population and its path mix are what §9 publishes', () => {
   const summary = ACCESS.summary();
 
-  assert.deepEqual(summary.counts, { direct: 108, indirect: 83, hop: 21 });
-  assert.equal(summary.identities_with_hop, 11);
-  assert.equal(summary.identities_scanned, 127);
+  assert.deepEqual(summary.counts, { direct: 109, indirect: 83, hop: 22 });
+  assert.equal(summary.identities_with_hop, 12);
+  assert.equal(summary.identities_scanned, 128);
   assert.equal(
     DATASET.identities.filter((identity) => identity.type === 'group').length,
     12,
-    'scanned + groups = the 139 identities in the estate',
+    'scanned + groups = the 140 identities in the estate',
   );
 });
 
@@ -314,7 +314,7 @@ test('the exposure population and its path mix are what §9 publishes', () => {
 test('nothing beats 24-28 added is an ownership finding', () => {
   const queue = OWNERSHIP.list();
 
-  assert.equal(queue.length, 24);
+  assert.equal(queue.length, 25);
   assert.equal(queue[0]?.identity_id, 'svc-vpn-legacy');
 
   const added = [

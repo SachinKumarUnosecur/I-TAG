@@ -135,7 +135,10 @@ export const identities = [
   {
     id: "id-001", name: "jane.doe", type: "human", email: "jane.doe@acme.com", department: "Engineering",
     status: "active", createdBy: "id-sys-001", createdAt: "2023-01-15", lastActive: "2026-07-31",
+    // Simulated demo overlay — NOT an Ownership/Lineage engine finding
     compromisedAt: "2023-04-01",
+    provenanceState: "explained_absence", gapReason: "idp_directory_bootstrap",
+    originator: "No originator", originatorId: null,
     mfaEnabled: true, credentialAge: 45, owner: "id-001", ownerName: "Jane Doe", riskScore: 100, apps: ["payments"],
     sources: {
       okta: { id: "00u1jane9doe0kta", status: "ACTIVE", login: "jane.doe@acme.com", groups: ["Engineering", "AWS-PowerUsers", "Payments-App"], mfaTypes: ["okta_verify", "webauthn"] },
@@ -148,6 +151,8 @@ export const identities = [
   {
     id: "id-002", name: "mark.chen", type: "human", email: "mark.chen@acme.com", department: "DevOps",
     status: "active", createdBy: "id-sys-001", createdAt: "2022-08-01", lastActive: "2026-07-30",
+    provenanceState: "explained_absence", gapReason: "idp_directory_bootstrap",
+    originator: "No originator", originatorId: null, fanOut: 5,
     mfaEnabled: true, credentialAge: 12, owner: "id-002", ownerName: "Mark Chen", riskScore: 31, apps: ["devops"],
     sources: {
       okta: { id: "00u2mark8chen0kta", status: "ACTIVE", login: "mark.chen@acme.com", groups: ["DevOps", "GCP-Admins", "GKE-Operators"], mfaTypes: ["okta_verify"] },
@@ -183,7 +188,10 @@ export const identities = [
     id: "id-005", name: "alice.brooks", type: "human", email: "alice.brooks@acme.com", department: "Finance",
     status: "departed", createdBy: null, createdAt: "2020-03-10", lastActive: "2026-06-01",
     departedAt: "2026-06-01",
+    // Simulated demo overlay — NOT an Ownership/Lineage engine finding
     compromisedAt: "2021-06-01",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null, fanOut: 6, creatorStatus: "departed",
     mfaEnabled: false, credentialAge: 420, owner: null, ownerName: null, riskScore: 95, apps: ["payments"],
     sources: {
       okta: { id: "00u5alic5broo0kta", status: "DEPROVISIONED", login: "alice.brooks@acme.com", groups: [], mfaTypes: [], statusChanged: "2026-06-01T18:00:00.000Z" },
@@ -196,7 +204,8 @@ export const identities = [
     id: "id-006", name: "raj.patel", type: "human", email: "raj.patel@acme.com", department: "Engineering",
     status: "departed", createdBy: null, createdAt: "2021-09-01", lastActive: "2026-05-15",
     departedAt: "2026-05-15",
-    compromisedAt: "2021-09-15",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null, creatorStatus: "departed",
     mfaEnabled: false, credentialAge: 380, owner: null, ownerName: null, riskScore: 88, apps: ["data-pipeline"],
     sources: {
       okta: { id: "00u6rajp4atel0kta", status: "DEPROVISIONED", login: "raj.patel@acme.com", groups: [], mfaTypes: [], statusChanged: "2026-05-15T17:00:00.000Z" },
@@ -219,6 +228,8 @@ export const identities = [
   {
     id: "id-008", name: "lena.okonkwo", type: "human", email: "lena.okonkwo@acme.com", department: "Platform",
     status: "active", createdBy: "id-sys-001", createdAt: "2022-03-18", lastActive: "2026-07-31",
+    provenanceState: "explained_absence", gapReason: "idp_directory_bootstrap",
+    originator: "No originator", originatorId: null, fanOut: 2,
     mfaEnabled: true, credentialAge: 28, owner: "id-008", ownerName: "Lena Okonkwo", riskScore: 81, apps: ["devops"],
     sources: {
       okta: { id: "00u8lena2okon0kta", status: "ACTIVE", login: "lena.okonkwo@acme.com", groups: ["Platform", "Azure-Contributors", "AWS-PowerUsers"], mfaTypes: ["webauthn"] },
@@ -254,7 +265,8 @@ export const identities = [
     id: "id-011", name: "owen.blake", type: "human", email: "owen.blake@acme.com", department: "DevOps",
     status: "departed", createdBy: null, createdAt: "2021-05-01", lastActive: "2026-04-30",
     departedAt: "2026-04-30",
-    compromisedAt: "2021-05-15",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null, creatorStatus: "departed",
     mfaEnabled: false, credentialAge: 510, owner: null, ownerName: null, riskScore: 93, apps: ["devops"],
     sources: {
       okta: { id: "00u1owen9blak0kta", status: "DEPROVISIONED", login: "owen.blake@acme.com", groups: [], mfaTypes: [], statusChanged: "2026-04-30T18:00:00.000Z" },
@@ -315,6 +327,8 @@ export const identities = [
   {
     id: "id-016", name: "henry.cole", type: "human", email: "henry.cole@acme.com", department: "Finance",
     status: "active", createdBy: null, createdAt: "2018-04-01", lastActive: "2026-07-28",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null,
     mfaEnabled: true, credentialAge: 900, owner: "id-016", ownerName: "Henry Cole", riskScore: 58, apps: ["payments"],
     sources: {
       okta: { id: "00u6henr4cole0kta", status: "ACTIVE", login: "henry.cole@acme.com", groups: ["Finance", "Payments-App"], mfaTypes: ["okta_verify"] },
@@ -326,6 +340,8 @@ export const identities = [
   {
     id: "id-017", name: "maya.singh", type: "human", email: "maya.singh@acme.com", department: "Finance",
     status: "active", createdBy: null, createdAt: "2019-01-20", lastActive: "2026-07-30",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null,
     mfaEnabled: true, credentialAge: 700, owner: "id-017", ownerName: "Maya Singh", riskScore: 52, apps: ["payments"],
     sources: {
       okta: { id: "00u7maya3sing0kta", status: "ACTIVE", login: "maya.singh@acme.com", groups: ["Finance", "Payments-App-Readers"], mfaTypes: ["okta_verify", "webauthn"] },
@@ -337,6 +353,8 @@ export const identities = [
   {
     id: "id-018", name: "elise.moran", type: "human", email: "elise.moran@acme.com", department: "Data",
     status: "active", createdBy: null, createdAt: "2020-11-01", lastActive: "2026-07-29",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null,
     mfaEnabled: true, credentialAge: 520, owner: "id-018", ownerName: "Elise Moran", riskScore: 61, apps: ["data-pipeline"],
     sources: {
       okta: { id: "00u8elis2mora0kta", status: "ACTIVE", login: "elise.moran@acme.com", groups: ["Data", "GCP-Data-Analysts"], mfaTypes: ["okta_verify"] },
@@ -348,6 +366,8 @@ export const identities = [
   {
     id: "id-019", name: "quinn.adebayo", type: "human", email: "quinn.adebayo@acme.com", department: "DevOps",
     status: "active", createdBy: null, createdAt: "2019-07-15", lastActive: "2026-07-31",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null,
     mfaEnabled: true, credentialAge: 640, owner: "id-019", ownerName: "Quinn Adebayo", riskScore: 55, apps: ["devops"],
     sources: {
       okta: { id: "00u9quin1adeb0kta", status: "ACTIVE", login: "quinn.adebayo@acme.com", groups: ["DevOps", "AWS-PowerUsers"], mfaTypes: ["webauthn"] },
@@ -372,6 +392,8 @@ export const identities = [
     id: "id-021", name: "derek.frost", type: "human", email: "derek.frost@acme.com", department: "Security",
     status: "departed", createdBy: "id-sys-001", createdAt: "2021-02-10", lastActive: "2026-01-20",
     departedAt: "2026-01-20",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null, creatorStatus: "departed", fanOut: 3,
     mfaEnabled: false, credentialAge: 540, owner: null, ownerName: null, riskScore: 90, apps: ["devops"],
     sources: {
       okta: { id: "00u1dere7fros0kta", status: "DEPROVISIONED", login: "derek.frost@acme.com", groups: [], mfaTypes: [], statusChanged: "2026-01-20T18:30:00.000Z" },
@@ -392,12 +414,49 @@ export const identities = [
       gcp: { principal: "user:helena.cho@acme.com", stillActiveInCloud: false },
     },
   },
+  /**
+   * Out-of-population creator for payments fan-out.
+   * No IdP child edge — herself hangs under the connector hub (No originator);
+   * her NHIs nest under her: Connector → sofia.reyes → svc-sofia-*.
+   */
+  {
+    id: "id-023", name: "sofia.reyes", type: "human", email: "sofia.reyes@acme.com", department: "Platform",
+    status: "active", createdBy: null, createdAt: "2022-11-01", lastActive: "2026-07-31",
+    provenanceState: "unexplained", gapReason: "unexplained",
+    originator: "No originator", originatorId: null, fanOut: 6, creatorStatus: "active",
+    mfaEnabled: true, credentialAge: 60, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 36, apps: ["payments"],
+    sources: {
+      okta: { id: "00u3sofi5reye0kta", status: "ACTIVE", login: "sofia.reyes@acme.com", groups: ["Platform", "AWS-PowerUsers"], mfaTypes: ["okta_verify", "webauthn"] },
+      googleWorkspace: { id: "127888999000111222333", primaryEmail: "sofia.reyes@acme.com", orgUnitPath: "/Platform", isAdmin: false, isEnrolledIn2Sv: true },
+      hr: { employeeId: "WD-14280", workerType: "Employee", employmentStatus: "Active", hireDate: "2022-11-01", managerEmployeeId: "WD-09102", costCenter: "PLT-150" },
+      aws: { principalArn: "arn:aws:iam::481516234210:user/sofia.reyes", federatedVia: "arn:aws:iam::481516234210:saml-provider/Okta" },
+    },
+  },
+  /**
+   * Out-of-population creator for devops NHIs.
+   * Hub path: Connector → marcus.vale → svc-marcus-*.
+   */
+  {
+    id: "id-024", name: "marcus.vale", type: "human", email: "marcus.vale@acme.com", department: "SRE",
+    status: "active", createdBy: null, createdAt: "2023-06-01", lastActive: "2026-07-30",
+    provenanceState: "unexplained", gapReason: "unexplained",
+    originator: "No originator", originatorId: null, fanOut: 2, creatorStatus: "active",
+    mfaEnabled: true, credentialAge: 40, owner: "id-024", ownerName: "Marcus Vale", riskScore: 28, apps: ["devops"],
+    sources: {
+      okta: { id: "00u4marc4vale0kta", status: "ACTIVE", login: "marcus.vale@acme.com", groups: ["SRE", "AWS-BreakGlass"], mfaTypes: ["webauthn"] },
+      googleWorkspace: { id: "128999000111222333444", primaryEmail: "marcus.vale@acme.com", orgUnitPath: "/SRE", isAdmin: false, isEnrolledIn2Sv: true },
+      hr: { employeeId: "WD-14802", workerType: "Employee", employmentStatus: "Active", hireDate: "2023-06-01", managerEmployeeId: "WD-08540", costCenter: "OPS-110" },
+      aws: { principalArn: "arn:aws:iam::481516234210:user/marcus.vale", federatedVia: "arn:aws:iam::481516234210:saml-provider/Okta" },
+    },
+  },
 
   // Service / workload identities from cloud IAM APIs
   {
     id: "id-101", name: "svc-payments-api", type: "service", email: null, department: "Payments",
     status: "active", createdBy: "id-001", createdAt: "2023-02-01", lastActive: "2026-07-31",
-    mfaEnabled: false, credentialAge: 320, owner: "id-001", ownerName: "Jane Doe", riskScore: 67, apps: ["payments"],
+    provenanceState: "recorded", originator: "jane.doe", originatorId: "id-001", generation: 1, fanOut: 1,
+    mfaEnabled: false, credentialAge: 320, owner: "id-001", ownerName: "jane.doe", ownerKind: "user",
+    ownershipState: "owned", riskScore: 67, riskFactorsFiring: 1, apps: ["payments"],
     sources: {
       aws: {
         roleArn: "arn:aws:iam::481516234210:role/svc-payments-api",
@@ -426,7 +485,8 @@ export const identities = [
   {
     id: "id-103", name: "svc-ci-runner", type: "service", email: null, department: "DevOps",
     status: "active", createdBy: "id-002", createdAt: "2022-09-01", lastActive: "2026-07-31",
-    mfaEnabled: false, credentialAge: 45, owner: "id-002", ownerName: "Mark Chen", riskScore: 41, apps: ["devops"],
+    mfaEnabled: false, credentialAge: 45, owner: "team-platform", ownerName: "team-platform", ownerKind: "team",
+    ownershipState: "owned", ownerAttestedAt: "2026-07-22", riskScore: 41, riskFactorsFiring: 1, apps: ["devops"],
     sources: {
       gcp: {
         email: "svc-ci-runner@acme-prod-4821.iam.gserviceaccount.com",
@@ -444,7 +504,8 @@ export const identities = [
   {
     id: "id-104", name: "svc-orphaned-etl", type: "service", email: null, department: "Data",
     status: "orphaned", createdBy: "id-006", createdAt: "2021-10-01", lastActive: "2026-07-10",
-    mfaEnabled: false, credentialAge: 380, owner: null, ownerName: null, riskScore: 91, apps: ["data-pipeline"],
+    mfaEnabled: false, credentialAge: 380, owner: null, ownerName: null, ownershipState: "unowned",
+    riskScore: 91, riskFactorsFiring: 2, apps: ["data-pipeline"],
     sources: {
       gcp: {
         email: "svc-orphaned-etl@acme-prod-4821.iam.gserviceaccount.com",
@@ -457,7 +518,8 @@ export const identities = [
   {
     id: "id-105", name: "svc-old-payments-worker", type: "service", email: null, department: "Payments",
     status: "orphaned", createdBy: "id-005", createdAt: "2020-04-15", lastActive: "2026-06-20",
-    mfaEnabled: false, credentialAge: 460, owner: null, ownerName: null, riskScore: 97, apps: ["payments"],
+    mfaEnabled: false, credentialAge: 460, owner: null, ownerName: null, ownershipState: "unowned",
+    riskScore: 97, riskFactorsFiring: 3, apps: ["payments"],
     sources: {
       aws: {
         roleArn: "arn:aws:iam::481516234210:role/svc-old-payments-worker",
@@ -470,7 +532,8 @@ export const identities = [
   {
     id: "id-106", name: "svc-monitoring", type: "service", email: null, department: "DevOps",
     status: "active", createdBy: "id-002", createdAt: "2023-01-01", lastActive: "2026-07-31",
-    mfaEnabled: false, credentialAge: 90, owner: "id-002", ownerName: "Mark Chen", riskScore: 29, apps: ["devops"],
+    mfaEnabled: false, credentialAge: 90, owner: "team-platform", ownerName: "team-platform", ownerKind: "team",
+    ownershipState: "owned", riskScore: 29, riskFactorsFiring: 1, apps: ["devops"],
     sources: {
       aws: { roleArn: "arn:aws:iam::481516234210:role/svc-monitoring", path: "/service-roles/" },
       gcp: { email: "svc-monitoring@acme-prod-4821.iam.gserviceaccount.com", uniqueId: "555666777888999000111" },
@@ -479,6 +542,7 @@ export const identities = [
   {
     id: "id-107", name: "svc-billing-sync", type: "service", email: null, department: "Finance",
     status: "active", createdBy: "id-101", createdAt: "2023-06-01", lastActive: "2026-07-28",
+    provenanceState: "recorded", originator: "jane.doe", originatorId: "id-001", generation: 2, fanOut: 1,
     mfaEnabled: false, credentialAge: 120, owner: "id-001", ownerName: "Jane Doe", riskScore: 44, apps: ["payments"],
     sources: {
       aws: { roleArn: "arn:aws:iam::481516234210:role/svc-billing-sync", path: "/service-roles/" },
@@ -505,6 +569,9 @@ export const identities = [
   {
     id: "id-109", name: "svc-terraform-apply", type: "service", email: null, department: "Platform",
     status: "active", createdBy: "id-008", createdAt: "2023-03-01", lastActive: "2026-07-31",
+    // Self-authorized-shaped story: creator also received privilege via this role on 2023-03-02
+    provenanceState: "recorded", originator: "lena.okonkwo", originatorId: "id-008",
+    selfAuthorized: true, creatorStatus: "active", generation: 1,
     mfaEnabled: false, credentialAge: 150, owner: "id-008", ownerName: "Lena Okonkwo", riskScore: 84, apps: ["devops"],
     sources: {
       aws: {
@@ -536,7 +603,11 @@ export const identities = [
   {
     id: "id-111", name: "svc-backup-agent", type: "service", email: null, department: "DevOps",
     status: "orphaned", createdBy: "id-011", createdAt: "2021-06-01", lastActive: "2026-03-12",
-    mfaEnabled: false, credentialAge: 620, owner: null, ownerName: null, riskScore: 96, apps: ["devops"],
+    mfaEnabled: false, credentialAge: 620, owner: null, ownerName: null, ownershipState: "unowned",
+    suppressionEffect: "suppressed", suppressionReason: "break_glass",
+    suppressionDetail: "emergency restore path; use is alerted rather than owned",
+    suppressionExpiresAt: "2026-12-31",
+    riskScore: 96, riskFactorsFiring: 2, apps: ["devops"],
     sources: {
       aws: {
         roleArn: "arn:aws:iam::481516234210:role/svc-backup-agent",
@@ -549,7 +620,8 @@ export const identities = [
   {
     id: "id-112", name: "svc-github-actions", type: "service", email: null, department: "Platform",
     status: "active", createdBy: "id-008", createdAt: "2023-07-20", lastActive: "2026-07-31",
-    mfaEnabled: false, credentialAge: 35, owner: "id-008", ownerName: "Lena Okonkwo", riskScore: 78, apps: ["devops"],
+    mfaEnabled: false, credentialAge: 35, owner: "team-platform", ownerName: "team-platform", ownerKind: "team",
+    ownershipState: "owned", riskScore: 78, riskFactorsFiring: 2, apps: ["devops"],
     sources: {
       aws: {
         roleArn: "arn:aws:iam::481516234210:role/svc-github-actions",
@@ -566,7 +638,10 @@ export const identities = [
   {
     id: "id-113", name: "svc-hr-sync", type: "service", email: null, department: "People Ops",
     status: "active", createdBy: "id-004", createdAt: "2022-11-01", lastActive: "2026-07-31",
-    mfaEnabled: false, credentialAge: 110, owner: "id-004", ownerName: "Tom Walker", riskScore: 38, apps: ["devops"],
+    mfaEnabled: false, credentialAge: 110, owner: null, ownerName: null, ownershipState: "unknown",
+    suppressionEffect: "unknown", suppressionReason: "sso_federated",
+    suppressionDetail: "provisioned via SSO federation; this app records no durable owner attestation",
+    riskScore: 38, riskAssessment: "unevaluated", apps: ["devops"],
     sources: {
       okta: { id: "0oa_hr_sync_app", status: "ACTIVE", label: "Workday HR Sync" },
       hr: { integrationSystemId: "WD-INT-HR-SYNC", status: "Active" },
@@ -576,7 +651,8 @@ export const identities = [
   {
     id: "id-114", name: "svc-finance-reporter", type: "service", email: null, department: "Finance",
     status: "orphaned", createdBy: "id-005", createdAt: "2021-08-01", lastActive: "2026-05-28",
-    mfaEnabled: false, credentialAge: 400, owner: null, ownerName: null, riskScore: 88, apps: ["payments"],
+    mfaEnabled: false, credentialAge: 400, owner: null, ownerName: null, ownershipState: "unowned",
+    riskScore: 88, riskFactorsFiring: 2, apps: ["payments"],
     sources: {
       aws: {
         roleArn: "arn:aws:iam::481516234210:role/svc-finance-reporter",
@@ -819,6 +895,258 @@ export const identities = [
       },
     },
   },
+  // alice.brooks fan-out children (departed creator tree)
+  {
+    id: "id-133", name: "svc-alice-refund-bot", type: "service", email: null, department: "Finance",
+    status: "orphaned", createdBy: "id-005", createdAt: "2022-06-15", lastActive: "2026-07-20",
+    provenanceState: "recorded", originator: "alice.brooks", originatorId: "id-005",
+    creatorStatus: "departed", generation: 1,
+    mfaEnabled: false, credentialAge: 310, owner: null, ownerName: null, riskScore: 86, apps: ["payments"],
+    sources: {
+      aws: {
+        roleArn: "arn:aws:iam::481516234210:role/svc-alice-refund-bot",
+        path: "/legacy/",
+        createDate: "2022-06-15T10:00:00Z",
+        attachedPolicies: ["arn:aws:iam::481516234210:policy/RefundSubmit"],
+      },
+    },
+  },
+  {
+    id: "id-134", name: "svc-alice-tax-export", type: "service", email: null, department: "Finance",
+    status: "orphaned", createdBy: "id-005", createdAt: "2023-01-20", lastActive: "2026-07-15",
+    provenanceState: "recorded", originator: "alice.brooks", originatorId: "id-005",
+    creatorStatus: "departed", generation: 1,
+    mfaEnabled: false, credentialAge: 280, owner: null, ownerName: null, riskScore: 80, apps: ["payments"],
+    sources: {
+      aws: {
+        roleArn: "arn:aws:iam::481516234210:role/svc-alice-tax-export",
+        path: "/legacy/",
+        createDate: "2023-01-20T09:00:00Z",
+        attachedPolicies: ["arn:aws:iam::481516234210:policy/TaxExportRead"],
+      },
+    },
+  },
+  // sofia.reyes peer-root NHIs (recorded human originator)
+  {
+    id: "id-140", name: "svc-sofia-deploy-gate", type: "service", email: null, department: "Platform",
+    status: "active", createdBy: "id-023", createdAt: "2023-09-01", lastActive: "2026-07-31",
+    provenanceState: "recorded", originator: "sofia.reyes", originatorId: "id-023", generation: 1,
+    mfaEnabled: false, credentialAge: 100, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 42, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-sofia-deploy-gate", path: "/platform/", createDate: "2023-09-01T12:00:00Z" } },
+  },
+  {
+    id: "id-141", name: "svc-sofia-secrets-rotate", type: "service", email: null, department: "Platform",
+    status: "active", createdBy: "id-023", createdAt: "2023-09-08", lastActive: "2026-07-30",
+    provenanceState: "recorded", originator: "sofia.reyes", originatorId: "id-023", generation: 1,
+    mfaEnabled: false, credentialAge: 95, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 48, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-sofia-secrets-rotate", path: "/platform/", createDate: "2023-09-08T12:00:00Z" } },
+  },
+  {
+    id: "id-142", name: "svc-sofia-canary-roll", type: "service", email: null, department: "Platform",
+    status: "active", createdBy: "id-023", createdAt: "2023-10-02", lastActive: "2026-07-29",
+    provenanceState: "recorded", originator: "sofia.reyes", originatorId: "id-023", generation: 1,
+    mfaEnabled: false, credentialAge: 90, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 35, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-sofia-canary-roll", path: "/platform/", createDate: "2023-10-02T12:00:00Z" } },
+  },
+  {
+    id: "id-143", name: "svc-sofia-cost-guard", type: "service", email: null, department: "Platform",
+    status: "active", createdBy: "id-023", createdAt: "2023-11-14", lastActive: "2026-07-28",
+    provenanceState: "recorded", originator: "sofia.reyes", originatorId: "id-023", generation: 1,
+    mfaEnabled: false, credentialAge: 85, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 30, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-sofia-cost-guard", path: "/platform/", createDate: "2023-11-14T12:00:00Z" } },
+  },
+  {
+    id: "id-144", name: "svc-sofia-vpc-flow", type: "service", email: null, department: "Platform",
+    status: "active", createdBy: "id-023", createdAt: "2024-01-09", lastActive: "2026-07-27",
+    provenanceState: "recorded", originator: "sofia.reyes", originatorId: "id-023", generation: 1,
+    mfaEnabled: false, credentialAge: 70, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 33, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-sofia-vpc-flow", path: "/platform/", createDate: "2024-01-09T12:00:00Z" } },
+  },
+  {
+    id: "id-145", name: "svc-sofia-ami-promote", type: "service", email: null, department: "Platform",
+    status: "active", createdBy: "id-023", createdAt: "2024-02-22", lastActive: "2026-07-26",
+    provenanceState: "recorded", originator: "sofia.reyes", originatorId: "id-023", generation: 1,
+    mfaEnabled: false, credentialAge: 65, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 38, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-sofia-ami-promote", path: "/platform/", createDate: "2024-02-22T12:00:00Z" } },
+  },
+  // marcus.vale peer-root NHIs
+  {
+    id: "id-146", name: "svc-marcus-chaos-runner", type: "service", email: null, department: "SRE",
+    status: "active", createdBy: "id-024", createdAt: "2024-04-01", lastActive: "2026-07-25",
+    provenanceState: "recorded", originator: "marcus.vale", originatorId: "id-024", generation: 1,
+    mfaEnabled: false, credentialAge: 55, owner: "id-024", ownerName: "Marcus Vale", riskScore: 45, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-marcus-chaos-runner", path: "/sre/", createDate: "2024-04-01T10:00:00Z" } },
+  },
+  {
+    id: "id-147", name: "svc-marcus-pager-bridge", type: "service", email: null, department: "SRE",
+    status: "active", createdBy: "id-024", createdAt: "2024-05-10", lastActive: "2026-07-24",
+    provenanceState: "recorded", originator: "marcus.vale", originatorId: "id-024", generation: 1,
+    mfaEnabled: false, credentialAge: 50, owner: "id-024", ownerName: "Marcus Vale", riskScore: 40, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-marcus-pager-bridge", path: "/sre/", createDate: "2024-05-10T10:00:00Z" } },
+  },
+  // Depth ≥3: jane → payments-api → billing-sync → billing-recon
+  {
+    id: "id-148", name: "svc-billing-recon", type: "service", email: null, department: "Finance",
+    status: "active", createdBy: "id-107", createdAt: "2024-03-01", lastActive: "2026-07-28",
+    provenanceState: "recorded", originator: "svc-billing-sync", originatorId: "id-107", generation: 3,
+    mfaEnabled: false, credentialAge: 110, owner: "id-001", ownerName: "Jane Doe", riskScore: 46, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-billing-recon", path: "/service-roles/", createDate: "2024-03-01T11:00:00Z" } },
+  },
+  // Depth ≥3 under alice: alice → old-payments-worker → legacy-settlement
+  {
+    id: "id-149", name: "svc-legacy-settlement", type: "service", email: null, department: "Finance",
+    status: "orphaned", createdBy: "id-105", createdAt: "2022-08-01", lastActive: "2026-07-10",
+    provenanceState: "recorded", originator: "alice.brooks", originatorId: "id-005",
+    creatorStatus: "departed", generation: 2,
+    mfaEnabled: false, credentialAge: 360, owner: null, ownerName: null, riskScore: 88, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-legacy-settlement", path: "/legacy/", createDate: "2022-08-01T09:00:00Z" } },
+  },
+  // Pre-audit gap NHIs (No originator + gapReason)
+  {
+    id: "id-150", name: "svc-payments-legacy-batch", type: "service", email: null, department: "Finance",
+    status: "active", createdBy: null, createdAt: "2019-03-01", lastActive: "2026-07-01",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null, generation: 0,
+    mfaEnabled: false, credentialAge: 900, owner: "id-016", ownerName: "Henry Cole", riskScore: 55, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-payments-legacy-batch", path: "/legacy/", createDate: "2019-03-01T08:00:00Z" } },
+  },
+  // mark.chen AWS NHIs (promote to peers under AWS scope — mark has no aws source)
+  {
+    id: "id-151", name: "svc-mark-canary", type: "service", email: null, department: "DevOps",
+    status: "active", createdBy: "id-002", createdAt: "2023-04-12", lastActive: "2026-07-31",
+    provenanceState: "recorded", originator: "mark.chen", originatorId: "id-002", generation: 1,
+    mfaEnabled: false, credentialAge: 100, owner: "team-platform", ownerName: "team-platform", riskScore: 32, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-mark-canary", path: "/service-roles/", createDate: "2023-04-12T10:00:00Z" } },
+  },
+  {
+    id: "id-152", name: "svc-mark-log-shipper", type: "service", email: null, department: "DevOps",
+    status: "active", createdBy: "id-002", createdAt: "2023-05-03", lastActive: "2026-07-30",
+    provenanceState: "recorded", originator: "mark.chen", originatorId: "id-002", generation: 1,
+    mfaEnabled: false, credentialAge: 95, owner: "team-platform", ownerName: "team-platform", riskScore: 29, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-mark-log-shipper", path: "/service-roles/", createDate: "2023-05-03T10:00:00Z" } },
+  },
+  {
+    id: "id-153", name: "svc-mark-node-drainer", type: "service", email: null, department: "DevOps",
+    status: "active", createdBy: "id-002", createdAt: "2023-06-18", lastActive: "2026-07-29",
+    provenanceState: "recorded", originator: "mark.chen", originatorId: "id-002", generation: 1,
+    mfaEnabled: false, credentialAge: 88, owner: "team-platform", ownerName: "team-platform", riskScore: 34, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-mark-node-drainer", path: "/service-roles/", createDate: "2023-06-18T10:00:00Z" } },
+  },
+  {
+    id: "id-154", name: "svc-devops-bootstrap-runner", type: "service", email: null, department: "DevOps",
+    status: "active", createdBy: null, createdAt: "2020-02-01", lastActive: "2026-06-01",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null, generation: 0,
+    mfaEnabled: false, credentialAge: 800, owner: "id-013", ownerName: "Chris Nguyen", riskScore: 50, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-devops-bootstrap-runner", path: "/legacy/", createDate: "2020-02-01T08:00:00Z" } },
+  },
+  {
+    id: "id-155", name: "svc-derek-threat-intel", type: "service", email: null, department: "Security",
+    status: "orphaned", createdBy: "id-021", createdAt: "2021-11-01", lastActive: "2026-07-08",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "derek.frost", originatorId: "id-021", creatorStatus: "departed", generation: 1,
+    mfaEnabled: false, credentialAge: 520, owner: null, ownerName: null, riskScore: 91, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-derek-threat-intel", path: "/security/", createDate: "2021-11-01T09:00:00Z" } },
+  },
+  /**
+   * Offline QA twin of engine beat 23b (`svc-temp-ssm-bridge`):
+   * hop-producing grant + no owner — compound Needs attention.
+   * Display name matches live Access Discovery (`Temporary SSM Bridge`).
+   */
+  {
+    id: "id-mock-ssm-bridge",
+    name: "Temporary SSM Bridge",
+    type: "service",
+    email: null,
+    department: "Platform",
+    status: "orphaned",
+    createdBy: null,
+    createdAt: "2026-05-01",
+    lastActive: "2026-07-28",
+    mfaEnabled: false,
+    credentialAge: 91,
+    owner: null,
+    ownerName: null,
+    ownerKind: null,
+    ownershipState: "unowned",
+    riskScore: 96,
+    riskFactorsFiring: 3,
+    mockAttention: "hop_unowned",
+    apps: ["aws-iam"],
+    sources: {
+      aws: {
+        roleArn: "arn:aws:iam::481516234210:role/svc-temp-ssm-bridge",
+        path: "/temp/",
+        createDate: "2026-05-01T00:00:00Z",
+        attachedPolicies: ["arn:aws:iam::481516234210:policy/SsmSessionDeployBox"],
+      },
+    },
+  },
+  /**
+   * Offline twin of live `agent-incident-responder` — multi-hop Shadow drawer
+   * (admin:warehouse via runbook → warehouse role). Owned team-platform so
+   * attention is hop-only (rank 2), matching the live CISO walkthrough.
+   */
+  {
+    id: "id-mock-incident-responder",
+    name: "Incident Responder Agent",
+    type: "service",
+    email: null,
+    department: "Platform",
+    status: "active",
+    createdBy: null,
+    createdAt: "2026-01-14",
+    lastActive: "2026-07-30",
+    mfaEnabled: false,
+    credentialAge: 40,
+    owner: "team-platform",
+    ownerName: "team-platform",
+    ownerKind: "team",
+    ownershipState: "owned",
+    ownerAttestedAt: "2026-07-24",
+    riskScore: 94,
+    riskFactorsFiring: 2,
+    apps: ["mcp-gateway"],
+    sources: {
+      aws: {
+        roleArn: "arn:aws:iam::481516234210:role/agent-incident-responder",
+        path: "/agents/",
+        createDate: "2026-01-14T00:00:00Z",
+      },
+    },
+  },
+  /**
+   * Offline twin of live `svc-release-orchestrator` — deploy:prod Shadow chain
+   * through GitHub connect permissions (delegation drawer parity).
+   */
+  {
+    id: "id-mock-release-orchestrator",
+    name: "Release Orchestrator",
+    type: "service",
+    email: null,
+    department: "Platform",
+    status: "active",
+    createdBy: "id-008",
+    createdAt: "2025-11-02",
+    lastActive: "2026-07-31",
+    mfaEnabled: false,
+    credentialAge: 55,
+    owner: "team-platform",
+    ownerName: "team-platform",
+    ownerKind: "team",
+    ownershipState: "owned",
+    ownerAttestedAt: "2026-07-22",
+    riskScore: 90,
+    riskFactorsFiring: 2,
+    apps: ["github"],
+    sources: {
+      aws: {
+        roleArn: "arn:aws:iam::481516234210:role/svc-release-orchestrator",
+        path: "/cicd/",
+        createDate: "2025-11-02T00:00:00Z",
+      },
+    },
+  },
 ];
 
 
@@ -999,23 +1327,23 @@ export const accessPaths = [
     },
   },
 
-  // Shadow Access — multi-hop, invisible to native analyzers
+  // Shadow Access — multi-hop (engine chain vocabulary for HopChain drawer)
   {
     id: "ap-009", identityId: "id-001", identityName: "jane.doe",
-    resource: "iam://account-root-admin", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 2,
-    effectivePermissions: ["*"], mechanism: "ssm:StartSession → EC2:i-0abc123 → AssumeRole:AdminRole",
+    resource: "admin:platform", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 3,
+    effectivePermissions: ["admin:platform"], mechanism: "ssm:session-deploy-box → role-deploy-box",
     lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: true,
-    adminRole: "iam://account-root-admin",
+    adminRole: "role-deploy-box",
     hopChain: [
-      { step: 1, from: "jane.doe", to: "ec2://i-0abc123 (payments-prod-worker)", mechanism: "ssm:StartSession", timestamp: "2026-07-31T08:00:00Z", api: "ssm:StartSession", resourceArn: "arn:aws:ec2:us-east-1:481516234210:instance/i-0abc123def456" },
-      { step: 2, from: "ec2://i-0abc123", to: "iam://AdminInstanceProfile", mechanism: "EC2 Instance Profile → AssumeRole", timestamp: "2026-07-31T08:00:01Z", api: "ec2:DescribeIamInstanceProfileAssociations", resourceArn: "arn:aws:iam::481516234210:instance-profile/AdminInstanceProfile" },
-      { step: 3, from: "iam://AdminInstanceProfile", to: "iam://account-root-admin", mechanism: "iam:PassRole", timestamp: "2026-07-31T08:00:02Z", api: "iam:PassRole", resourceArn: "arn:aws:iam::481516234210:role/account-root-admin" },
+      { step: 1, from: "jane.doe", to: "ssm:session-deploy-box", edge: "CAN_ACCESS", mechanism: "granted ssm:session-deploy-box" },
+      { step: 2, from: "ssm:session-deploy-box", to: "role-deploy-box", edge: "ASSUMES_ROLE", mechanism: "resource carries role-deploy-box" },
+      { step: 3, from: "role-deploy-box", to: "admin:platform", edge: "HAS_POLICY", mechanism: "holds admin:platform" },
     ],
     api: {
-      source: "aws.ssm + ec2 + iam",
+      source: "aws.iam + ssm",
       nativeVisible: false,
       nativeToolsMissed: ["IAM Access Analyzer", "IAM Policy Simulator (direct only)"],
-      terminalRoleArn: "arn:aws:iam::481516234210:role/account-root-admin",
+      evaluatedVia: "itag.access.classify",
     },
   },
   {
@@ -1541,13 +1869,20 @@ export const accessPaths = [
   },
   {
     id: "ap-051", identityId: "id-116", identityName: "svc-etl-ghost",
-    resource: "storage://raw-pii-data", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 1,
-    effectivePermissions: ["storage.objects.get", "storage.objects.list"], mechanism: "HAS_ROLE",
+    resource: "storage://raw-pii-data", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 2,
+    effectivePermissions: ["storage.objects.get", "storage.objects.list"],
+    mechanism: "gcf://ghost-etl-fn → SA key → storage.objectViewer",
     lastConfirmed: "2026-07-08", cloudProvider: "GCP", blocked: false, shadowAdmin: false,
+    hopChain: [
+      { step: 1, from: "svc-etl-ghost", to: "gcf://ghost-etl-fn", mechanism: "Cloud Function trigger", timestamp: "2026-07-08T03:00:00Z", api: "cloudfunctions.functions.call" },
+      { step: 2, from: "gcf://ghost-etl-fn", to: "iam://svc-etl-ghost-key", mechanism: "embedded SA key", timestamp: "2026-07-08T03:00:01Z", api: "iam.serviceAccountKeys.list" },
+      { step: 3, from: "iam://svc-etl-ghost-key", to: "storage://raw-pii-data", mechanism: "storage.objectViewer binding", timestamp: "2026-07-08T03:00:02Z", api: "storage.buckets.getIamPolicy" },
+    ],
     api: {
       source: "gcp.storage + cloudasset",
       principal: "serviceAccount:svc-etl-ghost@acme-prod-4821.iam.gserviceaccount.com",
       resource: "//storage.googleapis.com/projects/_/buckets/raw-pii-data",
+      resourceName: "projects/acme-prod-4821/buckets/raw-pii-data",
       evaluatedVia: "cloudasset.analyzeIamPolicy",
       note: "Created after raj.patel termination",
     },
@@ -1745,10 +2080,683 @@ export const accessPaths = [
       note: "Revoked during offboarding",
     },
   },
+  // Offline beat 23b — hop + unowned (compound Needs attention) + companion direct grant
+  {
+    id: "ap-068", identityId: "id-mock-ssm-bridge", identityName: "Temporary SSM Bridge",
+    resource: "admin:platform", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 3,
+    effectivePermissions: ["admin:platform"], mechanism: "ssm:session-deploy-box → role-deploy-box",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: true,
+    originator: "No originator",
+    hopChain: [
+      { step: 1, from: "svc-temp-ssm-bridge", to: "ssm:session-deploy-box", edge: "CAN_ACCESS", mechanism: "granted ssm:session-deploy-box" },
+      { step: 2, from: "ssm:session-deploy-box", to: "role-deploy-box", edge: "ASSUMES_ROLE", mechanism: "resource carries role-deploy-box" },
+      { step: 3, from: "role-deploy-box", to: "admin:platform", edge: "HAS_POLICY", mechanism: "holds admin:platform" },
+    ],
+    api: {
+      source: "aws.iam + ssm",
+      principalArn: "arn:aws:iam::481516234210:role/svc-temp-ssm-bridge",
+      evaluatedVia: "itag.access.classify",
+    },
+  },
+  {
+    id: "ap-069", identityId: "id-mock-ssm-bridge", identityName: "Temporary SSM Bridge",
+    resource: "ssm:session-deploy-box", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["ssm:session-deploy-box"], mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false,
+    originator: "No originator",
+    api: {
+      source: "aws.iam",
+      principalArn: "arn:aws:iam::481516234210:role/svc-temp-ssm-bridge",
+      evaluatedVia: "itag.access.classify",
+    },
+  },
+
+  // Incident Responder Agent — live agent-incident-responder drawer parity
+  {
+    id: "ap-070", identityId: "id-mock-incident-responder", identityName: "Incident Responder Agent",
+    resource: "admin:warehouse", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 6,
+    effectivePermissions: ["admin:warehouse"],
+    mechanism: "mcp:connect-prod-runbook → mcp:connect-warehouse-box",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: true,
+    originator: "No originator",
+    hopChain: [
+      { step: 1, from: "agent-incident-responder", to: "group-oncall-agents", edge: "MEMBER_OF", mechanism: "group membership" },
+      { step: 2, from: "group-oncall-agents", to: "mcp:connect-prod-runbook", edge: "CAN_ACCESS", mechanism: "granted mcp:connect-prod-runbook" },
+      { step: 3, from: "mcp:connect-prod-runbook", to: "role-runbook-executor", edge: "ASSUMES_ROLE", mechanism: "resource carries role-runbook-executor" },
+      { step: 4, from: "role-runbook-executor", to: "mcp:connect-warehouse-box", edge: "CAN_ACCESS", mechanism: "granted mcp:connect-warehouse-box" },
+      { step: 5, from: "mcp:connect-warehouse-box", to: "role-warehouse-admin", edge: "ASSUMES_ROLE", mechanism: "resource carries role-warehouse-admin" },
+      { step: 6, from: "role-warehouse-admin", to: "admin:warehouse", edge: "HAS_POLICY", mechanism: "holds admin:warehouse" },
+    ],
+    api: { source: "mcp-gateway", evaluatedVia: "itag.access.classify", app: "mcp-gateway" },
+  },
+  {
+    id: "ap-071", identityId: "id-mock-incident-responder", identityName: "Incident Responder Agent",
+    resource: "mcp:prod-db-query", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 4,
+    effectivePermissions: ["mcp:prod-db-query"],
+    mechanism: "mcp:connect-prod-runbook → role-runbook-executor",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: true,
+    originator: "No originator",
+    hopChain: [
+      { step: 1, from: "agent-incident-responder", to: "group-oncall-agents", edge: "MEMBER_OF", mechanism: "group membership" },
+      { step: 2, from: "group-oncall-agents", to: "mcp:connect-prod-runbook", edge: "CAN_ACCESS", mechanism: "granted mcp:connect-prod-runbook" },
+      { step: 3, from: "mcp:connect-prod-runbook", to: "role-runbook-executor", edge: "ASSUMES_ROLE", mechanism: "resource carries role-runbook-executor" },
+      { step: 4, from: "role-runbook-executor", to: "mcp:prod-db-query", edge: "HAS_POLICY", mechanism: "holds mcp:prod-db-query" },
+    ],
+    api: { source: "mcp-gateway", evaluatedVia: "itag.access.classify", app: "mcp-gateway" },
+  },
+  {
+    id: "ap-072", identityId: "id-mock-incident-responder", identityName: "Incident Responder Agent",
+    resource: "mcp:connect-warehouse-box", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 4,
+    effectivePermissions: ["mcp:connect-warehouse-box"],
+    mechanism: "mcp:connect-prod-runbook → role-runbook-executor",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: true,
+    originator: "No originator",
+    hopChain: [
+      { step: 1, from: "agent-incident-responder", to: "group-oncall-agents", edge: "MEMBER_OF", mechanism: "group membership" },
+      { step: 2, from: "group-oncall-agents", to: "mcp:connect-prod-runbook", edge: "CAN_ACCESS", mechanism: "granted mcp:connect-prod-runbook" },
+      { step: 3, from: "mcp:connect-prod-runbook", to: "role-runbook-executor", edge: "ASSUMES_ROLE", mechanism: "resource carries role-runbook-executor" },
+      { step: 4, from: "role-runbook-executor", to: "mcp:connect-warehouse-box", edge: "HAS_POLICY", mechanism: "holds mcp:connect-warehouse-box" },
+    ],
+    api: { source: "mcp-gateway", evaluatedVia: "itag.access.classify", app: "mcp-gateway" },
+  },
+  {
+    id: "ap-073", identityId: "id-mock-incident-responder", identityName: "Incident Responder Agent",
+    resource: "mcp:connect-prod-runbook", resourceSensitivity: "high", accessType: "Indirect", hopCount: 0,
+    effectivePermissions: ["mcp:connect-prod-runbook"],
+    mechanism: "MEMBER_OF:group-oncall-agents",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false,
+    originator: "No originator",
+    api: {
+      source: "mcp-gateway",
+      oktaGroupName: "group-oncall-agents",
+      evaluatedVia: "itag.access.classify",
+      app: "mcp-gateway",
+    },
+  },
+
+  // Release Orchestrator — live svc-release-orchestrator drawer parity
+  {
+    id: "ap-074", identityId: "id-mock-release-orchestrator", identityName: "Release Orchestrator",
+    resource: "deploy:prod", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 5,
+    effectivePermissions: ["deploy:prod"],
+    mechanism: "gh:connect-release-runner → gh:connect-artifact-signer",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: true,
+    hopChain: [
+      { step: 1, from: "svc-release-orchestrator", to: "gh:connect-release-runner", edge: "CAN_ACCESS", mechanism: "granted gh:connect-release-runner" },
+      { step: 2, from: "gh:connect-release-runner", to: "role-release-runner", edge: "ASSUMES_ROLE", mechanism: "resource carries role-release-runner" },
+      { step: 3, from: "role-release-runner", to: "gh:connect-artifact-signer", edge: "CAN_ACCESS", mechanism: "granted gh:connect-artifact-signer" },
+      { step: 4, from: "gh:connect-artifact-signer", to: "role-artifact-signer", edge: "ASSUMES_ROLE", mechanism: "resource carries role-artifact-signer" },
+      { step: 5, from: "role-artifact-signer", to: "deploy:prod", edge: "HAS_POLICY", mechanism: "holds deploy:prod" },
+    ],
+    api: { source: "github", evaluatedVia: "itag.access.classify", app: "github" },
+  },
+  {
+    id: "ap-075", identityId: "id-mock-release-orchestrator", identityName: "Release Orchestrator",
+    resource: "gh:connect-artifact-signer", resourceSensitivity: "high", accessType: "Shadow", hopCount: 3,
+    effectivePermissions: ["gh:connect-artifact-signer"],
+    mechanism: "gh:connect-release-runner → role-release-runner",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: false,
+    hopChain: [
+      { step: 1, from: "svc-release-orchestrator", to: "gh:connect-release-runner", edge: "CAN_ACCESS", mechanism: "granted gh:connect-release-runner" },
+      { step: 2, from: "gh:connect-release-runner", to: "role-release-runner", edge: "ASSUMES_ROLE", mechanism: "resource carries role-release-runner" },
+      { step: 3, from: "role-release-runner", to: "gh:connect-artifact-signer", edge: "HAS_POLICY", mechanism: "holds gh:connect-artifact-signer" },
+    ],
+    api: { source: "github", evaluatedVia: "itag.access.classify", app: "github" },
+  },
+  {
+    id: "ap-076", identityId: "id-mock-release-orchestrator", identityName: "Release Orchestrator",
+    resource: "gh:connect-release-runner", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["gh:connect-release-runner"], mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false,
+    api: { source: "github", evaluatedVia: "itag.access.classify", app: "github" },
+  },
+  {
+    id: "ap-077", identityId: "id-mock-release-orchestrator", identityName: "Release Orchestrator",
+    resource: "read:release-notes", resourceSensitivity: "low", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["read:release-notes"], mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false,
+    api: { source: "github", evaluatedVia: "itag.access.classify", app: "github" },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Exposure demo pack: azure-bridge — densify Azure tab (≥2 pages)
+  // subscription f47ac10b-58cc-4372-a567-0e02b2c3d479
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    id: "ap-080", identityId: "id-004", identityName: "tom.walker",
+    resource: "azure://kv-security-audit", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["Secrets/list", "Keys/list"], mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-31", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.authorization + keyvault",
+      principalId: "tom-walker-azure-oid",
+      roleDefinitionName: "Key Vault Reader",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-security/providers/Microsoft.KeyVault/vaults/kv-security-audit",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-081", identityId: "id-005", identityName: "alice.brooks",
+    resource: "azure://sa-finance-archive", resourceSensitivity: "critical", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-06-28", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.authorization",
+      principalId: "alice-brooks-azure-oid",
+      roleDefinitionName: "Storage Blob Data Reader",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-finance/providers/Microsoft.Storage/storageAccounts/safinancearchive",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+      note: "Departed human; Azure principal still assigned",
+    },
+  },
+  {
+    id: "ap-082", identityId: "id-014", identityName: "nora.whitfield",
+    resource: "azure://sql-finance-reporting", resourceSensitivity: "high", accessType: "Indirect", hopCount: 0,
+    effectivePermissions: ["Microsoft.Sql/servers/databases/read"],
+    mechanism: "MEMBER_OF:Azure-Finance-Readers",
+    lastConfirmed: "2026-03-01", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.authorization + graph",
+      principalId: "f1e2d3c4-b5a6-9788-0011-223344556677",
+      roleDefinitionName: "SQL DB Contributor",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-finance/providers/Microsoft.Sql/servers/sql-finance/databases/reporting",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-083", identityId: "id-016", identityName: "henry.cole",
+    resource: "azure://kv-payments-prod", resourceSensitivity: "critical", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["Secrets/get"], mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-28", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.keyvault",
+      principalId: "henry-cole-azure-oid",
+      roleDefinitionName: "Key Vault Secrets User",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-payments/providers/Microsoft.KeyVault/vaults/kv-payments-prod",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-084", identityId: "id-017", identityName: "maya.singh",
+    resource: "azure://sa-billing-prod", resourceSensitivity: "high", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-29", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.authorization",
+      principalId: "maya-singh-azure-oid",
+      roleDefinitionName: "Storage Blob Data Reader",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-finance/providers/Microsoft.Storage/storageAccounts/sabillingprod",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-085", identityId: "id-013", identityName: "chris.nguyen",
+    resource: "azure://aks-sre-prod", resourceSensitivity: "high", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["Microsoft.ContainerService/managedClusters/read"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-30", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.containerservice",
+      principalId: "chris-nguyen-azure-oid",
+      roleDefinitionName: "Azure Kubernetes Service Cluster User Role",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-sre/providers/Microsoft.ContainerService/managedClusters/aks-sre-prod",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-086", identityId: "id-013", identityName: "chris.nguyen",
+    resource: "azure://mi-sre-ops → kv-ops-secrets", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 2,
+    effectivePermissions: ["Secrets/get", "Secrets/set"],
+    mechanism: "AKS workload identity → MI → Key Vault",
+    lastConfirmed: "2026-07-28", cloudProvider: "Azure", blocked: false, shadowAdmin: false,
+    hopChain: [
+      { step: 1, from: "chris.nguyen", to: "azure://aks-sre-prod", mechanism: "cluster user binding", timestamp: "2026-07-28T10:00:00Z", api: "Microsoft.ContainerService/managedClusters/read" },
+      { step: 2, from: "azure://aks-sre-prod", to: "azure://mi-sre-ops", mechanism: "workload identity federation", timestamp: "2026-07-28T10:00:01Z", api: "Microsoft.ManagedIdentity/userAssignedIdentities/read" },
+      { step: 3, from: "azure://mi-sre-ops", to: "azure://kv-ops-secrets", mechanism: "Key Vault Secrets Officer", timestamp: "2026-07-28T10:00:02Z", api: "Microsoft.Authorization/roleAssignments/read" },
+    ],
+    api: {
+      source: "azure.containerservice + managedidentity + keyvault",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-sre",
+      nativeVisible: false,
+    },
+  },
+  {
+    id: "ap-087", identityId: "id-023", identityName: "sofia.reyes",
+    resource: "azure://rg-platform-prod", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["*/read"], mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-31", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.authorization",
+      principalId: "sofia-reyes-azure-oid",
+      roleDefinitionName: "Reader",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-platform-prod",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-088", identityId: "id-024", identityName: "marcus.vale",
+    resource: "azure://appi-sre-prod", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["Microsoft.Insights/*/read"], mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-27", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.insights",
+      principalId: "marcus-vale-azure-oid",
+      roleDefinitionName: "Monitoring Reader",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-sre/providers/Microsoft.Insights/components/appi-sre-prod",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-089", identityId: "id-101", identityName: "svc-payments-api",
+    resource: "azure://sb-payments-prod", resourceSensitivity: "high", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["Microsoft.ServiceBus/namespaces/queues/send"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-31", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.servicebus",
+      principalId: "deadbeef-0001-4000-8000-000000000101",
+      roleDefinitionName: "Azure Service Bus Data Sender",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-payments/providers/Microsoft.ServiceBus/namespaces/sb-payments-prod",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-090", identityId: "id-106", identityName: "svc-monitoring",
+    resource: "azure://law-ops-prod", resourceSensitivity: "low", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["Microsoft.OperationalInsights/workspaces/query/read"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-30", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.operationalinsights",
+      principalId: "deadbeef-0001-4000-8000-000000000106",
+      roleDefinitionName: "Log Analytics Reader",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-ops/providers/Microsoft.OperationalInsights/workspaces/law-ops-prod",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-091", identityId: "id-133", identityName: "svc-alice-refund-bot",
+    resource: "azure://fn-refunds-prod", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 2,
+    effectivePermissions: ["Microsoft.Web/sites/functions/write", "Secrets/get"],
+    mechanism: "Function app → system MI → Key Vault + refunds queue",
+    lastConfirmed: "2026-07-20", cloudProvider: "Azure", blocked: false, shadowAdmin: false,
+    hopChain: [
+      { step: 1, from: "svc-alice-refund-bot", to: "azure://fn-refunds-prod", mechanism: "function app identity", timestamp: "2026-07-20T08:00:00Z", api: "Microsoft.Web/sites/read" },
+      { step: 2, from: "azure://fn-refunds-prod", to: "azure://mi-fn-refunds", mechanism: "system-assigned managed identity", timestamp: "2026-07-20T08:00:01Z", api: "Microsoft.ManagedIdentity/userAssignedIdentities/read" },
+      { step: 3, from: "azure://mi-fn-refunds", to: "azure://kv-payments-prod", mechanism: "Key Vault Secrets User", timestamp: "2026-07-20T08:00:02Z", api: "Microsoft.Authorization/roleAssignments/read" },
+    ],
+    api: {
+      source: "azure.web + managedidentity + keyvault",
+      note: "Orphaned NHI after alice.brooks departure",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-payments",
+      nativeVisible: false,
+    },
+  },
+  {
+    id: "ap-092", identityId: "id-021", identityName: "derek.frost",
+    resource: "azure://kv-security-audit", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["Secrets/list"], mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-29", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.keyvault",
+      principalId: "derek-frost-azure-oid",
+      roleDefinitionName: "Key Vault Reader",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-security/providers/Microsoft.KeyVault/vaults/kv-security-audit",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-093", identityId: "id-015", identityName: "kai.sato",
+    resource: "azure://app-intern-sandbox", resourceSensitivity: "low", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["Microsoft.Web/sites/read"], mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-25", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.web",
+      principalId: "kai-sato-azure-oid",
+      roleDefinitionName: "Website Contributor",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-sandbox/providers/Microsoft.Web/sites/app-intern-sandbox",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-094", identityId: "id-019", identityName: "quinn.adebayo",
+    resource: "azure://vmss-build-agents", resourceSensitivity: "high", accessType: "Indirect", hopCount: 0,
+    effectivePermissions: ["Microsoft.Compute/virtualMachineScaleSets/*/read"],
+    mechanism: "MEMBER_OF:Azure-DevOps-Operators",
+    lastConfirmed: "2026-07-28", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.compute + graph",
+      principalId: "quinn-adebayo-azure-oid",
+      roleDefinitionName: "Virtual Machine Contributor",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-devops/providers/Microsoft.Compute/virtualMachineScaleSets/vmss-build-agents",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-095", identityId: "id-114", identityName: "svc-finance-reporter",
+    resource: "azure://synapse-finance", resourceSensitivity: "high", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["Microsoft.Synapse/workspaces/read"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-26", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.synapse",
+      principalId: "deadbeef-0001-4000-8000-000000000114",
+      roleDefinitionName: "Synapse SQL Administrator",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-finance/providers/Microsoft.Synapse/workspaces/synapse-finance",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-096", identityId: "id-115", identityName: "svc-finance-ghost",
+    resource: "azure://sa-finance-archive", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 2,
+    effectivePermissions: ["Microsoft.Storage/storageAccounts/blobServices/containers/blobs/*"],
+    mechanism: "Logic App → MI → Storage Blob Data Owner",
+    lastConfirmed: "2026-07-12", cloudProvider: "Azure", blocked: false, shadowAdmin: true,
+    hopChain: [
+      { step: 1, from: "svc-finance-ghost", to: "azure://logic-finance-export", mechanism: "Logic App run", timestamp: "2026-07-12T02:00:00Z", api: "Microsoft.Logic/workflows/read" },
+      { step: 2, from: "azure://logic-finance-export", to: "azure://mi-finance-export", mechanism: "workflow managed identity", timestamp: "2026-07-12T02:00:01Z", api: "Microsoft.ManagedIdentity/userAssignedIdentities/read" },
+      { step: 3, from: "azure://mi-finance-export", to: "azure://sa-finance-archive", mechanism: "Storage Blob Data Owner", timestamp: "2026-07-12T02:00:02Z", api: "Microsoft.Authorization/roleAssignments/read" },
+    ],
+    api: {
+      source: "azure.logic + storage",
+      note: "Ghost NHI — no active owner attestation",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-finance",
+      nativeVisible: false,
+    },
+  },
+  {
+    id: "ap-097", identityId: "id-002", identityName: "mark.chen",
+    resource: "azure://acr-devops", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["Microsoft.ContainerRegistry/registries/pull/read"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-30", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.containerregistry",
+      principalId: "1a2b3c4d-5e6f-7081-9203-b4c5d6e7f809",
+      roleDefinitionName: "AcrPull",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-devops/providers/Microsoft.ContainerRegistry/registries/acrdevops",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+  {
+    id: "ap-098", identityId: "id-007", identityName: "sara.jones",
+    resource: "azure://app-payments-portal", resourceSensitivity: "low", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["Microsoft.Web/sites/read"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-29", cloudProvider: "Azure", blocked: false,
+    api: {
+      source: "azure.web",
+      principalId: "sara-jones-azure-oid",
+      roleDefinitionName: "Website Contributor",
+      scope: "/subscriptions/f47ac10b-58cc-4372-a567-0e02b2c3d479/resourceGroups/rg-payments/providers/Microsoft.Web/sites/app-payments-portal",
+      evaluatedVia: "Microsoft.Authorization/roleAssignments",
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // Exposure demo pack: gcp-data-plane — deepen GCP + score spread
+  // project acme-prod-4821
+  // ═══════════════════════════════════════════════════════════════════════════
+  {
+    id: "ap-100", identityId: "id-004", identityName: "tom.walker",
+    resource: "bigquery://security_audit_views", resourceSensitivity: "low", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["bigquery.tables.getData"], mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-31", cloudProvider: "GCP", blocked: false,
+    api: {
+      source: "gcp.bigquery",
+      principal: "user:tom.walker@acme.com",
+      role: "roles/bigquery.dataViewer",
+      resourceName: "projects/acme-prod-4821/datasets/security_audit_views",
+      evaluatedVia: "bigquery.datasets.getIamPolicy",
+    },
+  },
+  {
+    id: "ap-101", identityId: "id-018", identityName: "elise.moran",
+    resource: "bigquery://analytics-prod", resourceSensitivity: "high", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["bigquery.tables.getData", "bigquery.jobs.create"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-29", cloudProvider: "GCP", blocked: false,
+    api: {
+      source: "gcp.bigquery",
+      principal: "user:elise.moran@acme.com",
+      role: "roles/bigquery.dataEditor",
+      resourceName: "projects/acme-prod-4821/datasets/analytics_prod",
+      evaluatedVia: "bigquery.datasets.getIamPolicy",
+    },
+  },
+  {
+    id: "ap-102", identityId: "id-015", identityName: "kai.sato",
+    resource: "gke://devops-cluster", resourceSensitivity: "medium", accessType: "Indirect", hopCount: 0,
+    effectivePermissions: ["container.pods.get", "container.pods.list"],
+    mechanism: "MEMBER_OF:GCP-Editors",
+    lastConfirmed: "2026-07-28", cloudProvider: "GCP", blocked: false,
+    api: {
+      source: "gcp.container",
+      principal: "user:kai.sato@acme.com",
+      role: "roles/container.viewer",
+      resourceName: "projects/acme-prod-4821/locations/us-central1/clusters/devops-cluster",
+      evaluatedVia: "cloudasset.analyzeIamPolicy",
+    },
+  },
+  {
+    id: "ap-103", identityId: "id-015", identityName: "kai.sato",
+    resource: "storage://ml-scratch", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["storage.objects.create", "storage.objects.get"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-27", cloudProvider: "GCP", blocked: false,
+    api: {
+      source: "gcp.storage",
+      principal: "user:kai.sato@acme.com",
+      role: "roles/storage.objectUser",
+      resourceName: "projects/acme-prod-4821/buckets/ml-scratch",
+      evaluatedVia: "storage.buckets.getIamPolicy",
+    },
+  },
+  {
+    id: "ap-104", identityId: "id-009", identityName: "diego.ramos",
+    resource: "gce://batch-worker-01", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["compute.instances.start", "compute.instances.stop"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-26", cloudProvider: "GCP", blocked: false,
+    api: {
+      source: "gcp.compute",
+      principal: "user:diego.ramos@acme.com",
+      role: "roles/compute.instanceAdmin.v1",
+      resourceName: "projects/acme-prod-4821/zones/us-central1-a/instances/batch-worker-01",
+      evaluatedVia: "cloudasset.analyzeIamPolicy",
+    },
+  },
+  {
+    id: "ap-105", identityId: "id-102", identityName: "svc-data-ingest",
+    resource: "pubsub://raw-events", resourceSensitivity: "high", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["pubsub.subscriptions.consume"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-31", cloudProvider: "GCP", blocked: false,
+    api: {
+      source: "gcp.pubsub",
+      principal: "serviceAccount:svc-data-ingest@acme-prod-4821.iam.gserviceaccount.com",
+      role: "roles/pubsub.subscriber",
+      resourceName: "projects/acme-prod-4821/subscriptions/raw-events-sub",
+      evaluatedVia: "pubsub.subscriptions.getIamPolicy",
+    },
+  },
+  {
+    id: "ap-106", identityId: "id-102", identityName: "svc-data-ingest",
+    resource: "bigquery://landing_zone", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 2,
+    effectivePermissions: ["bigquery.tables.updateData", "bigquery.datasets.update"],
+    mechanism: "Dataflow worker SA impersonation → dataset editor",
+    lastConfirmed: "2026-07-30", cloudProvider: "GCP", blocked: false, shadowAdmin: false,
+    hopChain: [
+      { step: 1, from: "svc-data-ingest", to: "dataflow://ingest-job", mechanism: "pipeline launch", timestamp: "2026-07-30T04:00:00Z", api: "dataflow.jobs.create" },
+      { step: 2, from: "dataflow://ingest-job", to: "iam://dataflow-worker", mechanism: "worker service account", timestamp: "2026-07-30T04:00:01Z", api: "iamcredentials.generateAccessToken" },
+      { step: 3, from: "iam://dataflow-worker", to: "bigquery://landing_zone", mechanism: "dataset editor binding", timestamp: "2026-07-30T04:00:02Z", api: "bigquery.datasets.getIamPolicy" },
+    ],
+    api: {
+      source: "gcp.dataflow + bigquery",
+      principal: "serviceAccount:svc-data-ingest@acme-prod-4821.iam.gserviceaccount.com",
+      resourceName: "projects/acme-prod-4821/datasets/landing_zone",
+      nativeVisible: false,
+    },
+  },
+  {
+    id: "ap-107", identityId: "id-012", identityName: "fatima.hassan",
+    resource: "storage://product-exports", resourceSensitivity: "low", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["storage.objects.get"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-24", cloudProvider: "GCP", blocked: false,
+    api: {
+      source: "gcp.storage",
+      principal: "user:fatima.hassan@acme.com",
+      role: "roles/storage.objectViewer",
+      resourceName: "projects/acme-prod-4821/buckets/product-exports",
+      evaluatedVia: "storage.buckets.getIamPolicy",
+    },
+  },
+  {
+    id: "ap-108", identityId: "id-120", identityName: "svc-catalog-sync",
+    resource: "firestore://product-catalog", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["datastore.entities.get", "datastore.entities.create"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-28", cloudProvider: "GCP", blocked: false,
+    api: {
+      source: "gcp.firestore",
+      principal: "serviceAccount:svc-catalog-sync@acme-prod-4821.iam.gserviceaccount.com",
+      role: "roles/datastore.user",
+      resourceName: "projects/acme-prod-4821/databases/(default)",
+      evaluatedVia: "cloudasset.analyzeIamPolicy",
+    },
+  },
+  {
+    id: "ap-109", identityId: "id-006", identityName: "raj.patel",
+    resource: "bigquery://analytics-prod", resourceSensitivity: "high", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["bigquery.tables.getData"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-05-01", cloudProvider: "GCP", blocked: false,
+    api: {
+      source: "gcp.bigquery",
+      principal: "user:raj.patel@acme.com",
+      role: "roles/bigquery.dataViewer",
+      resourceName: "projects/acme-prod-4821/datasets/analytics_prod",
+      evaluatedVia: "bigquery.datasets.getIamPolicy",
+      note: "Departed; GCP binding not fully revoked",
+    },
+  },
+  {
+    id: "ap-110", identityId: "id-008", identityName: "lena.okonkwo",
+    resource: "gke://devops-cluster", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["container.pods.exec"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-30", cloudProvider: "GCP", blocked: false,
+    api: {
+      source: "gcp.container",
+      principal: "user:lena.okonkwo@acme.com",
+      role: "roles/container.developer",
+      resourceName: "projects/acme-prod-4821/locations/us-central1/clusters/devops-cluster",
+      evaluatedVia: "cloudasset.analyzeIamPolicy",
+    },
+  },
+  {
+    id: "ap-111", identityId: "id-019", identityName: "quinn.adebayo",
+    resource: "gce://ci-builder-02", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["compute.instances.setMetadata", "compute.instances.start"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-29", cloudProvider: "GCP", blocked: false,
+    api: {
+      source: "gcp.compute",
+      principal: "user:quinn.adebayo@acme.com",
+      role: "roles/compute.instanceAdmin.v1",
+      resourceName: "projects/acme-prod-4821/zones/us-central1-b/instances/ci-builder-02",
+      evaluatedVia: "cloudasset.analyzeIamPolicy",
+    },
+  },
+  {
+    id: "ap-112", identityId: "id-022", identityName: "helena.cho",
+    resource: "artifactregistry://eng-images", resourceSensitivity: "low", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["artifactregistry.repositories.downloadArtifacts"],
+    mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-28", cloudProvider: "GCP", blocked: false,
+    api: {
+      source: "gcp.artifactregistry",
+      principal: "user:helena.cho@acme.com",
+      role: "roles/artifactregistry.reader",
+      resourceName: "projects/acme-prod-4821/locations/us-central1/repositories/eng-images",
+      evaluatedVia: "cloudasset.analyzeIamPolicy",
+    },
+  },
+  {
+    id: "ap-113", identityId: "id-112", identityName: "svc-github-actions",
+    resource: "iam://deploy-prod-sa", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 2,
+    effectivePermissions: ["iam.serviceAccounts.actAs", "container.clusters.getCredentials"],
+    mechanism: "WIF → deploy SA → GKE deploy",
+    lastConfirmed: "2026-07-31", cloudProvider: "GCP", blocked: false, shadowAdmin: true,
+    hopChain: [
+      { step: 1, from: "svc-github-actions", to: "iam://github-wif-pool", mechanism: "Workload Identity Federation", timestamp: "2026-07-31T09:00:00Z", api: "iam.googleapis.com" },
+      { step: 2, from: "iam://github-wif-pool", to: "iam://deploy-prod-sa", mechanism: "impersonate service account", timestamp: "2026-07-31T09:00:01Z", api: "iamcredentials.generateAccessToken" },
+      { step: 3, from: "iam://deploy-prod-sa", to: "gke://devops-cluster", mechanism: "cluster credentials", timestamp: "2026-07-31T09:00:02Z", api: "container.clusters.getCredentials" },
+    ],
+    api: {
+      source: "gcp.iam + container",
+      principal: "serviceAccount:svc-github-actions@acme-prod-4821.iam.gserviceaccount.com",
+      resourceName: "projects/acme-prod-4821/locations/us-central1/clusters/devops-cluster",
+      nativeVisible: false,
+    },
+  },
 ];
 
 // ─── Shadow Access derived views ─────────────────────────────────────────────
 
+
+/** Align hopChain with live Access Discovery drawer (engine AccessChainStep vocabulary). */
+function normalizeMockHopChain(steps) {
+  if (!Array.isArray(steps) || !steps.length) return [];
+  return steps.map((raw, idx) => {
+    const from = String(raw.from || '').trim();
+    const to = String(raw.to || '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+    let mechanism = String(raw.mechanism || '').trim();
+    let edge = raw.edge || null;
+    const isLast = idx === steps.length - 1;
+    const alreadyEngine = /^(granted |resource carries |holds |group membership)/i.test(mechanism);
+
+    if (!alreadyEngine) {
+      const m = mechanism.toLowerCase();
+      if (/member_of|group membership|memberof/.test(m)) {
+        mechanism = 'group membership';
+        edge = 'MEMBER_OF';
+      } else if (
+        /resource carries|instance profile|workload identity|execution role|managed identity|assumes?_?role|assumerole/.test(m)
+        && !isLast
+      ) {
+        mechanism = `resource carries ${to.replace(/^iam:\/\//, '').replace(/^azure:\/\//, '')}`;
+        edge = 'ASSUMES_ROLE';
+      } else if (isLast || /holds|has_policy|fullaccess|owner role|passrole|binding/.test(m)) {
+        mechanism = `holds ${to.replace(/^iam:\/\//, '').replace(/^azure:\/\//, '')}`;
+        edge = 'HAS_POLICY';
+      } else {
+        const grant = to.includes('://') ? to.split('/').pop() : to;
+        mechanism = `granted ${grant}`;
+        edge = 'CAN_ACCESS';
+      }
+    } else if (!edge) {
+      if (/^granted /i.test(mechanism)) edge = 'CAN_ACCESS';
+      else if (/^resource carries /i.test(mechanism)) edge = 'ASSUMES_ROLE';
+      else if (/^holds /i.test(mechanism)) edge = 'HAS_POLICY';
+      else if (/^group membership/i.test(mechanism)) edge = 'MEMBER_OF';
+    }
+
+    return {
+      step: idx + 1,
+      from,
+      to,
+      edge: edge || 'CAN_ACCESS',
+      mechanism,
+      ...(raw.api ? { api: raw.api } : {}),
+      ...(raw.resourceArn ? { resourceArn: raw.resourceArn } : {}),
+      ...(raw.resourceName ? { resourceName: raw.resourceName } : {}),
+    };
+  });
+}
 
 // Keep denormalized names / originators aligned with the canonical identity roster
 accessPaths.forEach(p => {
@@ -1758,6 +2766,16 @@ accessPaths.forEach(p => {
   p.originator = identity?.originator || identityNameById[p.originatorId] || SYSTEM_ORIGINATOR.name;
   p.provisionedById = p.originatorId;
   p.provisionedBy = p.originator;
+
+  // Delegation / escalation drawer: hopCount = chain length; app label for related-path meta
+  if (Array.isArray(p.hopChain) && p.hopChain.length) {
+    p.hopChain = normalizeMockHopChain(p.hopChain);
+    p.hopCount = p.hopChain.length;
+    if (p.accessType === 'Shadow' || p.hopCount > 0) {
+      p.accessType = 'Shadow';
+    }
+  }
+  if (p.api?.app && !p.app) p.app = p.api.app;
 });
 
 export const shadowAccessPaths = accessPaths.filter(p => p.accessType === "Shadow");
@@ -2008,10 +3026,15 @@ export const accessSummary = {
   total: accessPaths.length,
 };
 
-// Week-over-week risk: prior scan average; delta is computed live as currentAvg − priorAvg
+/**
+ * Legacy week-over-week average — Access Discovery no longer surfaces this.
+ * Kept for any older demo screens that still reference a prior scan instant.
+ * Risk Profile on the Discovery page uses level counts, not fused %.
+ */
 export const riskTrend = {
-  priorAvgRisk: 64.8,
-  scannedAt: "2026-07-24T14:00:00Z",
+  priorAvgRisk: null,
+  scannedAt: "2026-07-31T00:00:00Z",
+  note: "No honest WoW trend without a prior graph snapshot",
 };
 
 // ─── Delegation Chains (built from per-app creationEdges — official forest) ───
