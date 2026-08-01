@@ -135,7 +135,10 @@ export const identities = [
   {
     id: "id-001", name: "jane.doe", type: "human", email: "jane.doe@acme.com", department: "Engineering",
     status: "active", createdBy: "id-sys-001", createdAt: "2023-01-15", lastActive: "2026-07-31",
+    // Simulated demo overlay — NOT an Ownership/Lineage engine finding
     compromisedAt: "2023-04-01",
+    provenanceState: "explained_absence", gapReason: "idp_directory_bootstrap",
+    originator: "No originator", originatorId: null,
     mfaEnabled: true, credentialAge: 45, owner: "id-001", ownerName: "Jane Doe", riskScore: 100, apps: ["payments"],
     sources: {
       okta: { id: "00u1jane9doe0kta", status: "ACTIVE", login: "jane.doe@acme.com", groups: ["Engineering", "AWS-PowerUsers", "Payments-App"], mfaTypes: ["okta_verify", "webauthn"] },
@@ -148,6 +151,8 @@ export const identities = [
   {
     id: "id-002", name: "mark.chen", type: "human", email: "mark.chen@acme.com", department: "DevOps",
     status: "active", createdBy: "id-sys-001", createdAt: "2022-08-01", lastActive: "2026-07-30",
+    provenanceState: "explained_absence", gapReason: "idp_directory_bootstrap",
+    originator: "No originator", originatorId: null, fanOut: 5,
     mfaEnabled: true, credentialAge: 12, owner: "id-002", ownerName: "Mark Chen", riskScore: 31, apps: ["devops"],
     sources: {
       okta: { id: "00u2mark8chen0kta", status: "ACTIVE", login: "mark.chen@acme.com", groups: ["DevOps", "GCP-Admins", "GKE-Operators"], mfaTypes: ["okta_verify"] },
@@ -183,7 +188,10 @@ export const identities = [
     id: "id-005", name: "alice.brooks", type: "human", email: "alice.brooks@acme.com", department: "Finance",
     status: "departed", createdBy: null, createdAt: "2020-03-10", lastActive: "2026-06-01",
     departedAt: "2026-06-01",
+    // Simulated demo overlay — NOT an Ownership/Lineage engine finding
     compromisedAt: "2021-06-01",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null, fanOut: 6, creatorStatus: "departed",
     mfaEnabled: false, credentialAge: 420, owner: null, ownerName: null, riskScore: 95, apps: ["payments"],
     sources: {
       okta: { id: "00u5alic5broo0kta", status: "DEPROVISIONED", login: "alice.brooks@acme.com", groups: [], mfaTypes: [], statusChanged: "2026-06-01T18:00:00.000Z" },
@@ -196,7 +204,8 @@ export const identities = [
     id: "id-006", name: "raj.patel", type: "human", email: "raj.patel@acme.com", department: "Engineering",
     status: "departed", createdBy: null, createdAt: "2021-09-01", lastActive: "2026-05-15",
     departedAt: "2026-05-15",
-    compromisedAt: "2021-09-15",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null, creatorStatus: "departed",
     mfaEnabled: false, credentialAge: 380, owner: null, ownerName: null, riskScore: 88, apps: ["data-pipeline"],
     sources: {
       okta: { id: "00u6rajp4atel0kta", status: "DEPROVISIONED", login: "raj.patel@acme.com", groups: [], mfaTypes: [], statusChanged: "2026-05-15T17:00:00.000Z" },
@@ -219,6 +228,8 @@ export const identities = [
   {
     id: "id-008", name: "lena.okonkwo", type: "human", email: "lena.okonkwo@acme.com", department: "Platform",
     status: "active", createdBy: "id-sys-001", createdAt: "2022-03-18", lastActive: "2026-07-31",
+    provenanceState: "explained_absence", gapReason: "idp_directory_bootstrap",
+    originator: "No originator", originatorId: null, fanOut: 2,
     mfaEnabled: true, credentialAge: 28, owner: "id-008", ownerName: "Lena Okonkwo", riskScore: 81, apps: ["devops"],
     sources: {
       okta: { id: "00u8lena2okon0kta", status: "ACTIVE", login: "lena.okonkwo@acme.com", groups: ["Platform", "Azure-Contributors", "AWS-PowerUsers"], mfaTypes: ["webauthn"] },
@@ -254,7 +265,8 @@ export const identities = [
     id: "id-011", name: "owen.blake", type: "human", email: "owen.blake@acme.com", department: "DevOps",
     status: "departed", createdBy: null, createdAt: "2021-05-01", lastActive: "2026-04-30",
     departedAt: "2026-04-30",
-    compromisedAt: "2021-05-15",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null, creatorStatus: "departed",
     mfaEnabled: false, credentialAge: 510, owner: null, ownerName: null, riskScore: 93, apps: ["devops"],
     sources: {
       okta: { id: "00u1owen9blak0kta", status: "DEPROVISIONED", login: "owen.blake@acme.com", groups: [], mfaTypes: [], statusChanged: "2026-04-30T18:00:00.000Z" },
@@ -315,6 +327,8 @@ export const identities = [
   {
     id: "id-016", name: "henry.cole", type: "human", email: "henry.cole@acme.com", department: "Finance",
     status: "active", createdBy: null, createdAt: "2018-04-01", lastActive: "2026-07-28",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null,
     mfaEnabled: true, credentialAge: 900, owner: "id-016", ownerName: "Henry Cole", riskScore: 58, apps: ["payments"],
     sources: {
       okta: { id: "00u6henr4cole0kta", status: "ACTIVE", login: "henry.cole@acme.com", groups: ["Finance", "Payments-App"], mfaTypes: ["okta_verify"] },
@@ -326,6 +340,8 @@ export const identities = [
   {
     id: "id-017", name: "maya.singh", type: "human", email: "maya.singh@acme.com", department: "Finance",
     status: "active", createdBy: null, createdAt: "2019-01-20", lastActive: "2026-07-30",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null,
     mfaEnabled: true, credentialAge: 700, owner: "id-017", ownerName: "Maya Singh", riskScore: 52, apps: ["payments"],
     sources: {
       okta: { id: "00u7maya3sing0kta", status: "ACTIVE", login: "maya.singh@acme.com", groups: ["Finance", "Payments-App-Readers"], mfaTypes: ["okta_verify", "webauthn"] },
@@ -337,6 +353,8 @@ export const identities = [
   {
     id: "id-018", name: "elise.moran", type: "human", email: "elise.moran@acme.com", department: "Data",
     status: "active", createdBy: null, createdAt: "2020-11-01", lastActive: "2026-07-29",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null,
     mfaEnabled: true, credentialAge: 520, owner: "id-018", ownerName: "Elise Moran", riskScore: 61, apps: ["data-pipeline"],
     sources: {
       okta: { id: "00u8elis2mora0kta", status: "ACTIVE", login: "elise.moran@acme.com", groups: ["Data", "GCP-Data-Analysts"], mfaTypes: ["okta_verify"] },
@@ -348,6 +366,8 @@ export const identities = [
   {
     id: "id-019", name: "quinn.adebayo", type: "human", email: "quinn.adebayo@acme.com", department: "DevOps",
     status: "active", createdBy: null, createdAt: "2019-07-15", lastActive: "2026-07-31",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null,
     mfaEnabled: true, credentialAge: 640, owner: "id-019", ownerName: "Quinn Adebayo", riskScore: 55, apps: ["devops"],
     sources: {
       okta: { id: "00u9quin1adeb0kta", status: "ACTIVE", login: "quinn.adebayo@acme.com", groups: ["DevOps", "AWS-PowerUsers"], mfaTypes: ["webauthn"] },
@@ -372,6 +392,8 @@ export const identities = [
     id: "id-021", name: "derek.frost", type: "human", email: "derek.frost@acme.com", department: "Security",
     status: "departed", createdBy: "id-sys-001", createdAt: "2021-02-10", lastActive: "2026-01-20",
     departedAt: "2026-01-20",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null, creatorStatus: "departed", fanOut: 3,
     mfaEnabled: false, credentialAge: 540, owner: null, ownerName: null, riskScore: 90, apps: ["devops"],
     sources: {
       okta: { id: "00u1dere7fros0kta", status: "DEPROVISIONED", login: "derek.frost@acme.com", groups: [], mfaTypes: [], statusChanged: "2026-01-20T18:30:00.000Z" },
@@ -392,11 +414,47 @@ export const identities = [
       gcp: { principal: "user:helena.cho@acme.com", stillActiveInCloud: false },
     },
   },
+  /**
+   * Out-of-population creator for payments fan-out.
+   * No IdP child edge — herself hangs under the connector hub (No originator);
+   * her NHIs nest under her: Connector → sofia.reyes → svc-sofia-*.
+   */
+  {
+    id: "id-023", name: "sofia.reyes", type: "human", email: "sofia.reyes@acme.com", department: "Platform",
+    status: "active", createdBy: null, createdAt: "2022-11-01", lastActive: "2026-07-31",
+    provenanceState: "unexplained", gapReason: "unexplained",
+    originator: "No originator", originatorId: null, fanOut: 6, creatorStatus: "active",
+    mfaEnabled: true, credentialAge: 60, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 36, apps: ["payments"],
+    sources: {
+      okta: { id: "00u3sofi5reye0kta", status: "ACTIVE", login: "sofia.reyes@acme.com", groups: ["Platform", "AWS-PowerUsers"], mfaTypes: ["okta_verify", "webauthn"] },
+      googleWorkspace: { id: "127888999000111222333", primaryEmail: "sofia.reyes@acme.com", orgUnitPath: "/Platform", isAdmin: false, isEnrolledIn2Sv: true },
+      hr: { employeeId: "WD-14280", workerType: "Employee", employmentStatus: "Active", hireDate: "2022-11-01", managerEmployeeId: "WD-09102", costCenter: "PLT-150" },
+      aws: { principalArn: "arn:aws:iam::481516234210:user/sofia.reyes", federatedVia: "arn:aws:iam::481516234210:saml-provider/Okta" },
+    },
+  },
+  /**
+   * Out-of-population creator for devops NHIs.
+   * Hub path: Connector → marcus.vale → svc-marcus-*.
+   */
+  {
+    id: "id-024", name: "marcus.vale", type: "human", email: "marcus.vale@acme.com", department: "SRE",
+    status: "active", createdBy: null, createdAt: "2023-06-01", lastActive: "2026-07-30",
+    provenanceState: "unexplained", gapReason: "unexplained",
+    originator: "No originator", originatorId: null, fanOut: 2, creatorStatus: "active",
+    mfaEnabled: true, credentialAge: 40, owner: "id-024", ownerName: "Marcus Vale", riskScore: 28, apps: ["devops"],
+    sources: {
+      okta: { id: "00u4marc4vale0kta", status: "ACTIVE", login: "marcus.vale@acme.com", groups: ["SRE", "AWS-BreakGlass"], mfaTypes: ["webauthn"] },
+      googleWorkspace: { id: "128999000111222333444", primaryEmail: "marcus.vale@acme.com", orgUnitPath: "/SRE", isAdmin: false, isEnrolledIn2Sv: true },
+      hr: { employeeId: "WD-14802", workerType: "Employee", employmentStatus: "Active", hireDate: "2023-06-01", managerEmployeeId: "WD-08540", costCenter: "OPS-110" },
+      aws: { principalArn: "arn:aws:iam::481516234210:user/marcus.vale", federatedVia: "arn:aws:iam::481516234210:saml-provider/Okta" },
+    },
+  },
 
   // Service / workload identities from cloud IAM APIs
   {
     id: "id-101", name: "svc-payments-api", type: "service", email: null, department: "Payments",
     status: "active", createdBy: "id-001", createdAt: "2023-02-01", lastActive: "2026-07-31",
+    provenanceState: "recorded", originator: "jane.doe", originatorId: "id-001", generation: 1, fanOut: 1,
     mfaEnabled: false, credentialAge: 320, owner: "id-001", ownerName: "jane.doe", ownerKind: "user",
     ownershipState: "owned", riskScore: 67, riskFactorsFiring: 1, apps: ["payments"],
     sources: {
@@ -484,6 +542,7 @@ export const identities = [
   {
     id: "id-107", name: "svc-billing-sync", type: "service", email: null, department: "Finance",
     status: "active", createdBy: "id-101", createdAt: "2023-06-01", lastActive: "2026-07-28",
+    provenanceState: "recorded", originator: "jane.doe", originatorId: "id-001", generation: 2, fanOut: 1,
     mfaEnabled: false, credentialAge: 120, owner: "id-001", ownerName: "Jane Doe", riskScore: 44, apps: ["payments"],
     sources: {
       aws: { roleArn: "arn:aws:iam::481516234210:role/svc-billing-sync", path: "/service-roles/" },
@@ -510,6 +569,9 @@ export const identities = [
   {
     id: "id-109", name: "svc-terraform-apply", type: "service", email: null, department: "Platform",
     status: "active", createdBy: "id-008", createdAt: "2023-03-01", lastActive: "2026-07-31",
+    // Self-authorized-shaped story: creator also received privilege via this role on 2023-03-02
+    provenanceState: "recorded", originator: "lena.okonkwo", originatorId: "id-008",
+    selfAuthorized: true, creatorStatus: "active", generation: 1,
     mfaEnabled: false, credentialAge: 150, owner: "id-008", ownerName: "Lena Okonkwo", riskScore: 84, apps: ["devops"],
     sources: {
       aws: {
@@ -832,6 +894,159 @@ export const identities = [
         servicePrincipalType: "Application",
       },
     },
+  },
+  // alice.brooks fan-out children (departed creator tree)
+  {
+    id: "id-133", name: "svc-alice-refund-bot", type: "service", email: null, department: "Finance",
+    status: "orphaned", createdBy: "id-005", createdAt: "2022-06-15", lastActive: "2026-07-20",
+    provenanceState: "recorded", originator: "alice.brooks", originatorId: "id-005",
+    creatorStatus: "departed", generation: 1,
+    mfaEnabled: false, credentialAge: 310, owner: null, ownerName: null, riskScore: 86, apps: ["payments"],
+    sources: {
+      aws: {
+        roleArn: "arn:aws:iam::481516234210:role/svc-alice-refund-bot",
+        path: "/legacy/",
+        createDate: "2022-06-15T10:00:00Z",
+        attachedPolicies: ["arn:aws:iam::481516234210:policy/RefundSubmit"],
+      },
+    },
+  },
+  {
+    id: "id-134", name: "svc-alice-tax-export", type: "service", email: null, department: "Finance",
+    status: "orphaned", createdBy: "id-005", createdAt: "2023-01-20", lastActive: "2026-07-15",
+    provenanceState: "recorded", originator: "alice.brooks", originatorId: "id-005",
+    creatorStatus: "departed", generation: 1,
+    mfaEnabled: false, credentialAge: 280, owner: null, ownerName: null, riskScore: 80, apps: ["payments"],
+    sources: {
+      aws: {
+        roleArn: "arn:aws:iam::481516234210:role/svc-alice-tax-export",
+        path: "/legacy/",
+        createDate: "2023-01-20T09:00:00Z",
+        attachedPolicies: ["arn:aws:iam::481516234210:policy/TaxExportRead"],
+      },
+    },
+  },
+  // sofia.reyes peer-root NHIs (recorded human originator)
+  {
+    id: "id-140", name: "svc-sofia-deploy-gate", type: "service", email: null, department: "Platform",
+    status: "active", createdBy: "id-023", createdAt: "2023-09-01", lastActive: "2026-07-31",
+    provenanceState: "recorded", originator: "sofia.reyes", originatorId: "id-023", generation: 1,
+    mfaEnabled: false, credentialAge: 100, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 42, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-sofia-deploy-gate", path: "/platform/", createDate: "2023-09-01T12:00:00Z" } },
+  },
+  {
+    id: "id-141", name: "svc-sofia-secrets-rotate", type: "service", email: null, department: "Platform",
+    status: "active", createdBy: "id-023", createdAt: "2023-09-08", lastActive: "2026-07-30",
+    provenanceState: "recorded", originator: "sofia.reyes", originatorId: "id-023", generation: 1,
+    mfaEnabled: false, credentialAge: 95, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 48, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-sofia-secrets-rotate", path: "/platform/", createDate: "2023-09-08T12:00:00Z" } },
+  },
+  {
+    id: "id-142", name: "svc-sofia-canary-roll", type: "service", email: null, department: "Platform",
+    status: "active", createdBy: "id-023", createdAt: "2023-10-02", lastActive: "2026-07-29",
+    provenanceState: "recorded", originator: "sofia.reyes", originatorId: "id-023", generation: 1,
+    mfaEnabled: false, credentialAge: 90, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 35, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-sofia-canary-roll", path: "/platform/", createDate: "2023-10-02T12:00:00Z" } },
+  },
+  {
+    id: "id-143", name: "svc-sofia-cost-guard", type: "service", email: null, department: "Platform",
+    status: "active", createdBy: "id-023", createdAt: "2023-11-14", lastActive: "2026-07-28",
+    provenanceState: "recorded", originator: "sofia.reyes", originatorId: "id-023", generation: 1,
+    mfaEnabled: false, credentialAge: 85, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 30, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-sofia-cost-guard", path: "/platform/", createDate: "2023-11-14T12:00:00Z" } },
+  },
+  {
+    id: "id-144", name: "svc-sofia-vpc-flow", type: "service", email: null, department: "Platform",
+    status: "active", createdBy: "id-023", createdAt: "2024-01-09", lastActive: "2026-07-27",
+    provenanceState: "recorded", originator: "sofia.reyes", originatorId: "id-023", generation: 1,
+    mfaEnabled: false, credentialAge: 70, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 33, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-sofia-vpc-flow", path: "/platform/", createDate: "2024-01-09T12:00:00Z" } },
+  },
+  {
+    id: "id-145", name: "svc-sofia-ami-promote", type: "service", email: null, department: "Platform",
+    status: "active", createdBy: "id-023", createdAt: "2024-02-22", lastActive: "2026-07-26",
+    provenanceState: "recorded", originator: "sofia.reyes", originatorId: "id-023", generation: 1,
+    mfaEnabled: false, credentialAge: 65, owner: "id-023", ownerName: "Sofia Reyes", riskScore: 38, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-sofia-ami-promote", path: "/platform/", createDate: "2024-02-22T12:00:00Z" } },
+  },
+  // marcus.vale peer-root NHIs
+  {
+    id: "id-146", name: "svc-marcus-chaos-runner", type: "service", email: null, department: "SRE",
+    status: "active", createdBy: "id-024", createdAt: "2024-04-01", lastActive: "2026-07-25",
+    provenanceState: "recorded", originator: "marcus.vale", originatorId: "id-024", generation: 1,
+    mfaEnabled: false, credentialAge: 55, owner: "id-024", ownerName: "Marcus Vale", riskScore: 45, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-marcus-chaos-runner", path: "/sre/", createDate: "2024-04-01T10:00:00Z" } },
+  },
+  {
+    id: "id-147", name: "svc-marcus-pager-bridge", type: "service", email: null, department: "SRE",
+    status: "active", createdBy: "id-024", createdAt: "2024-05-10", lastActive: "2026-07-24",
+    provenanceState: "recorded", originator: "marcus.vale", originatorId: "id-024", generation: 1,
+    mfaEnabled: false, credentialAge: 50, owner: "id-024", ownerName: "Marcus Vale", riskScore: 40, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-marcus-pager-bridge", path: "/sre/", createDate: "2024-05-10T10:00:00Z" } },
+  },
+  // Depth ≥3: jane → payments-api → billing-sync → billing-recon
+  {
+    id: "id-148", name: "svc-billing-recon", type: "service", email: null, department: "Finance",
+    status: "active", createdBy: "id-107", createdAt: "2024-03-01", lastActive: "2026-07-28",
+    provenanceState: "recorded", originator: "svc-billing-sync", originatorId: "id-107", generation: 3,
+    mfaEnabled: false, credentialAge: 110, owner: "id-001", ownerName: "Jane Doe", riskScore: 46, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-billing-recon", path: "/service-roles/", createDate: "2024-03-01T11:00:00Z" } },
+  },
+  // Depth ≥3 under alice: alice → old-payments-worker → legacy-settlement
+  {
+    id: "id-149", name: "svc-legacy-settlement", type: "service", email: null, department: "Finance",
+    status: "orphaned", createdBy: "id-105", createdAt: "2022-08-01", lastActive: "2026-07-10",
+    provenanceState: "recorded", originator: "alice.brooks", originatorId: "id-005",
+    creatorStatus: "departed", generation: 2,
+    mfaEnabled: false, credentialAge: 360, owner: null, ownerName: null, riskScore: 88, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-legacy-settlement", path: "/legacy/", createDate: "2022-08-01T09:00:00Z" } },
+  },
+  // Pre-audit gap NHIs (No originator + gapReason)
+  {
+    id: "id-150", name: "svc-payments-legacy-batch", type: "service", email: null, department: "Finance",
+    status: "active", createdBy: null, createdAt: "2019-03-01", lastActive: "2026-07-01",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null, generation: 0,
+    mfaEnabled: false, credentialAge: 900, owner: "id-016", ownerName: "Henry Cole", riskScore: 55, apps: ["payments"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-payments-legacy-batch", path: "/legacy/", createDate: "2019-03-01T08:00:00Z" } },
+  },
+  // mark.chen AWS NHIs (promote to peers under AWS scope — mark has no aws source)
+  {
+    id: "id-151", name: "svc-mark-canary", type: "service", email: null, department: "DevOps",
+    status: "active", createdBy: "id-002", createdAt: "2023-04-12", lastActive: "2026-07-31",
+    provenanceState: "recorded", originator: "mark.chen", originatorId: "id-002", generation: 1,
+    mfaEnabled: false, credentialAge: 100, owner: "team-platform", ownerName: "team-platform", riskScore: 32, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-mark-canary", path: "/service-roles/", createDate: "2023-04-12T10:00:00Z" } },
+  },
+  {
+    id: "id-152", name: "svc-mark-log-shipper", type: "service", email: null, department: "DevOps",
+    status: "active", createdBy: "id-002", createdAt: "2023-05-03", lastActive: "2026-07-30",
+    provenanceState: "recorded", originator: "mark.chen", originatorId: "id-002", generation: 1,
+    mfaEnabled: false, credentialAge: 95, owner: "team-platform", ownerName: "team-platform", riskScore: 29, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-mark-log-shipper", path: "/service-roles/", createDate: "2023-05-03T10:00:00Z" } },
+  },
+  {
+    id: "id-153", name: "svc-mark-node-drainer", type: "service", email: null, department: "DevOps",
+    status: "active", createdBy: "id-002", createdAt: "2023-06-18", lastActive: "2026-07-29",
+    provenanceState: "recorded", originator: "mark.chen", originatorId: "id-002", generation: 1,
+    mfaEnabled: false, credentialAge: 88, owner: "team-platform", ownerName: "team-platform", riskScore: 34, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-mark-node-drainer", path: "/service-roles/", createDate: "2023-06-18T10:00:00Z" } },
+  },
+  {
+    id: "id-154", name: "svc-devops-bootstrap-runner", type: "service", email: null, department: "DevOps",
+    status: "active", createdBy: null, createdAt: "2020-02-01", lastActive: "2026-06-01",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "No originator", originatorId: null, generation: 0,
+    mfaEnabled: false, credentialAge: 800, owner: "id-013", ownerName: "Chris Nguyen", riskScore: 50, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-devops-bootstrap-runner", path: "/legacy/", createDate: "2020-02-01T08:00:00Z" } },
+  },
+  {
+    id: "id-155", name: "svc-derek-threat-intel", type: "service", email: null, department: "Security",
+    status: "orphaned", createdBy: "id-021", createdAt: "2021-11-01", lastActive: "2026-07-08",
+    provenanceState: "explained_absence", gapReason: "outside_window_backfill",
+    originator: "derek.frost", originatorId: "id-021", creatorStatus: "departed", generation: 1,
+    mfaEnabled: false, credentialAge: 520, owner: null, ownerName: null, riskScore: 91, apps: ["devops"],
+    sources: { aws: { roleArn: "arn:aws:iam::481516234210:role/svc-derek-threat-intel", path: "/security/", createDate: "2021-11-01T09:00:00Z" } },
   },
   /**
    * Offline QA twin of engine beat 23b (`svc-temp-ssm-bridge`):

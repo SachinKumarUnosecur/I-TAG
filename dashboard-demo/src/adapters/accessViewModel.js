@@ -123,7 +123,16 @@ export function originatorLabel(lineageRow) {
     const label = createdBy || fromActor;
     if (!label) return 'No originator';
     const norm = String(label).trim().toLowerCase();
-    if (!norm || norm === 'unknown' || norm.startsWith('unknown ')) return 'No originator';
+    // IdP / directory bootstrap is not a human accountable creator
+    if (
+      !norm
+      || norm === 'unknown'
+      || norm.startsWith('unknown ')
+      || norm === 'okta.admin'
+      || norm === 'okta directory'
+    ) {
+      return 'No originator';
+    }
     return label;
   }
 

@@ -445,67 +445,94 @@ function applyScopeToForest(node, identityById, connectorId, cloudId) {
 }
 
 /**
- * Drop peer-root leaves that have nothing forward (Linked 0) and no originator
- * node in the forest to hang from — e.g. svc-backup-agent after owen was scoped out.
- * Identities under the scope hub stay (hub is their connection).
+ * Graph shape (like Identity Exposure Map under a connector):
+ *   AWS/connector hub
+ *     └── originator (when present in graph)
+ *           └── created identities
+ *     └── identity (when No originator / originator not in graph)
+ *
+ * Never leave peer-root NHIs as a floating disconnected list when they name
+ * an originator that already sits under the hub — attach them there instead.
+ * If originator is missing entirely, attach under the connector hub.
  */
 function pruneDisconnectedPeerRoots(forest) {
   if (!forest?.isForestRoot) return forest;
 
-  let children = [...(forest.children || [])];
-  let changed = true;
+  let hub = null;
+  const peers = [];
+  for (const child of forest.children || []) {
+    if (child.isNoOriginator) hub = { ...child, children: [...(child.children || [])] };
+    else peers.push(child);
+  }
 
-  while (changed) {
-    changed = false;
-    const presentIds = new Set();
-    const presentNames = new Set();
-
-    function index(n) {
-      if (!n || n.isForestRoot) return;
-      if (n.isNoOriginator) {
-        (n.children || []).forEach(index);
-        return;
-      }
-      presentIds.add(n.id);
-      if (n.name) presentNames.add(String(n.name));
-      (n.children || []).forEach(index);
+  const byId = new Map();
+  const byName = new Map();
+  function indexHub(n) {
+    if (!n || n.isNoOriginator) {
+      (n?.children || []).forEach(indexHub);
+      return;
     }
-    children.forEach(index);
+    byId.set(n.id, n);
+    if (n.name) byName.set(String(n.name), n);
+    (n.children || []).forEach(indexHub);
+  }
+  if (hub) (hub.children || []).forEach(indexHub);
 
-    const next = [];
-    for (const child of children) {
-      if (child.isNoOriginator) {
-        // Hub stays if it still has children
-        if ((child.children || []).length > 0) next.push(child);
-        else changed = true;
-        continue;
-      }
+  function alreadyChild(parent, id) {
+    return (parent.children || []).some(c => c.id === id);
+  }
 
-      const hasForward = (child.children || []).length > 0;
-      if (hasForward) {
-        next.push(child);
-        continue;
-      }
+  function attach(parent, node) {
+    if (!parent || alreadyChild(parent, node.id)) return;
+    parent.children = sortRoots([...(parent.children || []), node]);
+    byId.set(node.id, node);
+    if (node.name) byName.set(String(node.name), node);
+  }
 
-      // Leaf peer root: keep only when a human originator node exists to connect to
-      const originatorId = child.originatorId || null;
-      const originatorName = String(child.originator || '').trim();
-      const hasOriginatorNode = Boolean(
-        !isMissingOriginatorLabel(originatorName)
-        && (
-          (originatorId && presentIds.has(originatorId))
-          || presentNames.has(originatorName)
-        ),
-      );
+  const stillPeers = [];
+  const hubExtras = [];
 
-      if (hasOriginatorNode) {
-        next.push(child);
-      } else {
-        changed = true;
-      }
+  for (const peer of peers) {
+    const originatorId = peer.originatorId || null;
+    const originatorName = String(peer.originator || '').trim();
+    const originatorNode = (
+      (originatorId && byId.get(originatorId))
+      || (!isMissingOriginatorLabel(originatorName) && byName.get(originatorName))
+      || null
+    );
+
+    if (originatorNode && originatorNode.id !== peer.id) {
+      // Connector → originator → this identity
+      attach(originatorNode, peer);
+      continue;
     }
 
-    children = next;
+    if (isMissingOriginatorLabel(originatorName) || !originatorNode) {
+      // No originator in graph → hang under connector hub (not a lone list)
+      hubExtras.push(peer);
+      continue;
+    }
+
+    stillPeers.push(peer);
+  }
+
+  if (hubExtras.length > 0) {
+    if (!hub) {
+      hub = makeScopeHub({
+        scopeLabel: 'Connector',
+        scopeCategory: 'cloud',
+        connectorId: null,
+        integratedAt: null,
+        appName: '—',
+        children: [],
+      });
+    }
+    for (const extra of hubExtras) attach(hub, extra);
+  }
+
+  const children = [...sortRoots(stillPeers)];
+  if (hub && (hub.children || []).length > 0) {
+    children.push({ ...hub, children: sortRoots(hub.children || []) });
   }
 
   return { ...forest, children: sortRoots(children) };
