@@ -196,14 +196,13 @@ export default function IdentityLifecycle() {
                 <th>Service accounts</th>
                 <th>Status</th>
                 <th>Triggered</th>
-                <th>Live access</th>
                 <th>App</th>
               </tr>
             </thead>
             <tbody>
               {pageRows.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="lc-table-empty">No leavers match</td>
+                  <td colSpan={7} className="lc-table-empty">No leavers match</td>
                 </tr>
               )}
               {pageRows.map(row => {
@@ -250,14 +249,11 @@ export default function IdentityLifecycle() {
                         </span>
                       </td>
                       <td className="lc-muted">{row.triggeredAt}</td>
-                      <td className={row.liveAccess > 0 && row.status !== 'success' ? 'lc-hot' : 'lc-num'}>
-                        {row.liveAccess}
-                      </td>
                       <td className="lc-muted" title={row.app || undefined}>{row.app || '—'}</td>
                     </tr>
                     {open && (
                       <tr className="lc-nhi-dropdown-row">
-                        <td colSpan={8}>
+                        <td colSpan={7}>
                           <div className="lc-nhi-dropdown" onClick={(e) => e.stopPropagation()}>
                             <div className="lc-nhi-dropdown-head">
                               <div className="lc-nhi-dropdown-title">
@@ -276,7 +272,6 @@ export default function IdentityLifecycle() {
                                     <span>Service account</span>
                                     <span>Originated by</span>
                                     <span>Status</span>
-                                    <span>Live access</span>
                                     <span>App</span>
                                   </div>
                                   {row.nhis.map(nhi => {
@@ -297,9 +292,6 @@ export default function IdentityLifecycle() {
                                           <span className={`lc-status-pill lc-status-pill--${nhiStatus.tone}`}>
                                             {nhiStatus.label}
                                           </span>
-                                        </span>
-                                        <span className={nhi.liveAccess > 0 && nhi.offboardStatus !== 'success' ? 'lc-hot' : 'lc-num'}>
-                                          {nhi.liveAccess}
                                         </span>
                                         <span className="lc-muted">{nhi.app || '—'}</span>
                                       </div>
