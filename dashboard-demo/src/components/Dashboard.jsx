@@ -10,13 +10,7 @@ import {
   identities, jmlEvents, impactGraph
 } from '../data/mockData';
 import { fetchMitreFindings } from '../data/riskProfileApi';
-import {
-  getReviewCampaignsSnapshot,
-  getReviewItemsSnapshot,
-} from '../data/accessReviewApi';
-
-const reviewCampaigns = getReviewCampaignsSnapshot();
-const reviewItems = getReviewItemsSnapshot();
+import { warmReviewSnapshots } from '../data/accessReviewApi';
 
 function useMitreFindings() {
   const [findings, setFindings] = useState([]);
@@ -30,6 +24,25 @@ function useMitreFindings() {
     };
   }, []);
   return findings;
+}
+
+function useReviewSnapshots() {
+  const [reviewCampaigns, setCampaigns] = useState([]);
+  const [reviewItems, setItems] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    warmReviewSnapshots().then(({ campaigns, items }) => {
+      if (!alive) return;
+      setCampaigns(campaigns);
+      setItems(items);
+    }).catch(() => {
+      if (!alive) return;
+      setCampaigns([]);
+      setItems([]);
+    });
+    return () => { alive = false; };
+  }, []);
+  return { reviewCampaigns, reviewItems };
 }
 
 function FabricStatIcon({ kind }) {
@@ -336,16 +349,40 @@ function RiskTile({ navigate }) {
 }
 
 /* ── Review tile ────────────────────────────────────────────── */
-function ReviewTile({ navigate }) {
+function ReviewTile({ navigate, reviewCampaigns, reviewItems }) {
   const campaign = reviewCampaigns[0];
-  const RISK_RANK = { Catastrophic: 0, Unacceptable: 1, Undesirable: 2, Acceptable: 3, Desirable: 4 };
+  const RISK_RANK = {
+    Critical: 0,
+    Catastrophic: 0,
+    High: 1,
+    Unacceptable: 1,
+    Medium: 2,
+    Undesirable: 2,
+    Low: 3,
+    Acceptable: 3,
+    Desirable: 4,
+  };
   const SEVERITY_META = {
+    Critical: { label: 'Critical', tone: 'critical' },
     Catastrophic: { label: 'Critical', tone: 'critical' },
+    High: { label: 'High', tone: 'high' },
     Unacceptable: { label: 'High', tone: 'high' },
+    Medium: { label: 'Medium', tone: 'medium' },
     Undesirable: { label: 'Medium', tone: 'medium' },
+    Low: { label: 'Low', tone: 'low' },
     Acceptable: { label: 'Low', tone: 'low' },
     Desirable: { label: 'Low', tone: 'low' },
   };
+
+  if (!campaign) {
+    return (
+      <div className="tile" onClick={() => navigate('/access-reviews')}>
+        <div className="tile-label">Access Reviews</div>
+        <div className="page-subtitle" style={{ marginTop: 12 }}>Loading review campaigns…</div>
+        <TileExit label="View review queue" onClick={() => navigate('/access-reviews')} />
+      </div>
+    );
+  }
 
   const topRisky = [...reviewItems]
     .filter(r => r.campaignId === campaign.id && r.decision === 'pending')
@@ -940,6 +977,7 @@ function ImpactTile({ navigate }) {
 /* ── Summary bar ────────────────────────────────────────────── */
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { reviewCampaigns, reviewItems } = useReviewSnapshots();
   return (
     <div className="page-content">
       <div className="page-header">
@@ -956,7 +994,7 @@ export default function Dashboard() {
         <LifecycleTile navigate={navigate} />
         <HygieneTile navigate={navigate} />
         <ImpactTile navigate={navigate} />
-        <ReviewTile navigate={navigate} />
+        <ReviewTile navigate={navigate} reviewCampaigns={reviewCampaigns} reviewItems={reviewItems} />
         <ThreatTile navigate={navigate} />
       </div>
     </div>

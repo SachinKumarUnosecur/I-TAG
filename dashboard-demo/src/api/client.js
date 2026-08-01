@@ -41,3 +41,37 @@ export async function apiGet(path, { signal } = {}) {
 
   return body;
 }
+
+export async function apiPost(path, payload, { signal } = {}) {
+  let response;
+  try {
+    response = await fetch(path, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload ?? {}),
+      signal,
+    });
+  } catch (err) {
+    throw new ApiError(err?.message || 'request_failed', { status: 0 });
+  }
+
+  const text = await response.text();
+  let body = null;
+  if (text) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = text;
+    }
+  }
+
+  if (!response.ok) {
+    const code = body?.error || `http_${response.status}`;
+    throw new ApiError(code, { status: response.status, body });
+  }
+
+  return body;
+}
