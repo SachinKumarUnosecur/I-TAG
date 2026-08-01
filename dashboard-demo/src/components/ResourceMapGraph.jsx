@@ -25,9 +25,15 @@ function nodeHeight(lineCount) {
   return DETAIL_START_Y + Math.max(lineCount, 1) * LINE_H + PAD_BOTTOM;
 }
 
+/**
+ * Tone for a resource leaf's colored accent/glow. Accepts both the legacy mock vocabulary
+ * (`critical|high|medium`) and the live engine's `ExposureSetEntry.sensitivity`
+ * (`sensitive|not_sensitive|unclassified`, `core/src/domain/exposure.ts`) — the displayed
+ * `Sensitivity:` value itself is always the caller's real word, never remapped.
+ */
 function sensitivityTone(sensitivity) {
-  if (sensitivity === 'critical' || sensitivity === 'high') return 'compromised';
-  if (sensitivity === 'medium') return 'departed';
+  if (sensitivity === 'critical' || sensitivity === 'high' || sensitivity === 'sensitive') return 'compromised';
+  if (sensitivity === 'medium' || sensitivity === 'unclassified') return 'departed';
   return 'service';
 }
 
@@ -38,7 +44,7 @@ function cardMeta(node) {
       tone,
       accent: CHAIN_COLORS[tone].accent,
       lines: [
-        { type: 'Type', value: node.isNhi || node.type === 'service' ? 'NHI' : 'User' },
+        { type: 'Type', value: node.typeLabel || (node.isNhi || node.type === 'service' ? 'NHI' : 'User') },
         { type: 'Categories', value: String(node.categoryCount ?? '—') },
         { type: 'Resources', value: String(node.resourceCount ?? '—') },
       ],
@@ -128,7 +134,6 @@ function layoutResourceTree(model, expanded) {
 
   const nodes = [];
   const links = [];
-  let cursorY = 0;
 
   function measure(node, depth) {
     const meta = cardMeta(node);

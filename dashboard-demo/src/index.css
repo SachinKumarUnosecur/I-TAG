@@ -4058,6 +4058,40 @@ button.ad-filters-count--reset:hover {
   gap: 8px;
   padding-top: 6px;
 }
+
+/* ─── Exposure identity — Map view (identity → category → resource graph) ─── */
+.egm-view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.egm-view-toggle button {
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--surface);
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+.egm-view-toggle button + button {
+  border-left: 1px solid var(--border);
+}
+.egm-view-toggle button.is-active {
+  background: var(--uno-blue-600, #2563eb);
+  color: #fff;
+}
+.egm-empty {
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px dashed var(--border);
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
 .type-chip-ai_agent {
   background: color-mix(in srgb, var(--uno-blue-500) 12%, white);
   color: var(--uno-blue-700);
