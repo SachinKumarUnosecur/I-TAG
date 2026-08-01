@@ -13,6 +13,7 @@ import { IMPACT } from './seed/impact.js';
 import { LINEAGE } from './seed/lineage.js';
 import { REASON_MATRIX } from './seed/reason-matrix.js';
 import { SUPPRESSED } from './seed/suppressed.js';
+import { THREAT_COVERAGE } from './seed/threat-coverage.js';
 import { TRUE_NEGATIVES } from './seed/true-negatives.js';
 
 /**
@@ -47,6 +48,9 @@ import { TRUE_NEGATIVES } from './seed/true-negatives.js';
  *   exposure        beats 24-28 — breadth, unclassified access, two routes, nesting
  *   impact          beats 29-31 — a rota behind one grant, a second chain, a shared binding
  *   fixtures        beat 14 — depth cap and corrupt lineage, filtered from every view
+ *   threat-coverage beats 32-35 — the low-probability tail: unowned-this-week and
+ *                   one non-MFA control change, so Threat's matrix has a reachable
+ *                   `low`/`moderate` Likelihood row instead of only `moderate`+
  *
  * Lineage is stored per app and left unmerged (§4.2). Three chains deliberately
  * cross app boundaries, which is the one question a per-app view cannot answer:
@@ -70,4 +74,5 @@ export const SEED_DATASET: IdentityDataset = assembleDataset(CATALOG, [
   EXPOSURE,
   IMPACT,
   FIXTURES,
+  THREAT_COVERAGE,
 ]);

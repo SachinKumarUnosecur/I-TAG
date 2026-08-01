@@ -236,6 +236,21 @@ export const CATALOG: SeedCatalog = {
 
     /** An ordinary grant, so the release orchestrator is not a bare pivot. */
     { id: 'read:release-notes', sensitive: false },
+
+    /**
+     * `seed/threat-coverage.ts` beats 32-33 — two single-holder choke points.
+     *
+     * Each binds to a role that holds nothing of its own (`role-integration-relay`,
+     * `role-vendor-relay` below), so the holder's own path to it is `direct` — no
+     * `ASSUMES_ROLE` edge is ever emitted, because `access/classify.ts` only adds one
+     * when the assumed identity's *own* `direct_grants` produce a further path
+     * (`access/classify.ts` L200-208). Severing either still removes exactly one
+     * `(subject, permission)` pair — its one holder's reach of the permission
+     * itself — which is what makes it `closes: 'access'` rather than `no_effect`
+     * without opening a hop for that holder.
+     */
+    { id: 'read:integration-status-feed', sensitive: false, grants_identity: 'role-integration-relay' },
+    { id: 'read:vendor-sync-status', sensitive: false, grants_identity: 'role-vendor-relay' },
   ],
 
   // F10 — historical revocation patterns per class of grant.

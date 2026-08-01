@@ -4,7 +4,6 @@ import { fetchMitreFindings, listPtraceStages } from '../data/riskProfileApi';
 
 const FINDINGS_PAGE_SIZE = 10;
 
-const mitreFindings = fetchMitreFindings();
 const PTRACE_STAGES = listPtraceStages();
 const PTRACE_ORDER = PTRACE_STAGES.map(s => s.key);
 
@@ -227,10 +226,21 @@ export default function ThreatProfile() {
   const [ptraceFilter, setPtraceFilter] = useState('all');
   const [severityFilter, setSeverityFilter] = useState('all');
   const [page, setPage] = useState(1);
+  const [mitreFindings, setMitreFindings] = useState([]);
+
+  useEffect(() => {
+    let alive = true;
+    fetchMitreFindings().then((rows) => {
+      if (alive) setMitreFindings(rows);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const findings = useMemo(
     () => mitreFindings.map(normalizeFinding),
-    [],
+    [mitreFindings],
   );
 
   const severities = useMemo(() => {

@@ -339,6 +339,11 @@ test('front-crossing counts understate removal impact mid-chain', () => {
     ['connect:ledger-writer', 1],
     ['gh:connect-artifact-signer', 1],
     ['mcp:connect-warehouse-box', 1],
+    // `seed/threat-coverage.ts` beats 32-33 bind to a role with nothing beyond it,
+    // so nobody's path ever crosses either as a hop — the front-crossing count is
+    // zero by the same construction that keeps the holder's own path `direct`.
+    ['read:integration-status-feed', 0],
+    ['read:vendor-sync-status', 0],
   ]);
 
   // The three subjects whose access the mid-chain binding actually carries, against

@@ -195,7 +195,7 @@ test('beat 30: the top choke point is measured, and it sits on a group', () => {
   assert.equal(top.closes, 'access');
 
   assert.equal(top.access_removed.removed, 12);
-  assert.equal(top.access_removed.baseline, 208);
+  assert.equal(top.access_removed.baseline, 220);
   assert.equal(top.mechanisms_closed.removed, 8);
   assert.equal(top.mechanisms_closed.baseline, 18);
 
@@ -307,7 +307,12 @@ test('candidates rank by access removed, then mechanisms closed, then id', () =>
       ['gh:connect-artifact-signer', 3],
       ['ssm:session-deploy-box', 2],
       ['ci:assume-build-agent', 1],
+      // `seed/threat-coverage.ts` beats 32-33 tie at zero with `connect:ledger-writer` —
+      // each is a single-holder choke point that removes only its own holder's reach
+      // of the permission itself — so the tie breaks on id.
       ['connect:ledger-writer', 0],
+      ['read:integration-status-feed', 0],
+      ['read:vendor-sync-status', 0],
     ],
   );
 });
@@ -318,7 +323,7 @@ test('the selection method is published, and exhaustive means exhaustive', () =>
   assert.equal(REPORT.selection.candidate_space, CANDIDATES.length);
   assert.equal(REPORT.selection.candidates_evaluated, CANDIDATES.length);
   assert.equal(REPORT.evaluations.length, CANDIDATES.length);
-  assert.equal(CANDIDATES.length, 7);
+  assert.equal(CANDIDATES.length, 9);
 });
 
 /**
@@ -328,9 +333,9 @@ test('the selection method is published, and exhaustive means exhaustive', () =>
  */
 test('the baseline is stated in the units the deltas are measured in', () => {
   assert.deepEqual(baselineOf(BASELINE), {
-    reachable_pairs: 208,
+    reachable_pairs: 220,
     pivot_edges: 18,
-    identities_scanned: 128,
+    identities_scanned: 134,
   });
 });
 

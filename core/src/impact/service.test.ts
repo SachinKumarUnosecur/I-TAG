@@ -245,8 +245,8 @@ test('every assessment arm is reachable from the estate', () => {
   assert.deepEqual(
     [...counts.entries()].sort(([left], [right]) => left.localeCompare(right)),
     [
-      ['no_access', 21],
-      ['no_pivot_paths', 106],
+      ['no_access', 23],
+      ['no_pivot_paths', 110],
       ['propagates', 13],
     ],
   );
@@ -316,9 +316,9 @@ test('the report publishes its selection method and its denominators', () => {
   assert.equal(report.selection.method, 'exhaustive');
   assert.equal(report.selection.candidates_evaluated, report.selection.candidate_space);
   assert.deepEqual(report.baseline, {
-    reachable_pairs: 208,
+    reachable_pairs: 220,
     pivot_edges: 18,
-    identities_scanned: 128,
+    identities_scanned: 134,
   });
   assert.equal(report.snapshot.graph_snapshot_at, NOW.toISOString());
 });
