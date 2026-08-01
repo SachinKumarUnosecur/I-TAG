@@ -469,6 +469,74 @@ function mockPathSeverity(path) {
 }
 
 /**
+ * Normalize mock hopChain steps to the live Access Discovery / HopChain contract:
+ * `from → to` with engine mechanism vocabulary (granted / resource carries / holds /
+ * group membership) and edge kinds. Matches `core` AccessChainStep rendering.
+ */
+export function normalizeHopChain(steps = []) {
+  if (!Array.isArray(steps) || steps.length === 0) return [];
+
+  return steps.map((raw, idx) => {
+    const from = String(raw.from || '').trim();
+    const to = String(raw.to || '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+    let mechanism = String(raw.mechanism || '').trim();
+    let edge = raw.edge || null;
+    const isLast = idx === steps.length - 1;
+    const alreadyEngine = /^(granted |resource carries |holds |group membership)/i.test(mechanism);
+
+    if (!alreadyEngine) {
+      const m = mechanism.toLowerCase();
+      if (/member_of|group membership|memberof/.test(m)) {
+        mechanism = 'group membership';
+        edge = 'MEMBER_OF';
+      } else if (
+        /resource carries|instance profile|workload identity|execution role|managed identity|assumes?_?role|assumerole/.test(m)
+        && !isLast
+      ) {
+        const role = to.replace(/^iam:\/\//, '').replace(/^azure:\/\//, '');
+        mechanism = `resource carries ${role}`;
+        edge = 'ASSUMES_ROLE';
+      } else if (isLast || /holds|has_policy|fullaccess|owner role|passrole|binding/.test(m)) {
+        mechanism = `holds ${to.replace(/^iam:\/\//, '').replace(/^azure:\/\//, '')}`;
+        edge = 'HAS_POLICY';
+      } else {
+        // Connect / session / invoke front of a hop
+        const grant = to.includes('://')
+          ? to.split('/').pop()
+          : to;
+        mechanism = `granted ${grant}`;
+        edge = 'CAN_ACCESS';
+      }
+    } else if (!edge) {
+      if (/^granted /i.test(mechanism)) edge = 'CAN_ACCESS';
+      else if (/^resource carries /i.test(mechanism)) edge = 'ASSUMES_ROLE';
+      else if (/^holds /i.test(mechanism)) edge = 'HAS_POLICY';
+      else if (/^group membership/i.test(mechanism)) edge = 'MEMBER_OF';
+    }
+
+    return {
+      step: idx + 1,
+      from,
+      to,
+      edge: edge || 'CAN_ACCESS',
+      mechanism,
+      ...(raw.api ? { api: raw.api } : {}),
+      ...(raw.resourceArn ? { resourceArn: raw.resourceArn } : {}),
+      ...(raw.resourceName ? { resourceName: raw.resourceName } : {}),
+    };
+  });
+}
+
+function shadowMechanismSummary(chain) {
+  if (!chain.length) return '';
+  const vias = chain
+    .filter((s) => s.edge === 'CAN_ACCESS' || /^granted /i.test(s.mechanism))
+    .map((s) => s.to);
+  if (vias.length) return vias.join(' → ');
+  return chain.map((s) => s.to).join(' → ');
+}
+
+/**
  * Map the offline mock bundle into the same identity-row shape so the page
  * has one render path. Mock risk scores are coerced to level bands for offline
  * QA only — never presented as engine Risk Profile truth.
@@ -515,15 +583,27 @@ export function buildViewModelFromMockBundle(bundle) {
         : 'direct';
     entry.pathCounts[pathType] += 1;
     if (pathType === 'hop') entry.hopPaths += 1;
+
+    const hopChain = pathType === 'hop' || (p.hopChain && p.hopChain.length)
+      ? normalizeHopChain(p.hopChain || [])
+      : [];
+    const hopCount = hopChain.length || p.hopCount || 0;
     const uiPath = {
       ...p,
       identityName: entry.identityName,
       pathType,
+      accessType: pathType === 'hop' ? 'Shadow' : p.accessType,
+      hopChain,
+      hopCount,
+      mechanism: hopChain.length ? (shadowMechanismSummary(hopChain) || p.mechanism) : p.mechanism,
       ownership: entry.ownership,
       lastConfirmed: entry.lastUpdated,
+      shadowAdmin: Boolean(p.shadowAdmin) || (pathType === 'hop' && (p.resourceSensitivity === 'critical' || p.sensitive)),
+      // Prefer engine `app` (mcp-gateway / github / aws-iam) for related-path meta
+      cloudProvider: p.api?.app || p.app || p.cloudProvider || entry.app,
     };
     entry.paths.push(uiPath);
-    if (!entry.representative || mockPathSeverity(p) > mockPathSeverity(entry.representative)) {
+    if (!entry.representative || mockPathSeverity(uiPath) > mockPathSeverity(entry.representative)) {
       entry.representative = uiPath;
     }
   }

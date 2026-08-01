@@ -867,6 +867,71 @@ export const identities = [
       },
     },
   },
+  /**
+   * Offline twin of live `agent-incident-responder` — multi-hop Shadow drawer
+   * (admin:warehouse via runbook → warehouse role). Owned team-platform so
+   * attention is hop-only (rank 2), matching the live CISO walkthrough.
+   */
+  {
+    id: "id-mock-incident-responder",
+    name: "Incident Responder Agent",
+    type: "service",
+    email: null,
+    department: "Platform",
+    status: "active",
+    createdBy: null,
+    createdAt: "2026-01-14",
+    lastActive: "2026-07-30",
+    mfaEnabled: false,
+    credentialAge: 40,
+    owner: "team-platform",
+    ownerName: "team-platform",
+    ownerKind: "team",
+    ownershipState: "owned",
+    ownerAttestedAt: "2026-07-24",
+    riskScore: 94,
+    riskFactorsFiring: 2,
+    apps: ["mcp-gateway"],
+    sources: {
+      aws: {
+        roleArn: "arn:aws:iam::481516234210:role/agent-incident-responder",
+        path: "/agents/",
+        createDate: "2026-01-14T00:00:00Z",
+      },
+    },
+  },
+  /**
+   * Offline twin of live `svc-release-orchestrator` — deploy:prod Shadow chain
+   * through GitHub connect permissions (delegation drawer parity).
+   */
+  {
+    id: "id-mock-release-orchestrator",
+    name: "Release Orchestrator",
+    type: "service",
+    email: null,
+    department: "Platform",
+    status: "active",
+    createdBy: "id-008",
+    createdAt: "2025-11-02",
+    lastActive: "2026-07-31",
+    mfaEnabled: false,
+    credentialAge: 55,
+    owner: "team-platform",
+    ownerName: "team-platform",
+    ownerKind: "team",
+    ownershipState: "owned",
+    ownerAttestedAt: "2026-07-22",
+    riskScore: 90,
+    riskFactorsFiring: 2,
+    apps: ["github"],
+    sources: {
+      aws: {
+        roleArn: "arn:aws:iam::481516234210:role/svc-release-orchestrator",
+        path: "/cicd/",
+        createDate: "2025-11-02T00:00:00Z",
+      },
+    },
+  },
 ];
 
 
@@ -1047,23 +1112,23 @@ export const accessPaths = [
     },
   },
 
-  // Shadow Access — multi-hop, invisible to native analyzers
+  // Shadow Access — multi-hop (engine chain vocabulary for HopChain drawer)
   {
     id: "ap-009", identityId: "id-001", identityName: "jane.doe",
-    resource: "iam://account-root-admin", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 2,
-    effectivePermissions: ["*"], mechanism: "ssm:StartSession → EC2:i-0abc123 → AssumeRole:AdminRole",
+    resource: "admin:platform", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 3,
+    effectivePermissions: ["admin:platform"], mechanism: "ssm:session-deploy-box → role-deploy-box",
     lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: true,
-    adminRole: "iam://account-root-admin",
+    adminRole: "role-deploy-box",
     hopChain: [
-      { step: 1, from: "jane.doe", to: "ec2://i-0abc123 (payments-prod-worker)", mechanism: "ssm:StartSession", timestamp: "2026-07-31T08:00:00Z", api: "ssm:StartSession", resourceArn: "arn:aws:ec2:us-east-1:481516234210:instance/i-0abc123def456" },
-      { step: 2, from: "ec2://i-0abc123", to: "iam://AdminInstanceProfile", mechanism: "EC2 Instance Profile → AssumeRole", timestamp: "2026-07-31T08:00:01Z", api: "ec2:DescribeIamInstanceProfileAssociations", resourceArn: "arn:aws:iam::481516234210:instance-profile/AdminInstanceProfile" },
-      { step: 3, from: "iam://AdminInstanceProfile", to: "iam://account-root-admin", mechanism: "iam:PassRole", timestamp: "2026-07-31T08:00:02Z", api: "iam:PassRole", resourceArn: "arn:aws:iam::481516234210:role/account-root-admin" },
+      { step: 1, from: "jane.doe", to: "ssm:session-deploy-box", edge: "CAN_ACCESS", mechanism: "granted ssm:session-deploy-box" },
+      { step: 2, from: "ssm:session-deploy-box", to: "role-deploy-box", edge: "ASSUMES_ROLE", mechanism: "resource carries role-deploy-box" },
+      { step: 3, from: "role-deploy-box", to: "admin:platform", edge: "HAS_POLICY", mechanism: "holds admin:platform" },
     ],
     api: {
-      source: "aws.ssm + ec2 + iam",
+      source: "aws.iam + ssm",
       nativeVisible: false,
       nativeToolsMissed: ["IAM Access Analyzer", "IAM Policy Simulator (direct only)"],
-      terminalRoleArn: "arn:aws:iam::481516234210:role/account-root-admin",
+      evaluatedVia: "itag.access.classify",
     },
   },
   {
@@ -1793,17 +1858,17 @@ export const accessPaths = [
       note: "Revoked during offboarding",
     },
   },
-  // Offline beat 23b — hop + unowned (compound Needs attention)
+  // Offline beat 23b — hop + unowned (compound Needs attention) + companion direct grant
   {
     id: "ap-068", identityId: "id-mock-ssm-bridge", identityName: "Temporary SSM Bridge",
-    resource: "admin:platform", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 2,
+    resource: "admin:platform", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 3,
     effectivePermissions: ["admin:platform"], mechanism: "ssm:session-deploy-box → role-deploy-box",
     lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: true,
     originator: "No originator",
     hopChain: [
-      { step: 1, from: "Temporary SSM Bridge", to: "ssm:session-deploy-box", mechanism: "granted ssm:session-deploy-box" },
-      { step: 2, from: "ssm:session-deploy-box", to: "role-deploy-box", mechanism: "resource carries role-deploy-box" },
-      { step: 3, from: "role-deploy-box", to: "admin:platform", mechanism: "holds admin:platform" },
+      { step: 1, from: "svc-temp-ssm-bridge", to: "ssm:session-deploy-box", edge: "CAN_ACCESS", mechanism: "granted ssm:session-deploy-box" },
+      { step: 2, from: "ssm:session-deploy-box", to: "role-deploy-box", edge: "ASSUMES_ROLE", mechanism: "resource carries role-deploy-box" },
+      { step: 3, from: "role-deploy-box", to: "admin:platform", edge: "HAS_POLICY", mechanism: "holds admin:platform" },
     ],
     api: {
       source: "aws.iam + ssm",
@@ -1811,10 +1876,179 @@ export const accessPaths = [
       evaluatedVia: "itag.access.classify",
     },
   },
+  {
+    id: "ap-069", identityId: "id-mock-ssm-bridge", identityName: "Temporary SSM Bridge",
+    resource: "ssm:session-deploy-box", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["ssm:session-deploy-box"], mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false,
+    originator: "No originator",
+    api: {
+      source: "aws.iam",
+      principalArn: "arn:aws:iam::481516234210:role/svc-temp-ssm-bridge",
+      evaluatedVia: "itag.access.classify",
+    },
+  },
+
+  // Incident Responder Agent — live agent-incident-responder drawer parity
+  {
+    id: "ap-070", identityId: "id-mock-incident-responder", identityName: "Incident Responder Agent",
+    resource: "admin:warehouse", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 6,
+    effectivePermissions: ["admin:warehouse"],
+    mechanism: "mcp:connect-prod-runbook → mcp:connect-warehouse-box",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: true,
+    originator: "No originator",
+    hopChain: [
+      { step: 1, from: "agent-incident-responder", to: "group-oncall-agents", edge: "MEMBER_OF", mechanism: "group membership" },
+      { step: 2, from: "group-oncall-agents", to: "mcp:connect-prod-runbook", edge: "CAN_ACCESS", mechanism: "granted mcp:connect-prod-runbook" },
+      { step: 3, from: "mcp:connect-prod-runbook", to: "role-runbook-executor", edge: "ASSUMES_ROLE", mechanism: "resource carries role-runbook-executor" },
+      { step: 4, from: "role-runbook-executor", to: "mcp:connect-warehouse-box", edge: "CAN_ACCESS", mechanism: "granted mcp:connect-warehouse-box" },
+      { step: 5, from: "mcp:connect-warehouse-box", to: "role-warehouse-admin", edge: "ASSUMES_ROLE", mechanism: "resource carries role-warehouse-admin" },
+      { step: 6, from: "role-warehouse-admin", to: "admin:warehouse", edge: "HAS_POLICY", mechanism: "holds admin:warehouse" },
+    ],
+    api: { source: "mcp-gateway", evaluatedVia: "itag.access.classify", app: "mcp-gateway" },
+  },
+  {
+    id: "ap-071", identityId: "id-mock-incident-responder", identityName: "Incident Responder Agent",
+    resource: "mcp:prod-db-query", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 4,
+    effectivePermissions: ["mcp:prod-db-query"],
+    mechanism: "mcp:connect-prod-runbook → role-runbook-executor",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: true,
+    originator: "No originator",
+    hopChain: [
+      { step: 1, from: "agent-incident-responder", to: "group-oncall-agents", edge: "MEMBER_OF", mechanism: "group membership" },
+      { step: 2, from: "group-oncall-agents", to: "mcp:connect-prod-runbook", edge: "CAN_ACCESS", mechanism: "granted mcp:connect-prod-runbook" },
+      { step: 3, from: "mcp:connect-prod-runbook", to: "role-runbook-executor", edge: "ASSUMES_ROLE", mechanism: "resource carries role-runbook-executor" },
+      { step: 4, from: "role-runbook-executor", to: "mcp:prod-db-query", edge: "HAS_POLICY", mechanism: "holds mcp:prod-db-query" },
+    ],
+    api: { source: "mcp-gateway", evaluatedVia: "itag.access.classify", app: "mcp-gateway" },
+  },
+  {
+    id: "ap-072", identityId: "id-mock-incident-responder", identityName: "Incident Responder Agent",
+    resource: "mcp:connect-warehouse-box", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 4,
+    effectivePermissions: ["mcp:connect-warehouse-box"],
+    mechanism: "mcp:connect-prod-runbook → role-runbook-executor",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: true,
+    originator: "No originator",
+    hopChain: [
+      { step: 1, from: "agent-incident-responder", to: "group-oncall-agents", edge: "MEMBER_OF", mechanism: "group membership" },
+      { step: 2, from: "group-oncall-agents", to: "mcp:connect-prod-runbook", edge: "CAN_ACCESS", mechanism: "granted mcp:connect-prod-runbook" },
+      { step: 3, from: "mcp:connect-prod-runbook", to: "role-runbook-executor", edge: "ASSUMES_ROLE", mechanism: "resource carries role-runbook-executor" },
+      { step: 4, from: "role-runbook-executor", to: "mcp:connect-warehouse-box", edge: "HAS_POLICY", mechanism: "holds mcp:connect-warehouse-box" },
+    ],
+    api: { source: "mcp-gateway", evaluatedVia: "itag.access.classify", app: "mcp-gateway" },
+  },
+  {
+    id: "ap-073", identityId: "id-mock-incident-responder", identityName: "Incident Responder Agent",
+    resource: "mcp:connect-prod-runbook", resourceSensitivity: "high", accessType: "Indirect", hopCount: 0,
+    effectivePermissions: ["mcp:connect-prod-runbook"],
+    mechanism: "MEMBER_OF:group-oncall-agents",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false,
+    originator: "No originator",
+    api: {
+      source: "mcp-gateway",
+      oktaGroupName: "group-oncall-agents",
+      evaluatedVia: "itag.access.classify",
+      app: "mcp-gateway",
+    },
+  },
+
+  // Release Orchestrator — live svc-release-orchestrator drawer parity
+  {
+    id: "ap-074", identityId: "id-mock-release-orchestrator", identityName: "Release Orchestrator",
+    resource: "deploy:prod", resourceSensitivity: "critical", accessType: "Shadow", hopCount: 5,
+    effectivePermissions: ["deploy:prod"],
+    mechanism: "gh:connect-release-runner → gh:connect-artifact-signer",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: true,
+    hopChain: [
+      { step: 1, from: "svc-release-orchestrator", to: "gh:connect-release-runner", edge: "CAN_ACCESS", mechanism: "granted gh:connect-release-runner" },
+      { step: 2, from: "gh:connect-release-runner", to: "role-release-runner", edge: "ASSUMES_ROLE", mechanism: "resource carries role-release-runner" },
+      { step: 3, from: "role-release-runner", to: "gh:connect-artifact-signer", edge: "CAN_ACCESS", mechanism: "granted gh:connect-artifact-signer" },
+      { step: 4, from: "gh:connect-artifact-signer", to: "role-artifact-signer", edge: "ASSUMES_ROLE", mechanism: "resource carries role-artifact-signer" },
+      { step: 5, from: "role-artifact-signer", to: "deploy:prod", edge: "HAS_POLICY", mechanism: "holds deploy:prod" },
+    ],
+    api: { source: "github", evaluatedVia: "itag.access.classify", app: "github" },
+  },
+  {
+    id: "ap-075", identityId: "id-mock-release-orchestrator", identityName: "Release Orchestrator",
+    resource: "gh:connect-artifact-signer", resourceSensitivity: "high", accessType: "Shadow", hopCount: 3,
+    effectivePermissions: ["gh:connect-artifact-signer"],
+    mechanism: "gh:connect-release-runner → role-release-runner",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false, shadowAdmin: false,
+    hopChain: [
+      { step: 1, from: "svc-release-orchestrator", to: "gh:connect-release-runner", edge: "CAN_ACCESS", mechanism: "granted gh:connect-release-runner" },
+      { step: 2, from: "gh:connect-release-runner", to: "role-release-runner", edge: "ASSUMES_ROLE", mechanism: "resource carries role-release-runner" },
+      { step: 3, from: "role-release-runner", to: "gh:connect-artifact-signer", edge: "HAS_POLICY", mechanism: "holds gh:connect-artifact-signer" },
+    ],
+    api: { source: "github", evaluatedVia: "itag.access.classify", app: "github" },
+  },
+  {
+    id: "ap-076", identityId: "id-mock-release-orchestrator", identityName: "Release Orchestrator",
+    resource: "gh:connect-release-runner", resourceSensitivity: "medium", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["gh:connect-release-runner"], mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false,
+    api: { source: "github", evaluatedVia: "itag.access.classify", app: "github" },
+  },
+  {
+    id: "ap-077", identityId: "id-mock-release-orchestrator", identityName: "Release Orchestrator",
+    resource: "read:release-notes", resourceSensitivity: "low", accessType: "Direct", hopCount: 0,
+    effectivePermissions: ["read:release-notes"], mechanism: "HAS_POLICY",
+    lastConfirmed: "2026-07-31", cloudProvider: "AWS", blocked: false,
+    api: { source: "github", evaluatedVia: "itag.access.classify", app: "github" },
+  },
 ];
 
 // ─── Shadow Access derived views ─────────────────────────────────────────────
 
+
+/** Align hopChain with live Access Discovery drawer (engine AccessChainStep vocabulary). */
+function normalizeMockHopChain(steps) {
+  if (!Array.isArray(steps) || !steps.length) return [];
+  return steps.map((raw, idx) => {
+    const from = String(raw.from || '').trim();
+    const to = String(raw.to || '').replace(/\s*\([^)]*\)\s*$/, '').trim();
+    let mechanism = String(raw.mechanism || '').trim();
+    let edge = raw.edge || null;
+    const isLast = idx === steps.length - 1;
+    const alreadyEngine = /^(granted |resource carries |holds |group membership)/i.test(mechanism);
+
+    if (!alreadyEngine) {
+      const m = mechanism.toLowerCase();
+      if (/member_of|group membership|memberof/.test(m)) {
+        mechanism = 'group membership';
+        edge = 'MEMBER_OF';
+      } else if (
+        /resource carries|instance profile|workload identity|execution role|managed identity|assumes?_?role|assumerole/.test(m)
+        && !isLast
+      ) {
+        mechanism = `resource carries ${to.replace(/^iam:\/\//, '').replace(/^azure:\/\//, '')}`;
+        edge = 'ASSUMES_ROLE';
+      } else if (isLast || /holds|has_policy|fullaccess|owner role|passrole|binding/.test(m)) {
+        mechanism = `holds ${to.replace(/^iam:\/\//, '').replace(/^azure:\/\//, '')}`;
+        edge = 'HAS_POLICY';
+      } else {
+        const grant = to.includes('://') ? to.split('/').pop() : to;
+        mechanism = `granted ${grant}`;
+        edge = 'CAN_ACCESS';
+      }
+    } else if (!edge) {
+      if (/^granted /i.test(mechanism)) edge = 'CAN_ACCESS';
+      else if (/^resource carries /i.test(mechanism)) edge = 'ASSUMES_ROLE';
+      else if (/^holds /i.test(mechanism)) edge = 'HAS_POLICY';
+      else if (/^group membership/i.test(mechanism)) edge = 'MEMBER_OF';
+    }
+
+    return {
+      step: idx + 1,
+      from,
+      to,
+      edge: edge || 'CAN_ACCESS',
+      mechanism,
+      ...(raw.api ? { api: raw.api } : {}),
+      ...(raw.resourceArn ? { resourceArn: raw.resourceArn } : {}),
+      ...(raw.resourceName ? { resourceName: raw.resourceName } : {}),
+    };
+  });
+}
 
 // Keep denormalized names / originators aligned with the canonical identity roster
 accessPaths.forEach(p => {
@@ -1824,6 +2058,16 @@ accessPaths.forEach(p => {
   p.originator = identity?.originator || identityNameById[p.originatorId] || SYSTEM_ORIGINATOR.name;
   p.provisionedById = p.originatorId;
   p.provisionedBy = p.originator;
+
+  // Delegation / escalation drawer: hopCount = chain length; app label for related-path meta
+  if (Array.isArray(p.hopChain) && p.hopChain.length) {
+    p.hopChain = normalizeMockHopChain(p.hopChain);
+    p.hopCount = p.hopChain.length;
+    if (p.accessType === 'Shadow' || p.hopCount > 0) {
+      p.accessType = 'Shadow';
+    }
+  }
+  if (p.api?.app && !p.app) p.app = p.api.app;
 });
 
 export const shadowAccessPaths = accessPaths.filter(p => p.accessType === "Shadow");

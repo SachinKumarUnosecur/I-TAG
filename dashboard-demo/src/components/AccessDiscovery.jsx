@@ -653,11 +653,14 @@ export default function AccessDiscovery() {
                         {(path.hopChain?.length || path.hopCount || 0)} hop{(path.hopChain?.length || path.hopCount || 0) === 1 ? '' : 's'}
                       </span>
                     </div>
-                    <div className="ad-detail-mechanism">{path.mechanism}</div>
+                    {/* Mechanism summary is in the chain; avoid duplicating noisy legacy strings */}
                     {path.hopChain?.length > 0 ? (
                       <HopChain steps={path.hopChain} />
                     ) : (
-                      <p className="ad-detail-section-note">No hop steps recorded for this shadow path.</p>
+                      <>
+                        <div className="ad-detail-mechanism">{path.mechanism}</div>
+                        <p className="ad-detail-section-note">No hop steps recorded for this shadow path.</p>
+                      </>
                     )}
                   </section>
                   <PermissionsBlock
