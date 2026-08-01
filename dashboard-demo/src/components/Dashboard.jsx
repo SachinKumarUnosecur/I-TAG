@@ -905,7 +905,7 @@ function ImpactTile({ navigate }) {
 
   return (
     <div className="tile" onClick={() => navigate('/exposure-map')}>
-      <div className="tile-label">Resource Map · Blast Radius</div>
+      <div className="tile-label">Identity Exposure Map</div>
 
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 12,

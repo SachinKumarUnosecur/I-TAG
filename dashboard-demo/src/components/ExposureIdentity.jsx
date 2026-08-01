@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Icon } from './ui';
 import { useExposureIdentity } from '../hooks/useExposureIdentity';
 import { downloadExposureProfileCsv } from '../api/exposureApi';
+import ExposureGraphMap from './ExposureGraphMap';
 
 const BAND_TONE = {
   extensive: 'extensive',
@@ -16,6 +18,15 @@ const SEVERITY_LABEL = {
   medium: 'Medium',
   low: 'Low',
   none: 'None',
+};
+
+/** `ExposureOwnershipContext.state` — the actual state word, distinct from *who* owns it. */
+const OWNERSHIP_STATE_LABEL = {
+  owned: 'Owned',
+  unowned: 'Unowned',
+  owner_invalid: 'Owner invalid',
+  ambiguous: 'Ambiguous',
+  unknown: 'Unevaluated',
 };
 
 function appQuery(app) {
@@ -109,6 +120,7 @@ export default function ExposureIdentity() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const app = searchParams.get('app') || '';
+  const [view, setView] = useState('map');
 
   const { profile, loading, error, notFound, reload, preferMock } = useExposureIdentity(identityId);
   const listHref = `/exposure-map${appQuery(app)}`;
@@ -249,87 +261,122 @@ export default function ExposureIdentity() {
         </div>
       )}
 
-      <section className="ad-detail-section">
-        <div className="ad-detail-section-head">
-          <h3>Ownership reconciliation</h3>
-        </div>
-        <div className="ad-detail-meta">
-          <div className="ad-detail-meta-item">
-            <span className="ad-detail-meta-label">Ownership state</span>
-            <span className="ad-detail-meta-value"><OwnerCell ownerDisplay={profile.ownerDisplay} /></span>
-          </div>
-          <div className="ad-detail-meta-item">
-            <span className="ad-detail-meta-label">Ownership severity</span>
-            <span className="ad-detail-meta-value"><SeverityChip severity={profile.ownershipSeverity} /></span>
-          </div>
-          <div className="ad-detail-meta-item" style={{ gridColumn: '1 / -1' }}>
-            <span className="ad-detail-meta-label">Why these can disagree</span>
-            <span className="ad-detail-meta-value">{profile.whyTheseDiffer}</span>
-          </div>
-        </div>
-      </section>
+      <div className="egm-view-toggle" role="tablist" aria-label="Exposure view">
+        <button
+          type="button"
+          className={view === 'map' ? 'is-active' : ''}
+          aria-pressed={view === 'map'}
+          onClick={() => setView('map')}
+        >
+          Map
+        </button>
+        <button
+          type="button"
+          className={view === 'table' ? 'is-active' : ''}
+          aria-pressed={view === 'table'}
+          onClick={() => setView('table')}
+        >
+          Table
+        </button>
+      </div>
 
-      {assessment.kind === 'scored' && assessment.contributions.length > 0 && (
-        <section className="ad-detail-section">
-          <div className="ad-detail-section-head">
-            <h3>Contributions</h3>
-            <span className="ad-detail-section-count">
-              {assessment.contributions.length} of {profile.exposureSet.counted} counted
-            </span>
-          </div>
-          <p className="ad-detail-section-note">
-            Descending by share of the weighted sum — the first row is the single largest
-            driver of this score.
-            {assessment.highestSensitivity && ` Highest sensitivity reached: ${assessment.highestSensitivity}.`}
-          </p>
-          <div className="ad-perm-list">
-            {assessment.contributions.map((c) => (
-              <ContributionRow
-                key={c.permission}
-                contribution={c}
-                sensitivity={sensitivityByPermission.get(c.permission)}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {profile.rings.length > 0 && (
-        <section className="ad-detail-section">
-          <div className="ad-detail-section-head">
-            <h3>Reachability rings</h3>
-            <span className="ad-detail-section-count">{profile.rings.length} ring{profile.rings.length === 1 ? '' : 's'}</span>
-          </div>
-          <p className="ad-detail-section-note">
-            One ring per distinct hop distance present, drawn outward from this identity.
-          </p>
-          {profile.rings.map((ring) => (
-            <RingSection key={ring.hop_distance} ring={ring} />
-          ))}
-        </section>
-      )}
-
-      {assessment.unclassified.length > 0 && (
-        <section className="ad-detail-section">
-          <div className="ad-detail-section-head">
-            <h3>Unclassified permissions</h3>
-            <span className="ad-detail-section-count">{assessment.unclassified.length}</span>
-          </div>
-          <p className="ad-detail-section-note">
-            Excluded from the weighted sum — nobody has assessed these, which is a claim about
-            the classification registry, not about this identity.
-          </p>
-          <div className="ad-perm-list">
-            {assessment.unclassified.map((perm) => (
-              <div key={perm} className="ad-perm-item">
-                <div className="ad-perm-item-main">
-                  <span className="ad-perm-label">{perm}</span>
-                  <span className="ad-perm-tone">unclassified</span>
-                </div>
+      {view === 'map' ? (
+        // Keyed by identity so its internal hop-slider state resets on navigation instead of
+        // needing a setState-in-effect to sync it (see ExposureGraphMap's own note).
+        <ExposureGraphMap key={profile.id} profile={profile} />
+      ) : (
+        <>
+          <section className="ad-detail-section">
+            <div className="ad-detail-section-head">
+              <h3>Ownership reconciliation</h3>
+            </div>
+            <div className="ad-detail-meta">
+              <div className="ad-detail-meta-item">
+                <span className="ad-detail-meta-label">Ownership state</span>
+                <span className="ad-detail-meta-value">
+                  <span className={`ad-owner ad-owner--${profile.ownerDisplay?.tone || 'muted'}`}>
+                    {OWNERSHIP_STATE_LABEL[profile.ownershipState] || 'Unevaluated'}
+                  </span>
+                </span>
               </div>
-            ))}
-          </div>
-        </section>
+              <div className="ad-detail-meta-item">
+                <span className="ad-detail-meta-label">Owner</span>
+                <span className="ad-detail-meta-value"><OwnerCell ownerDisplay={profile.ownerDisplay} /></span>
+              </div>
+              <div className="ad-detail-meta-item">
+                <span className="ad-detail-meta-label">Ownership severity</span>
+                <span className="ad-detail-meta-value"><SeverityChip severity={profile.ownershipSeverity} /></span>
+              </div>
+              <div className="ad-detail-meta-item" style={{ gridColumn: '1 / -1' }}>
+                <span className="ad-detail-meta-label">Why these can disagree</span>
+                <span className="ad-detail-meta-value">{profile.whyTheseDiffer}</span>
+              </div>
+            </div>
+          </section>
+
+          {assessment.kind === 'scored' && assessment.contributions.length > 0 && (
+            <section className="ad-detail-section">
+              <div className="ad-detail-section-head">
+                <h3>Contributions</h3>
+                <span className="ad-detail-section-count">
+                  {assessment.contributions.length} of {profile.exposureSet.counted} counted
+                </span>
+              </div>
+              <p className="ad-detail-section-note">
+                Descending by share of the weighted sum — the first row is the single largest
+                driver of this score.
+                {assessment.highestSensitivity && ` Highest sensitivity reached: ${assessment.highestSensitivity}.`}
+              </p>
+              <div className="ad-perm-list">
+                {assessment.contributions.map((c) => (
+                  <ContributionRow
+                    key={c.permission}
+                    contribution={c}
+                    sensitivity={sensitivityByPermission.get(c.permission)}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {profile.rings.length > 0 && (
+            <section className="ad-detail-section">
+              <div className="ad-detail-section-head">
+                <h3>Reachability rings</h3>
+                <span className="ad-detail-section-count">{profile.rings.length} ring{profile.rings.length === 1 ? '' : 's'}</span>
+              </div>
+              <p className="ad-detail-section-note">
+                One ring per distinct hop distance present, drawn outward from this identity.
+              </p>
+              {profile.rings.map((ring) => (
+                <RingSection key={ring.hop_distance} ring={ring} />
+              ))}
+            </section>
+          )}
+
+          {assessment.unclassified.length > 0 && (
+            <section className="ad-detail-section">
+              <div className="ad-detail-section-head">
+                <h3>Unclassified permissions</h3>
+                <span className="ad-detail-section-count">{assessment.unclassified.length}</span>
+              </div>
+              <p className="ad-detail-section-note">
+                Excluded from the weighted sum — nobody has assessed these, which is a claim about
+                the classification registry, not about this identity.
+              </p>
+              <div className="ad-perm-list">
+                {assessment.unclassified.map((perm) => (
+                  <div key={perm} className="ad-perm-item">
+                    <div className="ad-perm-item-main">
+                      <span className="ad-perm-label">{perm}</span>
+                      <span className="ad-perm-tone">unclassified</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </>
       )}
     </div>
   );
