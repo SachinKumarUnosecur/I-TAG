@@ -678,13 +678,14 @@ function HygieneTile({ navigate }) {
     { label: 'Stale NHIs', value: staleNhis.length, color: 'var(--uno-yellow-500)' },
   ];
   const totalIssues = issueStats.reduce((s, i) => s + i.value, 0);
-  const hygieneScore = Math.max(0, Math.min(100, 100 - humansNoMfaAll.length * 14 - staleCreds.length * 5));
+  const hygieneScore = Math.max(10, Math.min(100, Math.round(
+    100 - humansNoMfaAll.length * 2 - staleCreds.length * 1 - staleNhis.length * 0.5
+  )));
   const scoreColor = hygieneScore >= 70
     ? 'var(--uno-green-500)'
     : hygieneScore >= 40
       ? 'var(--uno-yellow-500)'
       : 'var(--uno-red-500)';
-  const scoreBand = hygieneScore >= 70 ? 'Healthy' : hygieneScore >= 40 ? 'At risk' : 'Critical';
 
   const priority = [...humansNoMfa, ...staleCreds.filter(i => i.mfaEnabled || i.type === 'service')].slice(0, 5);
   const maxAge = Math.max(...priority.map(i => i.credentialAge), 1);
@@ -693,9 +694,6 @@ function HygieneTile({ navigate }) {
     <div className="tile" onClick={() => navigate('/risk-profiles')}>
       <div className="tile-label-row">
         <div className="tile-label" style={{ marginBottom: 0 }}>Identity Hygiene</div>
-        <span className="hygiene-band" style={{ color: scoreColor, background: `color-mix(in srgb, ${scoreColor} 12%, white)` }}>
-          {scoreBand}
-        </span>
       </div>
 
       <div className="tile-chart-row">
