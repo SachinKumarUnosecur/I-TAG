@@ -11,6 +11,12 @@ node_modules
 dist
 dist-ssr
 *.local
+.venv
+.vite
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/fixtures/snapshot.json
 
 # Editor directories and files
 .vscode/*

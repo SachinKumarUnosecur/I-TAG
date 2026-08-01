@@ -6,9 +6,19 @@ import {
 } from './ui';
 import {
   dashboardSummary, accessSummary, accessPaths, ptraceFindingCounts,
-  reviewCampaigns, reviewItems, orphanedAccounts, riskProfiles,
-  identities, jmlEvents, mitreFindings, impactGraph
+  orphanedAccounts, shadowAdmins,
+  identities, jmlEvents, impactGraph
 } from '../data/mockData';
+import { fetchMitreFindings } from '../data/riskProfileApi';
+import {
+  getReviewCampaignsSnapshot,
+  getReviewItemsSnapshot,
+} from '../data/accessReviewApi';
+
+const reviewCampaigns = getReviewCampaignsSnapshot();
+const reviewItems = getReviewItemsSnapshot();
+
+const mitreFindings = fetchMitreFindings();
 
 function FabricStatIcon({ kind }) {
   if (kind === 'hi') {
@@ -30,46 +40,54 @@ function FabricStatIcon({ kind }) {
   }
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+      <path d="M16 3l1.5 1.5L16 6M8 3L6.5 4.5 8 6" />
     </svg>
   );
 }
 
-/* ── Identity overview (HI / NHI / Keys + risk signals) ─────── */
+/* ── Identity overview (HI / NHI / compromised + risk signals) ─────── */
 function IdentityOverview({ navigate }) {
+  const humanIdentities = identities.filter(i => i.type === 'human');
+  const serviceIdentities = identities.filter(i => i.type === 'service');
+  const compromisedUsers = humanIdentities.filter(i => i.compromisedAt).length;
+  const shadowPaths = accessPaths.filter(p => p.accessType === 'Shadow').length;
+
   const cards = [
     {
       key: 'hi',
       label: "HI's",
       sub: 'Human identities',
-      value: dashboardSummary.humanIdentities,
+      value: humanIdentities.length,
       accent: '#F8A012',
       to: '/access-discovery',
       icon: <FabricStatIcon kind="hi" />,
     },
     {
       key: 'nhi',
-      label: 'NHI',
+      label: "NHI's",
       sub: 'Non-human identities',
-      value: dashboardSummary.serviceIdentities,
+      value: serviceIdentities.length,
       accent: '#025DFD',
       to: '/access-discovery',
       icon: <FabricStatIcon kind="nhi" />,
     },
     {
-      key: 'keys',
-      label: 'Keys',
-      sub: 'Secrets & key material',
-      value: dashboardSummary.keysAndSecrets,
-      accent: '#85A0FF',
-      to: '/unified-impact',
-      icon: <FabricStatIcon kind="keys" />,
+      key: 'compromised',
+      label: 'Compromised Users',
+      sub: 'Known compromised humans',
+      value: compromisedUsers,
+      accent: '#E72E21',
+      valueColor: '#E72E21',
+      to: '/threat-profile',
+      icon: <FabricStatIcon kind="compromised" />,
     },
     {
       key: 'shadow',
       label: 'Shadow Access',
       sub: 'Shadow access paths',
-      value: dashboardSummary.shadowPaths,
+      value: shadowPaths,
       accent: '#E72E21',
       valueColor: '#E72E21',
       to: '/access-discovery',
@@ -84,7 +102,7 @@ function IdentityOverview({ navigate }) {
       key: 'admins',
       label: 'Shadow Admins',
       sub: 'Shadow admin access',
-      value: dashboardSummary.shadowAdminCount,
+      value: shadowAdmins.length,
       accent: '#F97316',
       valueColor: '#F97316',
       to: '/access-discovery',
@@ -548,18 +566,22 @@ function LifecycleTile({ navigate }) {
   };
   const statusOrder = ['Not offboarded', 'Partially offboarded'];
 
-  // NHI → HI mapping: offboarding state is measured on NHIs, surfaced on the human identity
-  const nhiToHi = [
-    { nhiId: 'id-105', nhi: 'svc-old-payments-worker', hiId: 'id-005', hiName: 'alice.brooks', status: 'Not offboarded' },
-    { nhiId: 'id-104', nhi: 'svc-orphaned-etl', hiId: 'id-006', hiName: 'raj.patel', status: 'Not offboarded' },
-    { nhiId: 'id-105b', nhi: 'svc-finance-reporter', hiId: 'id-005', hiName: 'alice.brooks', status: 'Not offboarded' },
-    { nhiId: 'id-107', nhi: 'svc-billing-sync', hiId: 'id-001', hiName: 'jane.doe', status: 'Partially offboarded' },
-    { nhiId: 'id-101', nhi: 'svc-payments-api', hiId: 'id-001', hiName: 'jane.doe', status: 'Partially offboarded' },
-    { nhiId: 'id-103', nhi: 'svc-ci-runner', hiId: 'id-002', hiName: 'mark.chen', status: 'Partially offboarded' },
-    { nhiId: 'id-102', nhi: 'svc-data-ingest', hiId: 'id-003', hiName: 'priya.sharma', status: 'Partially offboarded' },
-    { nhiId: 'id-106', nhi: 'svc-monitoring', hiId: 'id-002', hiName: 'mark.chen', status: 'Partially offboarded' },
-    { nhiId: 'id-108', nhi: 'svc-legacy-batch', hiId: 'id-004', hiName: 'tom.walker', status: 'Partially offboarded' },
-  ];
+  // Open NHIs from leavers — status derived from residual access (no hardcoded rows)
+  const nhiToHi = jmlEvents
+    .filter(e => e.eventType === 'leaver')
+    .flatMap(event => (event.linkedNhis || [])
+      .filter(nhi => nhi.offboardStatus !== 'success')
+      .map(nhi => ({
+        nhiId: nhi.id,
+        nhi: nhi.name,
+        hiId: event.identityId,
+        hiName: event.identityName,
+        status: (
+          event.status === 'partial' || nhi.offboardStatus === 'partial'
+            ? 'Partially offboarded'
+            : 'Not offboarded'
+        ),
+      })));
 
   // Donut counts are NHI-based
   const counts = Object.fromEntries(
@@ -833,7 +855,7 @@ function ImpactTile({ navigate }) {
   };
 
   return (
-    <div className="tile" onClick={() => navigate('/unified-impact')}>
+    <div className="tile" onClick={() => navigate('/exposure-map')}>
       <div className="tile-label">Resource Map · Blast Radius</div>
 
       <div style={{
@@ -898,7 +920,7 @@ function ImpactTile({ navigate }) {
         ))}
       </div>
 
-      <TileExit label="Open resource map" onClick={() => navigate('/unified-impact')} />
+      <TileExit label="Open exposure map" onClick={() => navigate('/exposure-map')} />
     </div>
   );
 }

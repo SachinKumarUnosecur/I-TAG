@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:py": "if [ -x .venv/bin/python ]; then .venv/bin/python -m pytest tests; else python3 -m pytest tests; fi",
+    "test:snapshot": "node tests/bridge/export_snapshot.mjs"
   },
   "dependencies": {
     "d3": "^7.9.0",
