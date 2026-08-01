@@ -1,150 +1,332 @@
-import { useState } from 'react';
-import { Icon, TypeChip, StatusChip } from './ui';
-import { jmlEvents, orphanedAccounts, identities } from '../data/mockData';
+import { Fragment, useEffect, useMemo, useState } from 'react';
+import { Icon, TablePager, paginateRows } from './ui';
+import { jmlEvents, identities } from '../data/mockData';
+
+const TABLE_PAGE_SIZE = 10;
+
+const STATUS_FILTERS = [
+  { key: 'All', label: 'All statuses' },
+  { key: 'success', label: 'Deprovisioned' },
+  { key: 'failed', label: 'Not deprovisioned' },
+  { key: 'partial', label: 'Partial deprovisioned' },
+];
+
+const STATUS_META = {
+  success: { label: 'Deprovisioned', tone: 'ok' },
+  failed: { label: 'Not deprovisioned', tone: 'hot' },
+  partial: { label: 'Partial deprovisioned', tone: 'warn' },
+};
+
+const identityById = Object.fromEntries(identities.map(i => [i.id, i]));
+
+function originatedByName(identity) {
+  if (!identity) return 'No originator';
+  if (identity.originator) return identity.originator;
+  if (!identity.createdBy) return 'No originator';
+  return identityById[identity.createdBy]?.name || 'No originator';
+}
+
+/** Leaver humans with nested NHIs — status/counts come from jmlEvents (derived). */
+function buildLeaverRows() {
+  return jmlEvents
+    .filter(e => e.eventType === 'leaver')
+    .map(event => {
+      const human = identityById[event.identityId];
+      const nhis = (event.linkedNhis || []).map(nhi => {
+        const full = identityById[nhi.id];
+        return {
+          id: nhi.id,
+          name: nhi.name,
+          status: nhi.status,
+          owner: nhi.owner,
+          createdBy: nhi.createdBy,
+          originatedBy: originatedByName(full),
+          app: nhi.app || event.app,
+          liveAccess: nhi.liveAccess,
+          offboardStatus: nhi.offboardStatus,
+        };
+      });
+
+      return {
+        id: event.id,
+        identityId: event.identityId,
+        identityName: event.identityName,
+        originatedBy: originatedByName(human),
+        status: event.status,
+        triggeredAt: event.triggeredAt,
+        liveAccess: event.liveAccess,
+        app: event.app,
+        nhis,
+        openNhiCount: nhis.filter(n => n.offboardStatus !== 'success').length,
+      };
+    });
+}
 
 export default function IdentityLifecycle() {
-  const [eventFilter, setEventFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState('All');
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [expandedId, setExpandedId] = useState(null);
 
-  const filtered = jmlEvents.filter(e => eventFilter === 'All' || e.eventType === eventFilter);
+  const allRows = useMemo(() => buildLeaverRows(), []);
 
-  const jmlIcon = (event) => {
-    if (event.eventType === 'joiner') return { cls: 'jml-joiner', icon: 'users' };
-    if (event.eventType === 'mover') return { cls: 'jml-mover', icon: 'refresh' };
-    if (event.status === 'success' || event.status === 'partial') return { cls: 'jml-leaver-success', icon: 'user' };
-    return { cls: 'jml-leaver-failed', icon: 'alert' };
-  };
+  const stats = useMemo(() => {
+    const allNhis = allRows.flatMap(r => r.nhis);
+    return {
+      humans: allRows.length,
+      nhis: allNhis.length,
+      deprovisioned: allRows.filter(r => r.status === 'success').length
+        + allNhis.filter(n => n.offboardStatus === 'success').length,
+      notDeprovisioned: allRows.filter(r => r.status === 'failed').length
+        + allNhis.filter(n => n.offboardStatus === 'failed').length,
+      partial: allRows.filter(r => r.status === 'partial').length
+        + allNhis.filter(n => n.offboardStatus === 'partial').length,
+      orphaned: allNhis.filter(n => n.status === 'orphaned').length,
+    };
+  }, [allRows]);
 
-  const statusText = {
-    success: { label: 'Deprovisioned', color: 'var(--color-desirable)' },
-    failed: { label: 'Deprovisioning failed', color: 'var(--color-hop)' },
-    partial: { label: 'Partial deprovision', color: 'var(--color-undesirable)' },
+  const rows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return allRows.filter(r => {
+      if (statusFilter !== 'All' && r.status !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        r.identityName.toLowerCase().includes(q)
+        || (r.originatedBy || '').toLowerCase().includes(q)
+        || (r.app || '').toLowerCase().includes(q)
+        || r.nhis.some(n => (
+          n.name.toLowerCase().includes(q)
+          || (n.originatedBy || '').toLowerCase().includes(q)
+        ))
+        || (STATUS_META[r.status]?.label || '').toLowerCase().includes(q)
+      );
+    });
+  }, [allRows, statusFilter, search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, search]);
+
+  const { rows: pageRows, page: safePage, pageCount } = paginateRows(
+    rows,
+    page,
+    TABLE_PAGE_SIZE,
+  );
+
+  const toggleExpand = (id) => {
+    setExpandedId(prev => (prev === id ? null : id));
   };
 
   return (
-    <div className="page-content">
-      <div className="page-header">
-        <div className="page-title">Identity lifecycle</div>
-        <div className="page-subtitle">Joiner, mover, and leaver events — deprovisioning sweep status and orphaned account detection</div>
+    <div className="page-content lc-page">
+      <div className="page-header lc-page-header">
+        <div className="page-header-copy">
+          <h1 className="page-title">Identity lifecycle</h1>
+          <p className="page-subtitle">
+            Leaver offboarding for humans and the service accounts they created or own.
+          </p>
+        </div>
       </div>
 
-      {/* Orphaned accounts — always visible */}
-      <div style={{ background: orphanedAccounts.length > 0 ? 'rgba(226,75,74,0.05)' : 'rgba(99,153,34,0.05)',
-        border: `1px solid ${orphanedAccounts.length > 0 ? 'rgba(226,75,74,0.2)' : 'rgba(99,153,34,0.2)'}`,
-        borderRadius: 12, padding: 20, marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: orphanedAccounts.length > 0 ? 16 : 0 }}>
-          <div className={`orphan-badge ${orphanedAccounts.length === 0 ? 'orphan-badge-zero' : ''}`} style={{ fontSize: 14, padding: '6px 14px' }}>
-            <Icon name="alert" size={14} />
-            {orphanedAccounts.length} orphaned {orphanedAccounts.length === 1 ? 'account' : 'accounts'}
-          </div>
-          <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>
-            {orphanedAccounts.length === 0
-              ? 'All leaver sweep operations completed successfully.'
-              : 'Leaver sweep failed — live access remains after departure.'}
-          </div>
+      <div className="lc-stats">
+        <div className="lc-stat">
+          <div className="lc-stat-value">{stats.humans}</div>
+          <div className="lc-stat-label">Leavers</div>
+          <div className="lc-stat-meta">{stats.nhis} linked NHIs</div>
         </div>
-        {orphanedAccounts.length > 0 && (
-          <div className="table-wrapper">
-            <table className="data-table">
-              <thead>
+        <div className="lc-stat">
+          <div className="lc-stat-value lc-stat-value--ok">{stats.deprovisioned}</div>
+          <div className="lc-stat-label">Deprovisioned</div>
+          <div className="lc-stat-meta">Access removed</div>
+        </div>
+        <div className="lc-stat">
+          <div className="lc-stat-value lc-stat-value--hot">{stats.notDeprovisioned}</div>
+          <div className="lc-stat-label">Not deprovisioned</div>
+          <div className="lc-stat-meta">Still live in cloud</div>
+        </div>
+        <div className="lc-stat">
+          <div className="lc-stat-value lc-stat-value--warn">{stats.partial}</div>
+          <div className="lc-stat-label">Partial deprovisioned</div>
+          <div className="lc-stat-meta">Residual access left</div>
+        </div>
+        <div className="lc-stat">
+          <div className="lc-stat-value lc-stat-value--hot">{stats.orphaned}</div>
+          <div className="lc-stat-label">Orphaned NHIs</div>
+          <div className="lc-stat-meta">No owner remaining</div>
+        </div>
+      </div>
+
+      <div className="lc-toolbar" role="search">
+        <label className={`lc-search${search.trim() ? ' is-filled' : ''}`}>
+          <Icon name="search" size={14} color="var(--text-tertiary)" />
+          <input
+            placeholder="Search leaver, originator, or service account…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            aria-label="Search offboarding"
+          />
+        </label>
+
+        <div className="lc-status-seg" role="group" aria-label="Deprovisioning status">
+          {STATUS_FILTERS.map(f => (
+            <button
+              key={f.key}
+              type="button"
+              className={`lc-status-btn${statusFilter === f.key ? ' is-active' : ''}`}
+              onClick={() => setStatusFilter(f.key)}
+            >
+              {f.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="lc-list-count">
+          {rows.length} leaver{rows.length === 1 ? '' : 's'}
+        </div>
+      </div>
+
+      <div className="lc-table-shell">
+        <div className="lc-table-scroll">
+          <table className="data-table lc-table lc-table--events">
+            <thead>
+              <tr>
+                <th aria-hidden="true" className="lc-col-expand" />
+                <th>Identity</th>
+                <th>Originated by</th>
+                <th>Service accounts</th>
+                <th>Status</th>
+                <th>Triggered</th>
+                <th>Live access</th>
+                <th>App</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pageRows.length === 0 && (
                 <tr>
-                  <th>Account</th>
-                  <th>Type</th>
-                  <th>Created by</th>
-                  <th>Last active</th>
-                  <th>Credential age</th>
-                  <th>Owner</th>
-                  <th>Apps</th>
+                  <td colSpan={8} className="lc-table-empty">No leavers match</td>
                 </tr>
-              </thead>
-              <tbody>
-                {orphanedAccounts.map(acct => (
-                  <tr key={acct.id} className="row-hop">
-                    <td style={{ fontWeight: 600 }}>{acct.name}</td>
-                    <td><TypeChip type={acct.type} /></td>
-                    <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                      {identities.find(i => i.id === acct.createdBy)?.name || acct.createdBy}
-                    </td>
-                    <td style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{acct.lastActive}</td>
-                    <td>
-                      <span style={{ color: 'var(--color-hop)', fontWeight: 700 }}>{acct.credentialAge} days</span>
-                    </td>
-                    <td>
-                      <span style={{ color: 'var(--color-hop)', fontWeight: 600, fontSize: 12 }}>No owner</span>
-                    </td>
-                    <td style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{acct.apps?.join(', ')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Summary stats */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        {[
-          { label: 'Total JML events', value: jmlEvents.length, color: 'var(--text-primary)' },
-          { label: 'Joiners', value: jmlEvents.filter(e => e.eventType === 'joiner').length, color: 'var(--color-desirable)' },
-          { label: 'Movers', value: jmlEvents.filter(e => e.eventType === 'mover').length, color: 'var(--color-indirect)' },
-          { label: 'Leavers', value: jmlEvents.filter(e => e.eventType === 'leaver').length, color: 'var(--text-secondary)' },
-          { label: 'Failed deprovision', value: jmlEvents.filter(e => e.status === 'failed').length, color: 'var(--color-hop)' },
-        ].map(s => (
-          <div key={s.label} className="card" style={{ flex: '1 1 100px' }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{s.label}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Event filter */}
-      <div className="filter-bar" style={{ marginBottom: 16 }}>
-        {['All', 'joiner', 'mover', 'leaver'].map(t => (
-          <button key={t} className={`filter-chip ${eventFilter === t ? 'active' : ''}`} onClick={() => setEventFilter(t)}>
-            {t === 'All' ? 'All events' : t.charAt(0).toUpperCase() + t.slice(1) + 's'}
-          </button>
-        ))}
-      </div>
-
-      {/* JML event feed */}
-      <div className="card">
-        <div className="section-title">JML event feed</div>
-        <div style={{ marginTop: 4 }}>
-          {filtered.map(event => {
-            const { cls, icon } = jmlIcon(event);
-            const status = statusText[event.status] || {};
-            return (
-              <div key={event.id} className="jml-event">
-                <div className={`jml-icon ${cls}`}>
-                  <Icon name={icon} size={15} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                    <span style={{ fontWeight: 600, fontSize: 13 }}>{event.identityName}</span>
-                    <span className="fact-pill" style={{ textTransform: 'capitalize' }}>{event.eventType}</span>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: status.color }}>{status.label}</span>
-                  </div>
-                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 4 }}>
-                    Triggered {event.triggeredAt}
-                    {event.deprovisionedAt && ` · Deprovisioned ${event.deprovisionedAt}`}
-                  </div>
-                  {event.liveAccess > 0 && (
-                    <div style={{ fontSize: 12, color: event.status === 'failed' ? 'var(--color-hop)' : 'var(--text-secondary)', fontWeight: event.status === 'failed' ? 600 : 400 }}>
-                      {event.liveAccess} live access path{event.liveAccess !== 1 ? 's' : ''} remaining
-                    </div>
-                  )}
-                  {event.orphanedAccounts?.length > 0 && (
-                    <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {event.orphanedAccounts.map(acct => (
-                        <span key={acct} className="badge badge-hop" style={{ fontSize: 10 }}>{acct}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+              )}
+              {pageRows.map(row => {
+                const status = STATUS_META[row.status] || { label: row.status, tone: 'muted' };
+                const open = expandedId === row.id;
+                return (
+                  <Fragment key={row.id}>
+                    <tr
+                      className={`lc-leaver-row${open ? ' is-open' : ''}`}
+                      onClick={() => toggleExpand(row.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          toggleExpand(row.id);
+                        }
+                      }}
+                      tabIndex={0}
+                      aria-expanded={open}
+                    >
+                      <td className="lc-col-expand">
+                        <span className={`lc-chevron${open ? ' is-open' : ''}`} aria-hidden="true">
+                          <Icon name="chevronRight" size={14} />
+                        </span>
+                      </td>
+                      <td>
+                        <span className="lc-id-name" title={row.identityName}>{row.identityName}</span>
+                      </td>
+                      <td>
+                        <span
+                          className={row.originatedBy === 'No originator' ? 'lc-muted' : 'lc-originator'}
+                          title={row.originatedBy}
+                        >
+                          {row.originatedBy}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`lc-nhi-chip${row.openNhiCount > 0 ? ' is-hot' : ''}`}>
+                          {row.nhis.length}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`lc-status-pill lc-status-pill--${status.tone}`}>
+                          {status.label}
+                        </span>
+                      </td>
+                      <td className="lc-muted">{row.triggeredAt}</td>
+                      <td className={row.liveAccess > 0 && row.status !== 'success' ? 'lc-hot' : 'lc-num'}>
+                        {row.liveAccess}
+                      </td>
+                      <td className="lc-muted" title={row.app || undefined}>{row.app || '—'}</td>
+                    </tr>
+                    {open && (
+                      <tr className="lc-nhi-dropdown-row">
+                        <td colSpan={8}>
+                          <div className="lc-nhi-dropdown" onClick={(e) => e.stopPropagation()}>
+                            <div className="lc-nhi-dropdown-head">
+                              <div className="lc-nhi-dropdown-title">
+                                Service accounts for {row.identityName}
+                              </div>
+                              <div className="lc-nhi-dropdown-meta">
+                                Created by or attached to this leaver
+                              </div>
+                            </div>
+                            {row.nhis.length === 0 ? (
+                              <div className="lc-nhi-empty">No linked service accounts</div>
+                            ) : (
+                              <div className="lc-nhi-grid-scroll">
+                                <div className="lc-nhi-grid">
+                                  <div className="lc-nhi-grid-head" aria-hidden="true">
+                                    <span>Service account</span>
+                                    <span>Originated by</span>
+                                    <span>Status</span>
+                                    <span>Live access</span>
+                                    <span>App</span>
+                                  </div>
+                                  {row.nhis.map(nhi => {
+                                    const nhiStatus = STATUS_META[nhi.offboardStatus]
+                                      || { label: nhi.offboardStatus, tone: 'muted' };
+                                    return (
+                                      <div key={nhi.id} className="lc-nhi-grid-row">
+                                        <span>
+                                          <span className="lc-id-name" title={nhi.name}>{nhi.name}</span>
+                                          {nhi.status === 'orphaned' && (
+                                            <span className="lc-id-hint">Orphaned NHI</span>
+                                          )}
+                                        </span>
+                                        <span className="lc-originator" title={nhi.originatedBy}>
+                                          {nhi.originatedBy}
+                                        </span>
+                                        <span>
+                                          <span className={`lc-status-pill lc-status-pill--${nhiStatus.tone}`}>
+                                            {nhiStatus.label}
+                                          </span>
+                                        </span>
+                                        <span className={nhi.liveAccess > 0 && nhi.offboardStatus !== 'success' ? 'lc-hot' : 'lc-num'}>
+                                          {nhi.liveAccess}
+                                        </span>
+                                        <span className="lc-muted">{nhi.app || '—'}</span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
+
+      <TablePager
+        page={safePage}
+        pageCount={pageCount}
+        onPageChange={setPage}
+        total={rows.length}
+        noun="leavers"
+      />
     </div>
   );
 }

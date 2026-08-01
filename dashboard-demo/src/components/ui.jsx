@@ -529,18 +529,63 @@ export function StepFunnel({
   );
 }
 
+/** Slice a list for table pagination. */
+export function paginateRows(items, page, pageSize = 10) {
+  const list = Array.isArray(items) ? items : [];
+  const pageCount = Math.max(1, Math.ceil(list.length / pageSize));
+  const safePage = Math.min(Math.max(1, page || 1), pageCount);
+  const start = (safePage - 1) * pageSize;
+  return {
+    rows: list.slice(start, start + pageSize),
+    page: safePage,
+    pageCount,
+    total: list.length,
+  };
+}
+
+/** Previous / next pager for data tables. Hidden when only one page. */
+export function TablePager({ page, pageCount, onPageChange, total, noun = 'rows' }) {
+  if (!pageCount || pageCount <= 1) return null;
+  return (
+    <div className="table-pager" role="navigation" aria-label="Table pagination">
+      <button
+        type="button"
+        className="table-pager-btn"
+        disabled={page <= 1}
+        onClick={() => onPageChange(Math.max(1, page - 1))}
+      >
+        Previous
+      </button>
+      <span className="table-pager-label">
+        Page {page} of {pageCount}
+        {typeof total === 'number' ? ` · ${total} ${noun}` : ''}
+      </span>
+      <button
+        type="button"
+        className="table-pager-btn"
+        disabled={page >= pageCount}
+        onClick={() => onPageChange(Math.min(pageCount, page + 1))}
+      >
+        Next
+      </button>
+    </div>
+  );
+}
+
 // Panel overlay
-export function SlidePanel({ title, subtitle, onClose, children }) {
+export function SlidePanel({ title, subtitle, onClose, children, size = 'default' }) {
   return (
     <>
       <div className="panel-overlay" onClick={onClose} />
-      <div className="slide-panel">
+      <div className={`slide-panel${size === 'wide' ? ' slide-panel--wide' : ''}`}>
         <div className="panel-header">
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>{title}</div>
-            {subtitle && <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>{subtitle}</div>}
+          <div className="panel-header-copy">
+            <div className="panel-title">{title}</div>
+            {subtitle && <div className="panel-subtitle">{subtitle}</div>}
           </div>
-          <button className="panel-close" onClick={onClose}><Icon name="x" size={14} /></button>
+          <button type="button" className="panel-close" onClick={onClose} aria-label="Close">
+            <Icon name="x" size={14} />
+          </button>
         </div>
         <div className="panel-body">{children}</div>
       </div>
@@ -553,25 +598,41 @@ export function HopChain({ steps }) {
   if (!steps?.length) return null;
   return (
     <div className="hop-chain">
-      {steps.map((s, i) => (
-        <div key={i} className="hop-step">
-          <div className="hop-step-line">
-            <div className="hop-step-dot" />
-            {i < steps.length - 1 && <div className="hop-step-connector" />}
+      {steps.map((s, i) => {
+        const to = s.to || s.displayTo || s.from;
+        const from = s.from || s.displayFrom;
+        return (
+          <div key={i} className="hop-step">
+            <div className="hop-step-line">
+              <div className="hop-step-index">{s.step || i + 1}</div>
+              {i < steps.length - 1 && <div className="hop-step-connector" />}
+            </div>
+            <div className="hop-step-content">
+              <div className="hop-step-label" title={to}>{to}</div>
+              {from && s.to && (
+                <div className="hop-step-from">from <span title={from}>{from}</span></div>
+              )}
+              <div className="hop-step-mechanism">{s.mechanism}</div>
+              <div className="hop-step-meta">
+                {s.api && <span className="hop-step-api">{s.api}</span>}
+                {s.resourceArn && (
+                  <span className="hop-step-api" title={s.resourceArn}>{s.resourceArn}</span>
+                )}
+                {s.resourceName && !s.resourceArn && (
+                  <span className="hop-step-api" title={s.resourceName}>{s.resourceName}</span>
+                )}
+                {s.timestamp && <span className="hop-step-time">{s.timestamp}</span>}
+              </div>
+            </div>
           </div>
-          <div className="hop-step-content">
-            <div className="hop-step-label">{s.to}</div>
-            <div className="hop-step-mechanism">{s.mechanism}</div>
-            <div className="hop-step-time">{s.timestamp}</div>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
 // Tree node
-export function TreeNode({ node }) {
+export function TreeNode({ node, onSelect, parent = null, depth = 0 }) {
   const [open, setOpen] = useState(true);
   const hasChildren = node.children?.length > 0;
   const typeIcon = { human: 'user', service: 'server', system: 'shield' };
@@ -579,23 +640,52 @@ export function TreeNode({ node }) {
 
   return (
     <div className="tree-node">
-      <div className="tree-node-content" onClick={() => setOpen(!open)}>
-        {hasChildren
-          ? <Icon name={open ? 'chevronDown' : 'chevronRight'} size={12} color="var(--text-tertiary)" />
-          : <span style={{ width: 12 }} />}
-        <Icon name={typeIcon[node.type] || 'user'} size={13} color={statusColor} />
-        <span style={{ color: statusColor, fontWeight: node.status === 'orphaned' || node.status === 'departed' ? 600 : 400 }}>
-          {node.name}
-        </span>
-        {(node.status === 'orphaned' || node.status === 'departed') && (
-          <span className={`badge badge-${node.status === 'orphaned' ? 'hop' : 'unacceptable'}`} style={{ fontSize: 10, padding: '1px 5px' }}>
-            {node.status}
+      <div className="tree-node-content">
+        <button
+          type="button"
+          className="tree-node-toggle"
+          aria-label={hasChildren ? (open ? 'Collapse' : 'Expand') : 'Leaf'}
+          onClick={e => {
+            e.stopPropagation();
+            if (hasChildren) setOpen(v => !v);
+          }}
+        >
+          {hasChildren
+            ? <Icon name={open ? 'chevronDown' : 'chevronRight'} size={12} color="var(--text-tertiary)" />
+            : <span style={{ width: 12 }} />}
+        </button>
+        <button
+          type="button"
+          className="tree-node-main"
+          onClick={() => onSelect?.({
+            ...node,
+            depth,
+            parentId: parent?.id || null,
+            parentName: parent?.name || null,
+          })}
+        >
+          <Icon name={typeIcon[node.type] || 'user'} size={13} color={statusColor} />
+          <span style={{ color: statusColor, fontWeight: node.status === 'orphaned' || node.status === 'departed' ? 600 : 400 }}>
+            {node.name}
           </span>
-        )}
+          {(node.status === 'orphaned' || node.status === 'departed') && (
+            <span className={`badge badge-${node.status === 'orphaned' ? 'hop' : 'unacceptable'}`} style={{ fontSize: 10, padding: '1px 5px' }}>
+              {node.status}
+            </span>
+          )}
+        </button>
       </div>
       {open && hasChildren && (
         <div className="tree-children">
-          {node.children.map(child => <TreeNode key={child.id} node={child} />)}
+          {node.children.map(child => (
+            <TreeNode
+              key={child.id}
+              node={child}
+              parent={node}
+              depth={depth + 1}
+              onSelect={onSelect}
+            />
+          ))}
         </div>
       )}
     </div>

@@ -4,10 +4,9 @@ import Dashboard from './components/Dashboard';
 import AccessDiscovery from './components/AccessDiscovery';
 import DelegationChain from './components/DelegationChain';
 import ExposureMap from './components/ExposureMap';
+import ExposureIdentity from './components/ExposureIdentity';
 import RiskProfiles from './components/RiskProfiles';
-import UnifiedImpact from './components/UnifiedImpact';
 import ThreatProfile from './components/ThreatProfile';
-import IdentityOwnership from './components/IdentityOwnership';
 import AccessReviews from './components/AccessReviews';
 import IdentityLifecycle from './components/IdentityLifecycle';
 
@@ -17,22 +16,12 @@ const SIDE_NAV = [
   { path: '/delegation-chain', label: 'Delegation', icon: 'gitBranch' },
   { path: '/exposure-map', label: 'Exposure', icon: 'eye' },
   { path: '/risk-profiles', label: 'Risk', icon: 'activity' },
-  { path: '/unified-impact', label: 'Impact', icon: 'zap' },
   { path: '/threat-profile', label: 'Threat', icon: 'target' },
-  { path: '/identity-ownership', label: 'Ownership', icon: 'lock' },
   { path: '/access-reviews', label: 'Reviews', icon: 'clipboard' },
   { path: '/identity-lifecycle', label: 'Lifecycle', icon: 'users' },
 ];
 
-const TOP_SECTIONS = [
-  { id: 'trace', label: 'Traceability', icon: 'target', paths: ['/', '/access-discovery', '/delegation-chain', '/exposure-map', '/risk-profiles', '/unified-impact', '/threat-profile'] },
-  { id: 'account', label: 'Accountability', icon: 'lock', paths: ['/identity-ownership'] },
-  { id: 'gov', label: 'Governance', icon: 'clipboard', paths: ['/access-reviews', '/identity-lifecycle'] },
-];
-
-function TopStrip({ location, navigate }) {
-  const activeSection = TOP_SECTIONS.find(s => s.paths.includes(location.pathname))?.id || 'trace';
-
+function TopStrip() {
   return (
     <header className="top-strip">
       <div className="top-strip-left">
@@ -46,38 +35,14 @@ function TopStrip({ location, navigate }) {
           <span className="top-strip-brand-name">unosecur</span>
         </div>
 
-        <div className="top-strip-divider" />
-
-        <button type="button" className="top-strip-nav-item active" onClick={() => navigate('/')}>
-          <Icon name="layers" size={17} />
-          <span>ITAG</span>
-        </button>
-
-        <div className="top-strip-divider" />
-
-        <nav className="top-strip-nav">
-          {TOP_SECTIONS.map((item, i) => (
-            <div key={item.id} className="top-strip-nav-wrap">
-              {i > 0 && <div className="top-strip-divider" />}
-              <button
-                type="button"
-                className={`top-strip-nav-item ${activeSection === item.id ? 'active' : ''}`}
-                onClick={() => navigate(item.paths[0])}
-              >
-                <Icon name={item.icon} size={17} />
-                <span>{item.label}</span>
-              </button>
-            </div>
-          ))}
-        </nav>
-      </div>
-
-      <div className="top-strip-right">
-        <button type="button" className="top-strip-tenant">
+        <button type="button" className="top-strip-tenant" aria-label="Select tenant">
           <span className="top-strip-tenant-dot" />
           Unosecur
           <Icon name="chevronDown" size={14} />
         </button>
+      </div>
+
+      <div className="top-strip-right">
         <button type="button" className="top-strip-icon-btn" title="Documentation">
           <Icon name="book" size={18} />
         </button>
@@ -122,7 +87,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <TopStrip location={location} navigate={navigate} />
+      <TopStrip />
       <div className="app-body">
         <SideStrip location={location} navigate={navigate} />
         <div className="main-area">
@@ -131,10 +96,9 @@ export default function App() {
             <Route path="/access-discovery" element={<AccessDiscovery />} />
             <Route path="/delegation-chain" element={<DelegationChain />} />
             <Route path="/exposure-map" element={<ExposureMap />} />
+            <Route path="/exposure-map/:identityId" element={<ExposureIdentity />} />
             <Route path="/risk-profiles" element={<RiskProfiles />} />
-            <Route path="/unified-impact" element={<UnifiedImpact />} />
             <Route path="/threat-profile" element={<ThreatProfile />} />
-            <Route path="/identity-ownership" element={<IdentityOwnership />} />
             <Route path="/access-reviews" element={<AccessReviews />} />
             <Route path="/identity-lifecycle" element={<IdentityLifecycle />} />
           </Routes>

@@ -151,3 +151,70 @@ export const newColors = {
 };
 
 export const color = { ...baseColors, ...oldColors, ...newColors };
+
+/**
+ * Delegation-chain graph tones — keep in sync with CSS `--dc-*` tokens in index.css.
+ * Used by SVG markers / edge strokes in DelegationGraph.
+ */
+export const chainToneColors = {
+  default: {
+    stroke: color['blue.300'],
+    arrow: color['blue.400'],
+    accent: color['grey.600'],
+    glow: 'rgba(2, 93, 253, 0.16)',
+  },
+  human: {
+    stroke: color['blue.400'],
+    arrow: color['blue.600'],
+    accent: color['blue.600'],
+    glow: 'rgba(2, 93, 253, 0.2)',
+  },
+  service: {
+    stroke: color['teal.600'],
+    arrow: color['teal.600'],
+    accent: color['teal.600'],
+    glow: 'rgba(48, 124, 156, 0.22)',
+  },
+  compromised: {
+    stroke: color['red.500'],
+    arrow: color['red.600'],
+    accent: color['red.500'],
+    glow: 'rgba(231, 46, 33, 0.26)',
+  },
+  orphaned: {
+    stroke: color['red.600'],
+    arrow: color['red.600'],
+    accent: color['red.600'],
+    glow: 'rgba(204, 36, 24, 0.24)',
+  },
+  departed: {
+    stroke: color['yellow.500'],
+    arrow: color['yellow.700'],
+    accent: color['yellow.500'],
+    glow: 'rgba(248, 160, 18, 0.24)',
+  },
+  'after-departure': {
+    stroke: color['violet.400'],
+    arrow: color['violet.600'],
+    accent: color['violet.500'],
+    glow: 'rgba(124, 58, 237, 0.22)',
+  },
+  'no-originator': {
+    stroke: color['grey.500'],
+    arrow: color['grey.600'],
+    accent: color['grey.600'],
+    glow: 'rgba(82, 92, 116, 0.16)',
+  },
+};
+
+/** CSS custom-property names for each chain tone (SVG can use var(--dc-…)). */
+export const chainToneCssVars = {
+  default: { stroke: 'var(--dc-default-edge)', accent: 'var(--dc-hub)' },
+  human: { stroke: 'var(--dc-user)', accent: 'var(--dc-user)' },
+  service: { stroke: 'var(--dc-nhi)', accent: 'var(--dc-nhi)' },
+  compromised: { stroke: 'var(--dc-compromised)', accent: 'var(--dc-compromised)' },
+  orphaned: { stroke: 'var(--dc-orphaned)', accent: 'var(--dc-orphaned)' },
+  departed: { stroke: 'var(--dc-departed)', accent: 'var(--dc-departed)' },
+  'after-departure': { stroke: 'var(--dc-after)', accent: 'var(--dc-after)' },
+  'no-originator': { stroke: 'var(--dc-hub)', accent: 'var(--dc-hub)' },
+};
