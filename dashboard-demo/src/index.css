@@ -7445,19 +7445,17 @@ button.ad-filters-count--reset:hover {
 .lc-table--events th.lc-col-expand,
 .lc-table--events td.lc-col-expand { width: 44px; padding-left: 14px; padding-right: 0; }
 .lc-table--events th:nth-child(2),
-.lc-table--events td:nth-child(2) { width: 17%; }
+.lc-table--events td:nth-child(2) { width: 20%; }
 .lc-table--events th:nth-child(3),
-.lc-table--events td:nth-child(3) { width: 14%; }
+.lc-table--events td:nth-child(3) { width: 16%; }
 .lc-table--events th:nth-child(4),
-.lc-table--events td:nth-child(4) { width: 13%; }
+.lc-table--events td:nth-child(4) { width: 15%; }
 .lc-table--events th:nth-child(5),
-.lc-table--events td:nth-child(5) { width: 18%; }
+.lc-table--events td:nth-child(5) { width: 21%; }
 .lc-table--events th:nth-child(6),
-.lc-table--events td:nth-child(6) { width: 12%; }
+.lc-table--events td:nth-child(6) { width: 14%; }
 .lc-table--events th:nth-child(7),
-.lc-table--events td:nth-child(7) { width: 10%; }
-.lc-table--events th:nth-child(8),
-.lc-table--events td:nth-child(8) { width: 12%; }
+.lc-table--events td:nth-child(7) { width: 14%; }
 .lc-table--events tbody td {
   padding-top: 14px;
   padding-bottom: 14px;
@@ -7588,7 +7586,7 @@ button.ad-filters-count--reset:hover {
 .lc-nhi-grid-head,
 .lc-nhi-grid-row {
   display: grid;
-  grid-template-columns: minmax(160px, 1.6fr) minmax(120px, 1.2fr) minmax(140px, 1.3fr) 88px minmax(90px, 0.9fr);
+  grid-template-columns: minmax(160px, 1.6fr) minmax(120px, 1.2fr) minmax(140px, 1.3fr) minmax(90px, 0.9fr);
   gap: 10px;
   align-items: center;
   padding: 10px 12px;
