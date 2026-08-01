@@ -80,7 +80,7 @@ function IdentityOverview({ navigate }) {
       value: compromisedUsers,
       accent: '#E72E21',
       valueColor: '#E72E21',
-      to: '/threat-profile',
+      to: '/risk-profiles',
       icon: <FabricStatIcon kind="compromised" />,
     },
     {

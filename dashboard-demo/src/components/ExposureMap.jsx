@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Icon, TypeChip, SeverityBadge, riskColor, TablePager, paginateRows } from './ui';
+import {
+  FilterSelect,
+  Icon,
+  TypeChip,
+  SeverityBadge,
+  riskColor,
+  TablePager,
+  paginateRows,
+} from './ui';
 import {
   CLOUD_PROVIDERS,
   fetchCloudExposureInventory,
@@ -187,19 +195,20 @@ export default function ExposureMap() {
         </div>
 
         {cloudAccounts.length > 1 && (
-          <label className="em-account-filter">
-            <span className="em-account-filter-k">Account</span>
-            <select
-              value={accountKey}
-              onChange={e => setAccount(e.target.value)}
-              aria-label={`Filter ${cloud} account`}
-            >
-              <option value="all">All {cloud} accounts</option>
-              {cloudAccounts.map(a => (
-                <option key={a.id} value={a.id}>{a.shortLabel || a.label}</option>
-              ))}
-            </select>
-          </label>
+          <FilterSelect
+            label="Account"
+            value={accountKey}
+            onChange={setAccount}
+            ariaLabel={`Filter ${cloud} account`}
+            className="ui-filter-select--account"
+            options={[
+              { value: 'all', label: `All ${cloud} accounts` },
+              ...cloudAccounts.map(account => ({
+                value: account.id,
+                label: account.shortLabel || account.label,
+              })),
+            ]}
+          />
         )}
 
         <div className="em-list-count">

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  FilterSelect,
   Icon,
   AccessBadge,
   SeverityBadge,
@@ -115,18 +116,19 @@ function ReviewAssignmentPanel({ item, onClose, decisionBadge, onApprove, onRevo
         </div>
 
         <div className="ar-panel-toolbar">
-          <label className="ar-campaign-select">
-            <select
-              value={connectorFilter}
-              onChange={e => setConnectorFilter(e.target.value)}
-              aria-label="Filter by connector"
-            >
-              <option value="all">All connectors</option>
-              {allConnectors.map(connector => (
-                <option key={connector} value={connector}>{connector}</option>
-              ))}
-            </select>
-          </label>
+          <FilterSelect
+            value={connectorFilter}
+            onChange={setConnectorFilter}
+            ariaLabel="Filter by connector"
+            className="ui-filter-select--wide"
+            options={[
+              { value: 'all', label: 'All connectors' },
+              ...allConnectors.map(connector => ({
+                value: connector,
+                label: connector,
+              })),
+            ]}
+          />
           <div className="ar-panel-count">
             {detail.grantCount} grant{detail.grantCount === 1 ? '' : 's'}
           </div>

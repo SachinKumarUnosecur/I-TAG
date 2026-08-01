@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
 
 // Icons (inline SVG helpers)
 export function Icon({ name, size = 16, color = 'currentColor' }) {
@@ -44,6 +43,102 @@ export function Icon({ name, size = 16, color = 'currentColor' }) {
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       {icons[name] || null}
     </svg>
+  );
+}
+
+export function FilterSelect({
+  value,
+  options,
+  onChange,
+  label,
+  ariaLabel = label || 'Select filter',
+  className = '',
+  align = 'left',
+}) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const selected = options.find(option => option.value === value) || options[0];
+  const groups = [];
+
+  options.forEach(option => {
+    const groupName = option.group || '';
+    let group = groups.find(item => item.name === groupName);
+    if (!group) {
+      group = { name: groupName, options: [] };
+      groups.push(group);
+    }
+    group.options.push(option);
+  });
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const closeOnOutsideClick = event => {
+      if (rootRef.current && !rootRef.current.contains(event.target)) setOpen(false);
+    };
+    const closeOnEscape = event => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+        rootRef.current?.querySelector('.ui-filter-select-trigger')?.focus();
+      }
+    };
+
+    document.addEventListener('mousedown', closeOnOutsideClick);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [open]);
+
+  return (
+    <div
+      className={`ui-filter-select${open ? ' is-open' : ''}${className ? ` ${className}` : ''}`}
+      ref={rootRef}
+    >
+      <button
+        type="button"
+        className="ui-filter-select-trigger"
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen(current => !current)}
+      >
+        {label && <span className="ui-filter-select-key">{label}</span>}
+        <span className="ui-filter-select-value">{selected?.label}</span>
+        <Icon name="chevronDown" size={12} />
+      </button>
+
+      {open && (
+        <div
+          className={`ui-filter-select-panel is-${align}`}
+          role="listbox"
+          aria-label={ariaLabel}
+        >
+          {groups.map(group => (
+            <div className="ui-filter-select-group" key={group.name || 'options'}>
+              {group.name && <div className="ui-filter-select-group-label">{group.name}</div>}
+              {group.options.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={option.value === value}
+                  className={`ui-filter-select-option${option.value === value ? ' is-selected' : ''}`}
+                  onClick={() => {
+                    onChange(option.value);
+                    setOpen(false);
+                  }}
+                >
+                  <span>{option.label}</span>
+                  {option.value === value && <Icon name="check" size={13} />}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

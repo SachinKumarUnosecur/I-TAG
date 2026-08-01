@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Icon, SlidePanel, HopChain, TablePager, paginateRows } from './ui';
+import { FilterSelect, Icon, SlidePanel, HopChain, TablePager, paginateRows } from './ui';
 import { fetchAccessDiscoveryFromSources, pathMatchesSource } from '../data/accessDiscoveryApi';
 
 const ALL = 'All';
@@ -650,36 +650,34 @@ export default function AccessDiscovery() {
           ))}
         </div>
 
-        <div className="ad-filters-select ad-filters-select--wide">
-          <select
-            aria-label="Filters"
-            value={filtersDropdown}
-            onChange={e => setFiltersDropdown(e.target.value)}
-          >
-            <option value={ALL}>Filters</option>
-            <option value={FILTER_ATTENTION}>
-              Needs attention ({summary.needAttention})
-            </option>
-            <option value={FILTER_SHADOW}>
-              Has shadow access paths ({summary.hopPathCount})
-            </option>
-            <optgroup label="Cloud">
-              {systemOptions.clouds.map(p => (
-                <option key={p} value={p}>
-                  {p} ({summary.systemCounts[p] || 0})
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Connectors">
-              {systemOptions.systems.map(p => (
-                <option key={p} value={p}>
-                  {p} ({summary.systemCounts[p] || 0})
-                </option>
-              ))}
-            </optgroup>
-          </select>
-          <Icon name="chevronDown" size={13} color="var(--text-tertiary)" />
-        </div>
+        <FilterSelect
+          value={filtersDropdown}
+          onChange={setFiltersDropdown}
+          ariaLabel="Filters"
+          className="ui-filter-select--wide"
+          align="right"
+          options={[
+            { value: ALL, label: 'Filters' },
+            {
+              value: FILTER_ATTENTION,
+              label: `Needs attention (${summary.needAttention})`,
+            },
+            {
+              value: FILTER_SHADOW,
+              label: `Has shadow access paths (${summary.hopPathCount})`,
+            },
+            ...systemOptions.clouds.map(provider => ({
+              value: provider,
+              label: `${provider} (${summary.systemCounts[provider] || 0})`,
+              group: 'Cloud',
+            })),
+            ...systemOptions.systems.map(provider => ({
+              value: provider,
+              label: `${provider} (${summary.systemCounts[provider] || 0})`,
+              group: 'Connectors',
+            })),
+          ]}
+        />
 
         {loading ? (
           <div className="ad-filters-count">…</div>

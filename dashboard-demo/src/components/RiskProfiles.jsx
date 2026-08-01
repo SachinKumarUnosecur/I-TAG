@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Icon, TypeChip, SeverityBadge, riskColor, SlidePanel, TablePager, paginateRows } from './ui';
+import {
+  FilterSelect,
+  Icon,
+  TypeChip,
+  SeverityBadge,
+  riskColor,
+  SlidePanel,
+  TablePager,
+  paginateRows,
+} from './ui';
 import {
   fetchIdentityIncidents,
   fetchIdentityRiskProfile,
@@ -297,19 +306,16 @@ export default function RiskProfiles() {
             </button>
           ))}
         </div>
-        <label className="rp-tactic-filter">
-          <span>Band</span>
-          <select
-            value={bandFilter}
-            onChange={e => setBandFilter(e.target.value)}
-            aria-label="Filter by risk band"
-          >
-            <option value="all">All bands</option>
-            {bands.map(b => (
-              <option key={b} value={b}>{b}</option>
-            ))}
-          </select>
-        </label>
+        <FilterSelect
+          label="Band"
+          value={bandFilter}
+          onChange={setBandFilter}
+          ariaLabel="Filter by risk band"
+          options={[
+            { value: 'all', label: 'All bands' },
+            ...bands.map(band => ({ value: band, label: band })),
+          ]}
+        />
         <div className="rp-list-count">
           {rows.length} identit{rows.length === 1 ? 'y' : 'ies'}
         </div>

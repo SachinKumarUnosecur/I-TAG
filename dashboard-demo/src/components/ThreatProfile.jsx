@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Icon, SeverityBadge, TablePager, paginateRows } from './ui';
+import { FilterSelect, Icon, SeverityBadge, TablePager, paginateRows } from './ui';
 import { fetchMitreFindings, listPtraceStages } from '../data/riskProfileApi';
 
 const FINDINGS_PAGE_SIZE = 10;
@@ -411,21 +411,20 @@ export default function ThreatProfile() {
               aria-label="Search findings"
             />
           </label>
-          <label className="tp-filter-select">
-            <span className="tp-filter-select-k">PTRACE</span>
-            <select
-              value={ptraceFilter}
-              onChange={e => setPtraceFilter(e.target.value)}
-              aria-label="Filter by PTRACE stage"
-            >
-              <option value="all">All stages</option>
-              {PTRACE_ORDER.map(letter => (
-                <option key={letter} value={letter}>
-                  {PTRACE_META[letter]?.full || PTRACE_META[letter]?.short || letter}
-                </option>
-              ))}
-            </select>
-          </label>
+          <FilterSelect
+            label="PTRACE"
+            value={ptraceFilter}
+            onChange={setPtraceFilter}
+            ariaLabel="Filter by PTRACE stage"
+            className="ui-filter-select--wide"
+            options={[
+              { value: 'all', label: 'All stages' },
+              ...PTRACE_ORDER.map(letter => ({
+                value: letter,
+                label: PTRACE_META[letter]?.full || PTRACE_META[letter]?.short || letter,
+              })),
+            ]}
+          />
           <div className="rp-status-seg" role="group" aria-label="Severity">
             <button
               type="button"
