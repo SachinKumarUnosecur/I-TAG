@@ -402,10 +402,10 @@ test('the snapshot comes from Access Discovery, not from this module clock', () 
 test('the summary publishes the gate before it publishes the ranking', () => {
   const summary = EXPOSURE.summary();
 
-  assert.equal(summary.scored, 106);
+  assert.equal(summary.scored, 110);
   assert.equal(summary.no_classified_permissions, 1);
-  assert.equal(summary.no_paths, 21);
-  assert.equal(summary.identities_scanned, 128);
+  assert.equal(summary.no_paths, 23);
+  assert.equal(summary.identities_scanned, 134);
   assert.equal(
     summary.scored + summary.no_classified_permissions + summary.no_paths,
     summary.identities_scanned,
@@ -413,10 +413,10 @@ test('the summary publishes the gate before it publishes the ranking', () => {
   );
 
   assert.deepEqual(summary.classification_completeness, {
-    classified: 80,
+    classified: 82,
     unclassified: 6,
-    total: 86,
-    ratio: 80 / 86,
+    total: 88,
+    ratio: 82 / 88,
   });
 
   /**
@@ -426,14 +426,21 @@ test('the summary publishes the gate before it publishes the ranking', () => {
    * than one member, and two are the release chain reaching `deploy:prod`. Whether
    * a band this size is still reviewable is a real question — research §7.2 leaves
    * it open — but it is a question about the estate, not about the arithmetic.
+   *
+   * `limited` gained two more when `seed/threat-coverage.ts` landed — Threat
+   * Profile's own beats 33/35, four and five non-sensitive direct grants each,
+   * neither near the `substantial` floor — and `minimal` gained the other two:
+   * beats 32/34 at one grant each. `no_paths` (not shown here; see `summary.no_paths`
+   * above) gained the two infrastructure roles those beats bind to, which hold
+   * nothing at all.
    */
   assert.deepEqual(
     summary.band_counts.map((entry) => [entry.band, entry.floor, entry.count]),
     [
       ['extensive', 75, 12],
       ['substantial', 50, 20],
-      ['limited', 25, 1],
-      ['minimal', 0, 73],
+      ['limited', 25, 3],
+      ['minimal', 0, 75],
     ],
     'the top band is a reviewable queue rather than a degenerate bucket',
   );
@@ -474,8 +481,8 @@ test('rows with no paths are hidden by default; rows with nothing assessed never
   const listed = EXPOSURE.list();
   const everything = EXPOSURE.list({ includeNoPaths: true });
 
-  assert.equal(listed.length, 107);
-  assert.equal(everything.length, 128);
+  assert.equal(listed.length, 111);
+  assert.equal(everything.length, 134);
   assert.deepEqual(listed.filter((row) => row.assessment.kind === 'no_paths'), []);
   assert.equal(
     listed.some((row) => row.identity_id === 'svc-partner-sync'),
@@ -483,13 +490,17 @@ test('rows with no paths are hidden by default; rows with nothing assessed never
     'beat 26 is on the landing table without a filter being touched',
   );
 
+  const noPaths = everything.filter((row) => row.assessment.kind === 'no_paths').map((row) => row.identity_id);
+
+  // `seed/threat-coverage.ts`'s two infrastructure roles hold nothing of their
+  // own by design (see that file's header) and are real, demoed rows — every
+  // other zero-path identity is an engine probe that never is.
   assert.deepEqual(
-    everything
-      .filter((row) => row.assessment.kind === 'no_paths')
-      .map((row) => row.identity_id.includes('-fixture-')),
-    Array.from({ length: 21 }, () => true),
-    'every zero-path identity is an engine probe, so the state is real but never demoed',
+    noPaths.filter((id) => !id.includes('-fixture-')).sort(),
+    ['role-integration-relay', 'role-vendor-relay'],
+    'the only non-probe, zero-path identities are the two roles those beats bind to',
   );
+  assert.equal(noPaths.length, 23);
 });
 
 /**
@@ -526,7 +537,7 @@ test('a filter on a score does not match a row that has not got one', () => {
     [],
     'min_score=0 is still a filter on a score, so the unscored are not swept in as zero',
   );
-  assert.equal(minimal.length, 106);
+  assert.equal(minimal.length, 110);
 
   /**
    * The three rota members tie at `S = 3.25`, so their relative order is decided by

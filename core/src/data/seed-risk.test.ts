@@ -201,7 +201,7 @@ test('beat 35 — the factors_firing >= 3 population is exactly these seven', ()
  * 127 rows, **42 identities sharing the single value 8**, and an empty Critical band. Five
  * buckets, one of which is a six-row queue, is the shape a reviewer can act on.
  */
-test('the factor-count distribution over the estate is {0:77, 1:27, 2:17, 3:6, 4:1}', () => {
+test('the factor-count distribution over the estate is {0:79, 1:31, 2:17, 3:6, 4:1}', () => {
   const distribution = new Map<number, number>();
   for (const entry of ROWS) {
     const count = entry.assessment.kind === 'findings' ? entry.assessment.factors_firing : 0;
@@ -209,22 +209,30 @@ test('the factor-count distribution over the estate is {0:77, 1:27, 2:17, 3:6, 4
   }
 
   assert.deepEqual([...distribution.entries()].sort((left, right) => left[0] - right[0]), [
-    [0, 77],
-    [1, 27],
+    [0, 79],
+    [1, 31],
     [2, 17],
     [3, 6],
     [4, 1],
   ]);
 });
 
-test('the level distribution is critical 20, high 8, medium 19, low 4 over 51 rows', () => {
+/**
+ * `seed/threat-coverage.ts` adds the estate's first two `low` rows: two identities
+ * unowned for less than the 14-day SLA, reaching nothing sensitive — the severity
+ * `ownership/severity.ts` L36 publishes for that shape and no other factor can
+ * produce (`risk/factors.ts` §5 step 1's remaining five are all `medium`+ when they
+ * fire at all). `medium` gains two of its own: a conditional-access policy edit that
+ * is neither an MFA removal nor a stale exception, `control_drift`'s fallback.
+ */
+test('the level distribution is critical 20, high 8, medium 21, low 6 over 55 rows', () => {
   assert.deepEqual(SUMMARY.by_worst_level, [
     { level: 'critical', count: 20 },
     { level: 'high', count: 8 },
-    { level: 'medium', count: 19 },
-    { level: 'low', count: 4 },
+    { level: 'medium', count: 21 },
+    { level: 'low', count: 6 },
   ]);
-  assert.equal(SUMMARY.with_findings, 51);
+  assert.equal(SUMMARY.with_findings, 55);
 });
 
 /**
@@ -264,35 +272,38 @@ test('svc-backup is the 90-day boundary case ITAG.md L342 seeded, and reads as c
  * none will. That is a scope statement, not a backlog item, and no product surveyed in §3.5
  * publishes the difference.
  */
-test('beat 36 — the factor coverage over 128 identities is exactly this', () => {
-  assert.equal(SUMMARY.scanned, 128);
+test('beat 36 — the factor coverage over 134 identities is exactly this', () => {
+  assert.equal(SUMMARY.scanned, 134);
   assert.deepEqual(SUMMARY.factor_coverage, [
-    { factor: 'hop_access', evaluated: 128, unavailable: 0, not_applicable: 0, findings: 12 },
-    { factor: 'exposure', evaluated: 127, unavailable: 1, not_applicable: 0, findings: 32 },
-    { factor: 'ownership', evaluated: 123, unavailable: 5, not_applicable: 0, findings: 25 },
-    { factor: 'control_drift', evaluated: 4, unavailable: 124, not_applicable: 0, findings: 4 },
-    { factor: 'grant_staleness', evaluated: 7, unavailable: 121, not_applicable: 0, findings: 7 },
-    { factor: 'review_staleness', evaluated: 14, unavailable: 0, not_applicable: 114, findings: 3 },
+    { factor: 'hop_access', evaluated: 134, unavailable: 0, not_applicable: 0, findings: 12 },
+    { factor: 'exposure', evaluated: 133, unavailable: 1, not_applicable: 0, findings: 32 },
+    { factor: 'ownership', evaluated: 129, unavailable: 5, not_applicable: 0, findings: 27 },
+    { factor: 'control_drift', evaluated: 6, unavailable: 128, not_applicable: 0, findings: 6 },
+    { factor: 'grant_staleness', evaluated: 7, unavailable: 127, not_applicable: 0, findings: 7 },
+    { factor: 'review_staleness', evaluated: 14, unavailable: 0, not_applicable: 120, findings: 3 },
   ]);
 });
 
 /**
- * Seventy-seven identities report nothing, and **not one of them is called clean**.
+ * Seventy-nine identities report nothing, and **not one of them is called clean**.
  *
  * This is the arm distinction paying for itself, and the number that would be a lie under the
  * source PRD's design: a badge on a diluted row lets it sort, and a composite would have put
- * these 77 in a 42-way tie at the value 8. Here they are `partially_evaluated` with the
- * missing factors named, because `control_drift` and `grant_staleness` have no data for them.
+ * these 79 in a many-way tie at the value 8. Here they are `partially_evaluated` with the
+ * missing factors named, because `control_drift` and `grant_staleness` have no data for them
+ * — which is also why `seed/threat-coverage.ts`'s two infrastructure roles land here rather
+ * than in `no_findings`: holding nothing is a clean hop/exposure/ownership result, but two
+ * factors with no row ingested for them are still `unavailable`, not `no_finding`.
  * `no_findings` is therefore zero on this estate — the only honest reading of a four-row
  * fixture table, and the thing to revisit when research §8 gap 3 is closed.
  */
-test('beat 36 — the 77 with nothing found are unassessed, not clean', () => {
-  assert.equal(SUMMARY.partially_evaluated, 77);
+test('beat 36 — the 79 with nothing found are unassessed, not clean', () => {
+  assert.equal(SUMMARY.partially_evaluated, 79);
   assert.equal(SUMMARY.no_findings, 0);
   assert.equal(SUMMARY.with_findings + SUMMARY.partially_evaluated, SUMMARY.scanned);
 
   const unassessed = ROWS.filter((entry) => entry.assessment.kind === 'partially_evaluated');
-  assert.equal(unassessed.length, 77);
+  assert.equal(unassessed.length, 79);
   for (const entry of unassessed) {
     assert.ok(entry.assessment.kind === 'partially_evaluated');
     assert.ok(

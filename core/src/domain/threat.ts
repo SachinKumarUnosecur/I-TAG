@@ -261,12 +261,23 @@ export interface ThreatStageCoverage {
   readonly identities: number;
 }
 
-/** One occupied or empty cell of the KPI matrix — always all 25, so a reviewer sees the zeros too. */
+/**
+ * One occupied or empty cell of the KPI matrix — always all 25, so a reviewer sees the zeros too.
+ *
+ * `count` and `identities` are deliberately both published, and deliberately allowed to differ:
+ * because Impact and Likelihood are identity-level (research §4.2 — every finding on one
+ * identity shares one cell), an identity with a long hop/pivot chain can contribute several
+ * `count` without contributing more than one `identities`. A cell reading "24 findings" beside
+ * "6 identities" is a different claim than "24 findings, 24 identities", and a reviewer who
+ * only sees `count` cannot tell the two apart — exactly the ambiguity `stageCoverage`'s own
+ * `findings`/`identities` pair already resolves for stages (`ThreatStageCoverage`, above).
+ */
 export interface ThreatMatrixCell {
   readonly impact: ThreatImpactLevel;
   readonly likelihood: ThreatLikelihoodLevel;
   readonly band: ThreatSeverityBand;
   readonly count: number;
+  readonly identities: number;
 }
 
 /** PRD §6.1's three KPIs, plus the coverage gate that has to publish before them (§6's pattern). */

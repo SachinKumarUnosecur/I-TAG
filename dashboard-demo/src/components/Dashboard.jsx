@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Icon, DonutChart, SegmentDonut, RiskArc, StepFunnel, RadarChart, TileExit,
@@ -18,7 +18,19 @@ import {
 const reviewCampaigns = getReviewCampaignsSnapshot();
 const reviewItems = getReviewItemsSnapshot();
 
-const mitreFindings = fetchMitreFindings();
+function useMitreFindings() {
+  const [findings, setFindings] = useState([]);
+  useEffect(() => {
+    let alive = true;
+    fetchMitreFindings().then((rows) => {
+      if (alive) setFindings(rows);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+  return findings;
+}
 
 function FabricStatIcon({ kind }) {
   if (kind === 'hi') {
@@ -228,6 +240,7 @@ function AccessTile({ navigate }) {
 
 /* ── Risk tile ──────────────────────────────────────────────── */
 function RiskTile({ navigate }) {
+  const mitreFindings = useMitreFindings();
   const SEV = [
     { band: 'Critical', color: 'var(--uno-red-500)' },
     { band: 'High', color: 'var(--uno-orange-500)' },
@@ -446,6 +459,7 @@ function ReviewTile({ navigate }) {
 
 /* ── PTRACE + MITRE tile ────────────────────────────────────── */
 function ThreatTile({ navigate }) {
+  const mitreFindings = useMitreFindings();
   const PTRACE_ORDER = ['P', 'T', 'R', 'A', 'C', 'E'];
   const PTRACE_META = {
     P: { lines: ['Probing', '(Recon & Discovery)'], color: 'var(--uno-green-700)' },

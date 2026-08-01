@@ -219,6 +219,39 @@ test('a finding with a null cell is excluded from the matrix but still counted i
   assert.equal(unplaced.length, summary.unplaced_findings);
 });
 
+test('every matrix cell publishes an identity count no greater than its finding count, and both are zero together', () => {
+  const summary = THREAT.summary();
+  for (const cell of summary.matrix) {
+    assert.ok(cell.identities >= 0);
+    assert.ok(cell.identities <= cell.count, `${cell.impact}/${cell.likelihood} has more identities than findings`);
+    if (cell.count === 0) {
+      assert.equal(cell.identities, 0);
+    }
+  }
+});
+
+test('at least one cell on the seed dataset has more findings than identities — a chained identity occupying one cell more than once', () => {
+  const summary = THREAT.summary();
+  assert.ok(summary.matrix.some((cell) => cell.count > cell.identities));
+});
+
+test('no identity emits two Exfiltration & Lateral Movement findings for the same via_permission pivot', () => {
+  const rows = THREAT.list();
+  const seen = new Map<string, Set<string>>();
+  for (const row of rows) {
+    if (row.ptrace_stage !== 'exfiltration_lateral_movement' || row.mitre_technique !== 'T1021') {
+      continue;
+    }
+    const refs = seen.get(row.identity_id) ?? new Set<string>();
+    assert.ok(
+      !refs.has(row.source_ref),
+      `${row.identity_id} has two T1021 Exfiltration findings sharing source_ref ${row.source_ref}`,
+    );
+    refs.add(row.source_ref);
+    seen.set(row.identity_id, refs);
+  }
+});
+
 test('list() rows carry the identity columns the findings table needs, inlined', () => {
   const rows = THREAT.list();
   assert.ok(rows.length > 0);

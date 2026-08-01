@@ -338,9 +338,19 @@ export const HOP_ACCESS_RULE: ThreatMappingRule = Object.freeze({
     // Exfiltration & Lateral Movement, only when Blast Radius's own propagation already
     // established this exact grant as a pivot into a further identity's footprint (research
     // §4.2 — the PRD's worked example's third stage). A real, quoted join, not a heuristic.
+    //
+    // `ImpactAssessment.pivots` is documented as sorted "descending by permissions_reached,
+    // then by id, so the widest crossing leads" (`domain/impact.ts` L169) — `pivots[0]` is the
+    // exact same row `PIVOT_RULE` below independently selects and reports, with a strictly
+    // more complete claim (assumed identity + chain depth, not just "pivots onward"). Reporting
+    // it a second time here, on the same stage and the same MITRE technique, is not a second
+    // fact — it is one fact read off two rules. This rule only adds its own row when the hop's
+    // matched pivot is a *different* one than `PIVOT_RULE` will name, which is the one case
+    // where its narrower "this hop also continues onward" claim is not already said elsewhere.
     if (ctx.impact !== null && ctx.impact.kind === 'propagates') {
       const pivot = ctx.impact.pivots.find((candidate) => candidate.via_permission === hop.via_permission);
-      if (pivot !== undefined) {
+      const widest = ctx.impact.pivots[0];
+      if (pivot !== undefined && pivot.via_permission !== widest?.via_permission) {
         seeds.push({
           ptrace_stage: 'exfiltration_lateral_movement',
           mitre_tactic: 'Lateral Movement',

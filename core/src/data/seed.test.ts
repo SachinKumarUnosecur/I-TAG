@@ -269,6 +269,25 @@ const EXPECTED: readonly ExpectedRow[] = [
   ['svc-hotfix-deployer', 'owned', null, 'none', false],
   ['role-release-runner', 'owned', null, 'none', false],
   ['role-artifact-signer', 'owned', null, 'none', false],
+
+  /**
+   * beats 32-35 — `seed/threat-coverage.ts`'s low-probability tail.
+   *
+   * The first two are unowned rather than orphaned: `noOwnerRule` fires because
+   * `provisioned_by` is null and no team claims them, but `created_at` is inside
+   * the 14-day service-account SLA and `last_activity_at` is inside the 90-day
+   * inactivity window, so `ownership/severity.ts`'s `low` arm is what fires — not
+   * the `medium`/`high`/`critical` every other `unowned` row above carries. The
+   * other four are owned outright by an explicitly, freshly attested team
+   * (the two service accounts) or the same green infrastructure-role pattern as
+   * `role-deploy-box` above (the two roles each Threat beat binds to).
+   */
+  ['svc-partner-status-sync', 'unowned', 'no_owner_on_record', 'low', true],
+  ['svc-vendor-webhook-relay', 'unowned', 'no_owner_on_record', 'low', true],
+  ['svc-catalog-sync-poller', 'owned', null, 'none', false],
+  ['svc-feature-flag-reader', 'owned', null, 'none', false],
+  ['role-integration-relay', 'owned', null, 'none', false],
+  ['role-vendor-relay', 'owned', null, 'none', false],
 ];
 
 test('every curated identity produces its documented verdict', () => {
@@ -603,12 +622,14 @@ test('beat 15: the queue is ranked by reachable sensitive access, not by count o
   const queue = OWNERSHIP.list();
   const reaching = queue.filter((value) => value.reachable_sensitive_count > 0);
 
-  // 12 of 25: beat 16 adds one finding that reaches production
+  // 12 of 27: beat 16 adds one finding that reaches production
   // (`svc-mail-archive-relay`) and one that reaches nothing (`svc-legacy-test-oauth`).
   // Beat 23b (`svc-temp-ssm-bridge`) is a counted finding whose hop is invisible to
-  // ownership/reach, so it does not raise `reachable_sensitive_count`.
+  // ownership/reach, so it does not raise `reachable_sensitive_count`. Beats 32-33
+  // (`seed/threat-coverage.ts`) add two more counted findings that reach nothing
+  // sensitive either.
   assert.equal(reaching.length, 12);
-  assert.equal(queue.length, 25);
+  assert.equal(queue.length, 27);
 
   const lastReaching = queue.findLastIndex((value) => value.reachable_sensitive_count > 0);
   const firstHarmless = queue.findIndex((value) => value.reachable_sensitive_count === 0);

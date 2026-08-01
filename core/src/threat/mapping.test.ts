@@ -238,19 +238,61 @@ test('a hop path unconditionally fires Rights Escalation and Trust Exploitation'
   assert.deepEqual(seeds.map((s) => s.ptrace_stage).sort(), ['rights_escalation', 'trust_exploitation']);
 });
 
-test('a hop path only fires Exfiltration & Lateral Movement when Blast Radius already pivots through it', () => {
+test('a hop path fires no Exfiltration seed of its own when Blast Radius records no pivot at all', () => {
   const withoutPivot = context({ access: accessProfile({ paths: [hopPath()] }) });
   assert.equal(
     HOP_ACCESS_RULE.evaluate(withoutPivot).some((s) => s.ptrace_stage === 'exfiltration_lateral_movement'),
     false,
   );
+});
 
-  const withPivot = context({
+test('a hop path suppresses its own Exfiltration seed when the matched pivot is the widest one — PIVOT_RULE already reports it, with a more complete claim', () => {
+  // `propagatingImpact()`'s single pivot matches `hopPath().via_permission` and, being the only
+  // entry, is trivially `pivots[0]` — exactly the case §4.6 documents: one crossing, two rules,
+  // and only one of them should be allowed to name it.
+  const withOnePivot = context({
     access: accessProfile({ paths: [hopPath()] }),
     impact: propagatingImpact(),
   });
   assert.equal(
-    HOP_ACCESS_RULE.evaluate(withPivot).some((s) => s.ptrace_stage === 'exfiltration_lateral_movement'),
+    HOP_ACCESS_RULE.evaluate(withOnePivot).some((s) => s.ptrace_stage === 'exfiltration_lateral_movement'),
+    false,
+  );
+  // The stage is not lost — PIVOT_RULE fires it independently, with the assumed identity and
+  // chain depth HOP_ACCESS_RULE's suppressed seed would not have carried.
+  assert.equal(
+    PIVOT_RULE.evaluate(withOnePivot).some((s) => s.ptrace_stage === 'exfiltration_lateral_movement'),
+    true,
+  );
+});
+
+test('a hop path fires its own distinct Exfiltration seed when its matched pivot is not the widest one', () => {
+  // Two pivots: a wider one (ranked first, the one PIVOT_RULE will report) on a different
+  // permission, and a narrower one matching the hop — a real second crossing PIVOT_RULE's single
+  // "widest" row never mentions.
+  const withTwoPivots = context({
+    access: accessProfile({ paths: [hopPath()] }),
+    impact: propagatingImpact({
+      pivots: [
+        {
+          via_permission: 'iam:pass-role',
+          assumed_identity: 'role:data-platform-admin',
+          assumed_identity_app: 'fx',
+          permissions_reached: ['s3:*', 'kms:decrypt', 'rds:*'],
+          deepest_hop_count: 5,
+        },
+        {
+          via_permission: 'ssm:start-session',
+          assumed_identity: 'svc:ci-deploy-bot',
+          assumed_identity_app: 'fx',
+          permissions_reached: ['deploy:prod'],
+          deepest_hop_count: 4,
+        },
+      ],
+    }),
+  });
+  assert.equal(
+    HOP_ACCESS_RULE.evaluate(withTwoPivots).some((s) => s.ptrace_stage === 'exfiltration_lateral_movement'),
     true,
   );
 });

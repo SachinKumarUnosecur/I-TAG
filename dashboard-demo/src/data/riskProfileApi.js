@@ -12,6 +12,7 @@ import {
   tenant,
 } from './mockData.js';
 import { cloudAttackTechniques } from './cloudAttackCatalog.js';
+import { apiGet } from '../api/client.js';
 
 const OPEN_STATUSES = new Set(['open', 'investigating']);
 
@@ -67,6 +68,10 @@ const PTRACE_STAGES = {
       { id: 'T1199', name: 'Trusted Relationship' },
       { id: 'T1550', name: 'Use Alternate Authentication Material' },
       { id: 'T1078.004', name: 'Cloud Accounts' },
+      // Appended for the live @itag/backend feed — HOP_ACCESS_RULE and CONTROL_DRIFT_RULE
+      // (core/src/threat/mapping.ts) tag Trust Exploitation with these two, not present above.
+      { id: 'T1550.001', name: 'Application Access Token' },
+      { id: 'T1556', name: 'Modify Authentication Process' },
     ],
   },
   R: {
@@ -79,6 +84,9 @@ const PTRACE_STAGES = {
       { id: 'T1548.002', name: 'Bypass User Account Control' },
       { id: 'T1134', name: 'Access Token Manipulation' },
       { id: 'T1552', name: 'Unsecured Credentials' },
+      // Appended for the live @itag/backend feed — CHOKE_POINT_RULE (core/src/threat/mapping.ts)
+      // tags a choke-point grant with the bare id, not the .004 cloud-accounts variant below.
+      { id: 'T1078', name: 'Valid Accounts' },
     ],
   },
   A: {
@@ -601,23 +609,73 @@ export function fetchAttackCatalog(opts = {}) {
   };
 }
 
-/** MITRE findings for threat-profile surface — API-shaped. */
-export function fetchMitreFindings() {
-  return mitreFindings.map(f => ({
-    id: f.id,
-    technique: f.technique,
-    name: f.name,
-    tactic: f.tactic,
-    ptraceCategory: f.ptraceCategory,
-    ptrace: PTRACE_STAGES[f.ptraceCategory] || null,
-    identityId: f.identityId,
-    identityName: f.identityName,
-    description: f.description,
-    severity: f.severity,
-    impact: f.impact,
-    likelihood: f.likelihood,
-    cellScore: (f.impact || 1) * (f.likelihood || 1),
-    triggeredAt: f.triggeredAt,
-    mitreUrl: `https://attack.mitre.org/techniques/${String(f.technique).replace('.', '/')}`,
-  }));
+/**
+ * Live @itag/backend feed for the Threat Profile surface.
+ * `fetchMitreFindings()` used to read the mock `mitreFindings` array (still used, unchanged,
+ * by `buildMitreIncidents()` for the Risk Profiles page below). It now translates the real
+ * engine's `GET /api/threat-profile` (`ThreatFindingRow[]`) into the exact object shape
+ * `ThreatProfile.jsx` has always consumed, so that component needs no changes of its own.
+ */
+
+/** `PtraceStage` (full word) → the single-letter code this UI has always keyed on. */
+const STAGE_CODE_BY_PTRACE_STAGE = {
+  probing: 'P',
+  trust_exploitation: 'T',
+  rights_escalation: 'R',
+  account_spoofing: 'A',
+  concealment_persistence: 'C',
+  exfiltration_lateral_movement: 'E',
+};
+
+/** NIST SP 800-30 Rev 1's five qualitative axis values → this UI's 1–5 rank. */
+const RANK_BY_NIST_LEVEL = {
+  very_low: 1,
+  low: 2,
+  moderate: 3,
+  high: 4,
+  very_high: 5,
+};
+
+/**
+ * Flat technique-id → display-name lookup, merged from every `PTRACE_STAGES[*].mitreTechniques`
+ * list above. The backend publishes `mitre_technique` as a bare id (e.g. `"T1556"`); it does
+ * not publish a display name, so this is the only place one is derived. Unmatched ids fall
+ * back to the id itself in `fetchMitreFindings()` below — never to an invented label.
+ */
+const TECHNIQUE_NAMES = new Map(
+  Object.values(PTRACE_STAGES).flatMap(stage => stage.mitreTechniques.map(t => [t.id, t.name])),
+);
+
+/** MITRE findings for threat-profile surface — API-shaped, backed by the real engine. */
+export async function fetchMitreFindings() {
+  const body = await apiGet('/api/threat-profile');
+  return (body?.findings || []).map(f => {
+    const ptraceCategory = STAGE_CODE_BY_PTRACE_STAGE[f.ptrace_stage] || null;
+    const impact = f.cell ? RANK_BY_NIST_LEVEL[f.cell.impact] : undefined;
+    const likelihood = f.cell ? RANK_BY_NIST_LEVEL[f.cell.likelihood] : undefined;
+    const severity = f.severity
+      ? f.severity.charAt(0).toUpperCase() + f.severity.slice(1)
+      : null;
+    return {
+      id: f.finding_id,
+      technique: f.mitre_technique,
+      name: TECHNIQUE_NAMES.get(f.mitre_technique) || f.mitre_technique,
+      tactic: f.mitre_tactic,
+      ptraceCategory,
+      ptrace: PTRACE_STAGES[ptraceCategory] || null,
+      identityId: f.identity_id,
+      identityName: f.identity_name,
+      identityType: f.identity_type,
+      description: f.evidence,
+      severity,
+      impact,
+      likelihood,
+      cellScore: (impact || 1) * (likelihood || 1),
+      // The engine has no per-finding timestamp (only an identity-level snapshot staleness,
+      // which `list()` doesn't carry) — fetch time, not an upstream fact. Unused by this
+      // component today (no column, no sort); kept for shape parity only.
+      triggeredAt: new Date().toISOString(),
+      mitreUrl: `https://attack.mitre.org/techniques/${String(f.mitre_technique).replace('.', '/')}`,
+    };
+  });
 }

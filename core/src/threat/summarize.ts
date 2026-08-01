@@ -137,14 +137,16 @@ export function matrixCounts(rows: readonly ThreatRow[]): readonly ThreatMatrixC
   return Object.freeze(
     allCells().map((cell): ThreatMatrixCell => {
       let count = 0;
+      const identities = new Set<string>();
       for (const row of rows) {
         for (const finding of findingsOf(row)) {
           if (finding.cell !== null && finding.cell.impact === cell.impact && finding.cell.likelihood === cell.likelihood) {
             count += 1;
+            identities.add(row.identity_id);
           }
         }
       }
-      return { ...cell, count };
+      return { ...cell, count, identities: identities.size };
     }),
   );
 }

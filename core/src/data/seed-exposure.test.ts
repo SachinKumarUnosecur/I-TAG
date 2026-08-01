@@ -200,10 +200,10 @@ test('the catalogue is classified except where beat 26 needs it not to be', () =
     byState[sensitivityOf(permission.id)] += 1;
   }
 
-  assert.deepEqual(byState, { sensitive: 9, not_sensitive: 71, unclassified: 6 });
+  assert.deepEqual(byState, { sensitive: 9, not_sensitive: 73, unclassified: 6 });
   assert.equal(
     DATASET.permissions.length,
-    86,
+    88,
     'the three states partition the catalogue — a fourth would mean a schema change',
   );
 });
@@ -292,13 +292,13 @@ test('beat 28: hop distance is no longer collinear with path type', () => {
 test('the exposure population and its path mix are what §9 publishes', () => {
   const summary = ACCESS.summary();
 
-  assert.deepEqual(summary.counts, { direct: 109, indirect: 83, hop: 22 });
+  assert.deepEqual(summary.counts, { direct: 121, indirect: 83, hop: 22 });
   assert.equal(summary.identities_with_hop, 12);
-  assert.equal(summary.identities_scanned, 128);
+  assert.equal(summary.identities_scanned, 134);
   assert.equal(
     DATASET.identities.filter((identity) => identity.type === 'group').length,
     12,
-    'scanned + groups = the 140 identities in the estate',
+    'scanned + groups = the 146 identities in the estate',
   );
 });
 
@@ -314,7 +314,7 @@ test('the exposure population and its path mix are what §9 publishes', () => {
 test('nothing beats 24-28 added is an ownership finding', () => {
   const queue = OWNERSHIP.list();
 
-  assert.equal(queue.length, 25);
+  assert.equal(queue.length, 27);
   assert.equal(queue[0]?.identity_id, 'svc-vpn-legacy');
 
   const added = [

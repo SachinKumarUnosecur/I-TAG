@@ -221,7 +221,51 @@ This is measured and stated here rather than smoothed over in code — `threat/s
 comment carries the same note for a future implementer who adds a per-finding signal and should
 know where the simplification lives.
 
-### 4.5 Groups — refused outright, a stronger position than Exposure's own split
+### 4.6 Observed shape on the seed dataset — two disclosures, not two bugs
+
+Wiring this service into the real UI (rather than reading it only through unit tests) surfaced
+two shapes worth writing down, because both are structural consequences of "quote, never
+recompute" rather than defects to correct by adjusting rule weights or the seed:
+
+**Likelihood and Severity are two readings of one input, whenever Risk Profile is `critical`.**
+`severityFor()` returns `RiskAssessment.worst_level` verbatim (§5 step 1); `likelihoodFor()` maps
+that same `worst_level` to `very_high` (§4.4). On the seed dataset, 73 of 103 findings quote a
+`critical` `worst_level`, and the same 73-plus findings land in the matrix's `very_high`
+likelihood column — not because Likelihood is redundant with Severity by construction (a `high`
+`worst_level` still separates from `critical` on both axes), but because this seed's population
+of identities *with any translatable finding at all* skews toward identities Risk Profile already
+rates worst. This is not this module inventing agreement between two numbers; it is two already-
+independent modules being asked the same question about the same worst-rated identities and, unsurprisingly, agreeing. The one place this needs a caption, not a code change, is the UI: a
+reviewer looking only at the matrix's shape should not conclude Likelihood adds a second opinion
+whenever Severity is already `critical` — see the frontend note below.
+
+**The matrix's `count` is a finding count, and one identity's chain can occupy several counts in
+one cell.** Because Impact and Likelihood are identity-level (§4.4's scope limitation), an
+identity with a long hop→pivot chain contributes one row per PTRACE stage the chain touches, all
+sharing that identity's one cell. On the seed dataset ten identities each reach the maximum of six
+findings (every rule fires), so a cell reading "24" is not 24 distinct at-risk identities — it may
+be four or five. `ThreatMatrixCell` now publishes `identities` beside `count` for exactly this
+reason (mirroring `ThreatStageCoverage`'s existing `findings`/`identities` pair), so a consumer
+that reads only `count` is choosing to, not because the distinction was unavailable.
+
+**Exfiltration & Lateral Movement's 55-of-103 findings (53%) is an expected skew, not an
+imbalance to correct.** Three of the six rules — `HOP_ACCESS_RULE`'s conditional third seed,
+`PIVOT_RULE`'s second seed, and `EXPOSURE_REALIZED_RULE` — can each independently land a finding
+on this one stage, because "what can this identity now reach" is the question Exposure, Impact's
+pivot detection, and Impact's choke-point selection were all already built to answer; no other
+PTRACE stage has three upstream modules answering its diagnostic question. Rebalancing rule
+weights to flatten this distribution would mean reporting stages evenly *despite* the underlying
+signal, which is exactly the kind of authored opinion this module has no license to hold (§1
+point 4). The card counts stay uneven because the engine's own coverage is uneven — a fact worth
+naming here so a future reviewer does not "fix" it into a fabricated balance.
+
+`HOP_ACCESS_RULE`'s conditional third seed was, prior to this note, itself a duplicate of
+`PIVOT_RULE`'s second seed whenever the same pivot backed both (§9 records this as closed, not
+open — see the fix note there). The rule now only fires its own Exfiltration seed when the hop's
+matched pivot is *not* `ImpactAssessment.pivots[0]` (the widest, and the one `PIVOT_RULE`
+independently reports) — the two rules can no longer describe the same crossing twice.
+
+### 4.7 Groups — refused outright, a stronger position than Exposure's own split
 
 `identity-risk-profile-research.md` §8 leaves open issue "A/A*" — `exposure.profile()` scores all
 12 groups while `.list()` returns none, an inconsistency inherited by anything that quotes
@@ -323,13 +367,26 @@ immediately above the guard.
 - §8's PTRACE naming question — not revisited here; this document documents the built stage
   names in full words (`PtraceStage`), leaving the acronym question to product naming, which is
   outside this module's engineering scope.
+- §8's findings-table column question is answered by `ThreatFindingRow`'s actual shape (§6). The
+  *frontend* contract against `dashboard-demo`'s existing mock was also reconciled: `dashboard-
+  demo/src/data/riskProfileApi.js`'s `fetchMitreFindings()` now calls `GET /api/threat-profile`
+  and translates `ThreatFindingRow[]` onto the mock's original field names (id scheme
+  `threat:<id>:<stage>:<ref>` replacing `mf-XXX` transparently to the component), so
+  `ThreatProfile.jsx` itself needed no changes. `listPtraceStages()` stays on its static local
+  table — it is reference configuration, not a per-request read.
+- The near-duplicate Exfiltration & Lateral Movement row observed on the live seed dataset —
+  `HOP_ACCESS_RULE`'s conditional third seed and `PIVOT_RULE`'s second seed both firing `T1021`
+  for the same identity when one pivot backed both — is closed in `mapping.ts`: `HOP_ACCESS_RULE`
+  now skips its own seed whenever the hop's matched pivot is `ImpactAssessment.pivots[0]` (the
+  widest, and the one `PIVOT_RULE` independently reports with a strictly more complete claim).
+  See §4.6.
 
 **Still open:**
-- §8's findings-table column question is answered by `ThreatFindingRow`'s actual shape (§6), but
-  the *frontend* contract against `dashboard-demo`'s existing mock (a separate fixture, untouched
-  by this work) has not been reconciled — that mock's `mitreFindings` array predates this service
-  and uses a different id scheme (`mf-XXX` vs `threat:<id>:<stage>:<ref>`). Reconciling them is a
-  frontend task, not logged here as a backend gap.
 - Whether a future per-finding resource-sensitivity signal (rather than per-identity) should
   split Impact away from the current identity-level sharing (§4.4's scope limitation) is left for
   whichever module first needs finer granularity than `ExposureAssessment` publishes today.
+- Whether the Likelihood/Severity correlation named in §4.6 warrants decoupling Likelihood from
+  `RiskAssessment.worst_level` onto a signal Risk Profile does not also already publish as
+  Severity. This document's position is that doing so would mean *authoring* a Likelihood
+  opinion Risk Profile itself does not hold — out of scope unless a future PRD revision asks for
+  it explicitly.
