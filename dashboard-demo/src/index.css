@@ -3213,6 +3213,13 @@ button.ad-filters-count--reset:hover {
   line-height: 1.55;
   color: var(--text-secondary);
 }
+.ad-detail-alert--info {
+  border-color: color-mix(in srgb, var(--uno-green-500) 28%, transparent);
+  background: color-mix(in srgb, var(--uno-green-500) 6%, white);
+}
+.ad-detail-alert--info .ad-detail-alert-title {
+  color: var(--uno-green-700, #15803d);
+}
 .ad-detail-meta {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3849,7 +3856,7 @@ button.ad-filters-count--reset:hover {
 .em-table-head,
 .em-table-row {
   display: grid;
-  grid-template-columns: 1.6fr 0.7fr 2.2fr 0.55fr 0.5fr 0.9fr;
+  grid-template-columns: 1.5fr 0.65fr 1.6fr 0.5fr 0.85fr 0.85fr 0.95fr;
   gap: 12px;
   align-items: center;
   padding: 14px 16px;
@@ -3913,10 +3920,151 @@ button.ad-filters-count--reset:hover {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
-.em-col-paths {
+.em-col-paths,
+.em-col-reach {
   font-size: 12px;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
+}
+.em-col-score--extensive { color: var(--uno-red-600); }
+.em-col-score--substantial { color: var(--uno-orange-600); }
+.em-col-score--limited { color: var(--uno-yellow-700); }
+.em-col-score--minimal { color: var(--uno-green-700); }
+.em-col-score--muted { color: var(--text-tertiary); }
+.em-reach-unclassified {
+  color: var(--uno-orange-600);
+  font-size: 11px;
+}
+.em-col-owner {
+  min-width: 0;
+}
+.em-bar-fill--extensive { background: var(--uno-red-500); }
+.em-bar-fill--substantial { background: var(--uno-orange-500); }
+.em-bar-fill--limited { background: var(--uno-yellow-500); }
+.em-bar-fill--minimal { background: var(--uno-green-500); }
+.em-bar-fill--muted { background: var(--uno-grey-300); }
+
+/* Engine exposure band — vocabulary is minimal|limited|substantial|extensive only,
+   deliberately not `SeverityBadge`'s Catastrophic…Desirable (Risk owns that scale). */
+.em-band {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.em-band--extensive {
+  background: color-mix(in srgb, var(--uno-red-500) 14%, white);
+  color: var(--uno-red-600);
+}
+.em-band--substantial {
+  background: color-mix(in srgb, var(--uno-orange-500) 14%, white);
+  color: var(--uno-orange-600);
+}
+.em-band--limited {
+  background: color-mix(in srgb, var(--uno-yellow-500) 16%, white);
+  color: var(--uno-yellow-700);
+}
+.em-band--minimal {
+  background: color-mix(in srgb, var(--uno-green-500) 12%, white);
+  color: var(--uno-green-700);
+}
+.em-band--muted {
+  background: var(--surface-subtle);
+  color: var(--text-tertiary);
+}
+.em-band--warn {
+  background: color-mix(in srgb, var(--uno-orange-500) 12%, white);
+  color: var(--uno-orange-600);
+}
+
+/* Ownership severity (`ExposureOwnershipContext.severity`) — shares Risk's critical/high/
+   medium/low words on purpose (it is the same urgency scale), scoped to its own class so it
+   never gets confused with the exposure band column above. */
+.em-severity {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.em-severity--critical { background: color-mix(in srgb, var(--uno-red-500) 14%, white); color: var(--uno-red-600); }
+.em-severity--high { background: color-mix(in srgb, var(--uno-orange-500) 14%, white); color: var(--uno-orange-600); }
+.em-severity--medium { background: color-mix(in srgb, var(--uno-yellow-500) 16%, white); color: var(--uno-yellow-700); }
+.em-severity--low { background: color-mix(in srgb, var(--uno-green-500) 12%, white); color: var(--uno-green-700); }
+.em-severity--muted { background: var(--surface-subtle); color: var(--text-tertiary); }
+
+.em-kpi-grid { margin-bottom: 0; }
+
+/* ─── Exposure identity profile ─────────────────────────────── */
+.em-profile-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #fff 0%, #f7f9fc 100%);
+  flex-wrap: wrap;
+}
+.em-profile-score-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.em-profile-score-value {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-heading, var(--text-primary));
+}
+.em-profile-score-value--extensive { color: var(--uno-red-600); }
+.em-profile-score-value--substantial { color: var(--uno-orange-600); }
+.em-profile-score-value--limited { color: var(--uno-yellow-700); }
+.em-profile-score-value--minimal { color: var(--uno-green-700); }
+.em-profile-score-value--muted { color: var(--text-tertiary); }
+.em-profile-score-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.em-profile-score-reach {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.em-profile-score-reach-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.em-profile-score-reach-value {
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.em-ring {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 6px;
+}
+.type-chip-ai_agent {
+  background: color-mix(in srgb, var(--uno-blue-500) 12%, white);
+  color: var(--uno-blue-700);
+}
+.type-chip-group {
+  background: var(--uno-grey-100);
+  color: var(--uno-grey-700);
 }
 @media (max-width: 900px) {
   .em-stats { grid-template-columns: 1fr; }
