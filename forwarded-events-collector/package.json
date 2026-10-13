@@ -1,0 +1,13 @@
+{
+  "name": "forwarded-events-ad-collector",
+  "version": "1.0.0",
+  "description": "Collects Active Directory activity from Windows Forwarded Events into a single JSON file",
+  "main": "collector.js",
+  "scripts": {
+    "collect": "node collector.js --verbose"
+  },
+  "engines": { "node": ">=18" },
+  "os": ["win32"],
+  "license": "UNLICENSED",
+  "private": true
+}
